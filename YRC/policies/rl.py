@@ -1,8 +1,9 @@
 import logging
+
 import torch
 
-from YRC.policies.base import BasePolicy
 from YRC.models.rl import PPOModel
+from YRC.policies.base import BasePolicy
 
 
 class PPOPolicy(BasePolicy):

@@ -2,11 +2,11 @@ import logging
 
 import torch
 
-from lib.procgenAISC.procgen import ProcgenEnv
 import YRC.envs.procgen.wrappers as wrappers
+from lib.procgenAISC.procgen import ProcgenEnv
+from YRC.core.configs.global_configs import get_global_variable
 from YRC.envs.procgen.models import ProcgenModel
 from YRC.envs.procgen.policies import ProcgenPolicy
-from YRC.core.configs.global_configs import get_global_variable
 
 
 def create_env(name, config):
@@ -36,6 +36,7 @@ def create_env(name, config):
     # NOTE: this must be done last
     env = wrappers.HardResetWrapper(env)
     env.obs_shape = env.observation_space.shape
+    env.action_shape = env.action_space.shape
     return env
 
 

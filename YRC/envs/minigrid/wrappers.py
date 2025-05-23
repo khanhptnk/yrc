@@ -7,7 +7,9 @@ class HardResetWrapper(VectorEnv):
         self.env = env
         self.observation_space = env.observation_space
         self.action_space = env.action_space
-        assert env.action_space.nvec.min() == env.action_space.nvec.max(), "Action space must be discrete"
+        assert (
+            env.action_space.nvec.min() == env.action_space.nvec.max()
+        ), "Action space must be discrete"
         self.action_space.n = env.action_space.nvec.min()
         self.num_envs = env.num_envs
 

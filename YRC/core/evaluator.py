@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 
 
@@ -63,21 +64,16 @@ class Evaluator:
 
             obs, reward, done, info = env.step(action)
 
-            """
-            if action.ndim == 0:
-                action = action.reshape(1)
-                reward = reward.reshape(1)
-            """
-
             for i in range(env.num_envs):
-
                 if "env_reward" in info[i]:
                     log["env_reward"][i] += info[i]["env_reward"] * (1 - has_done[i])
 
                 log["reward"][i] += reward[i] * (1 - has_done[i])
                 log["episode_length"][i] += 1 - has_done[i]
                 if not has_done[i]:
-                    log[f"action_{self.LOGGED_ACTION}"] += (action[i] == self.LOGGED_ACTION).sum()
+                    log[f"action_{self.LOGGED_ACTION}"] += (
+                        action[i] == self.LOGGED_ACTION
+                    ).sum()
 
             has_done |= done
             step += 1
@@ -113,9 +109,9 @@ class Evaluator:
         log_str += f"mean {summary['env_reward_mean']:.2f} "
         log_str += f"± {(1.96 * summary['env_reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
         log_str += f"   Action {self.LOGGED_ACTION} fraction: {summary[f'action_{self.LOGGED_ACTION}_frac']:7.2f}\n"
-        log_str += "   Raw Rewards: "
-        for r in summary["raw_reward"]:
-            log_str += f"{r:.2f},"
+        # log_str += "   Raw Rewards: "
+        # for r in summary["raw_reward"]:
+        #     log_str += f"{r:.2f},"
         logging.info(log_str)
 
         return summary

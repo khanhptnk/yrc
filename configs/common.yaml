@@ -1,13 +1,13 @@
 coord_policy:
     always:
         cls: AlwaysPolicy
-        agent: 'weak'
-    threshold:
-        cls: ThresholdPolicy
+        agent: 'novice'
+    logit:
+        cls: LogitPolicy
         metric: 'logit'
     random:
         cls: RandomPolicy
-        baseline: False
+        # baseline: False
     ppo:
         cls: PPOPolicy
     ood:
@@ -119,8 +119,8 @@ algorithm:
         dummy: null
     random:
         cls: RandomAlgorithm
-    threshold:
-        cls: ThresholdAlgorithm
+    logit:
+        cls: LogitAlgorithm
         min_pct: 0
         max_pct: 101
         pct_step: 10

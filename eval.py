@@ -1,20 +1,13 @@
-import flags
-import YRC.core.algorithm as algo_factory
-import YRC.core.configs.utils as config_utils
-import YRC.core.environment as env_factory
-import YRC.core.policy as policy_factory
-from YRC.core import Evaluator
-from YRC.policies import *
+import os
+
+import YRC
 
 if __name__ == "__main__":
-    args = flags.make()
-    args.eval_mode = True
-    config = config_utils.load(args.config, flags=args)
+    config = YRC.load_config()
 
-    envs = env_factory.make(config)
-    policy = policy_factory.make(config, envs["train"])
-    if config.general.algorithm != "always" and not config.coord_policy.baseline:
+    envs, policy, evaluator = YRC.make(config, eval=True)
+
+    if config.general.algorithm != "always" and config.filename is not None:
         policy.load_model(os.path.join(config.experiment_dir, config.file_name))
-    evaluator = Evaluator(config.evaluation)
 
-    evaluator.eval(policy, envs, ["test"])
+    evaluator.eval(policy, envs, eval_splits=["test"])

@@ -1,38 +1,45 @@
+import logging
 import os
-import numpy as np
 from copy import deepcopy as dc
 
+import numpy as np
 import torch
-import logging
 from torch.distributions.categorical import Categorical
+
 from YRC.core import Policy
 from YRC.core.configs.global_configs import get_global_variable
 
 
-class ThresholdPolicy(Policy):
+class LogitPolicy(Policy):
     def __init__(self, config, env):
         self.args = config.coord_policy
-        self.agent = env.weak_agent
+        self.agent = env.novice_agent
         self.params = {"threshold": 0.0, "explore_temp": 1.0, "score_temp": 1.0}
         self.device = get_global_variable("device")
 
     def act(self, obs, greedy=False):
         if get_global_variable("benchmark") == "cliport":
             attention_size = 3  # todo: get this shape automatically
-            attention_flat = obs["weak_logit"][:, :attention_size]
-            transport_flat = obs["weak_logit"][:, attention_size:]
+            attention_flat = obs["novice_logit"][:, :attention_size]
+            transport_flat = obs["novice_logit"][:, attention_size:]
             if not torch.is_tensor(attention_flat):
-                attention_flat = torch.from_numpy(attention_flat).float().to(self.device)
+                attention_flat = (
+                    torch.from_numpy(attention_flat).float().to(self.device)
+                )
             if not torch.is_tensor(transport_flat):
-                transport_flat = torch.from_numpy(transport_flat).float().to(self.device)
+                transport_flat = (
+                    torch.from_numpy(transport_flat).float().to(self.device)
+                )
             attention_score = self._compute_score(attention_flat)
             transport_score = self._compute_score(transport_flat)
-            score = torch.mean(torch.stack([attention_score, transport_score])).unsqueeze(0)
+            score = torch.mean(
+                torch.stack([attention_score, transport_score])
+            ).unsqueeze(0)
         else:
-            weak_logit = obs["weak_logit"]
-            if not torch.is_tensor(weak_logit):
-                weak_logit = torch.from_numpy(weak_logit).float().to(self.device)
-            score = self._compute_score(weak_logit)
+            novice_logit = obs["novice_logit"]
+            if not torch.is_tensor(novice_logit):
+                novice_logit = torch.from_numpy(novice_logit).float().to(self.device)
+            score = self._compute_score(novice_logit)
         # NOTE: higher score = more certain
         action = (score < self.params["threshold"]).int()
         return action.cpu().numpy()

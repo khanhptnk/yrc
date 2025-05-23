@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 
 from YRC.core.configs.global_configs import get_global_variable
-from YRC.models.utils import init_params, get_obss_preprocessor
+from YRC.models.utils import get_obss_preprocessor, init_params
 
 
 class MinigridModel(nn.Module):
@@ -22,7 +22,7 @@ class MinigridModel(nn.Module):
             nn.Conv2d(16, 32, (2, 2)),
             nn.ReLU(),
             nn.Conv2d(32, 64, (2, 2)),
-            nn.ReLU()
+            nn.ReLU(),
         )
         n = obs_space["image"][1]
         m = obs_space["image"][2]
@@ -31,23 +31,21 @@ class MinigridModel(nn.Module):
         self.word_embedding_size = 32
         self.word_embedding = nn.Embedding(obs_space["text"], self.word_embedding_size)
         self.text_embedding_size = 128
-        self.text_rnn = nn.GRU(self.word_embedding_size, self.text_embedding_size, batch_first=True)
+        self.text_rnn = nn.GRU(
+            self.word_embedding_size, self.text_embedding_size, batch_first=True
+        )
 
         # Resize image embedding
         self.hidden_dim = self.semi_memory_size + self.text_embedding_size
 
         # Define actor's model
         self.actor = nn.Sequential(
-            nn.Linear(self.hidden_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, self.logit_dim)
+            nn.Linear(self.hidden_dim, 64), nn.Tanh(), nn.Linear(64, self.logit_dim)
         )
 
         # Define critic's model
         self.critic = nn.Sequential(
-            nn.Linear(self.hidden_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, 1)
+            nn.Linear(self.hidden_dim, 64), nn.Tanh(), nn.Linear(64, 1)
         )
 
         # Initialize parameters correctly
@@ -58,7 +56,10 @@ class MinigridModel(nn.Module):
         x = self.image_conv(x)
         x = x.reshape(x.shape[0], -1)
 
-        hidden = (memory[:, :self.semi_memory_size], memory[:, self.semi_memory_size:])
+        hidden = (
+            memory[:, : self.semi_memory_size],
+            memory[:, self.semi_memory_size :],
+        )
         hidden = self.memory_rnn(x, hidden)
         embedding = hidden[0]
         memory = torch.cat(hidden, dim=1)

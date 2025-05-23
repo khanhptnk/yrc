@@ -1,9 +1,10 @@
 import logging
+
 import numpy as np
 import torch
 
-from YRC.core.configs.global_configs import get_global_variable
 from YRC.core import Algorithm
+from YRC.core.configs.global_configs import get_global_variable
 
 
 class PPOAlgorithm(Algorithm):
@@ -19,8 +20,8 @@ class PPOAlgorithm(Algorithm):
         args.minibatch_size = int(args.batch_size // args.num_minibatches)
         args.num_iterations = args.total_timesteps // args.batch_size
         self.total_reward = {
-            "reward": [0.] * args.num_envs,
-            "env_reward": [0.] * args.num_envs
+            "reward": [0.0] * args.num_envs,
+            "env_reward": [0.0] * args.num_envs,
         }
 
         device = get_global_variable("device")
@@ -28,10 +29,16 @@ class PPOAlgorithm(Algorithm):
         if isinstance(self.obs_shape, dict):
             self.obs = {}
             for k, shape in self.obs_shape.items():
-                self.obs[k] = torch.zeros((args.num_steps, args.num_envs) + shape).to(device)
+                self.obs[k] = torch.zeros((args.num_steps, args.num_envs) + shape).to(
+                    device
+                )
         else:
-            self.obs = torch.zeros((args.num_steps, args.num_envs) + self.obs_shape).to(device)
-        self.actions = torch.zeros((args.num_steps, args.num_envs) + self.action_shape).to(device)
+            self.obs = torch.zeros((args.num_steps, args.num_envs) + self.obs_shape).to(
+                device
+            )
+        self.actions = torch.zeros(
+            (args.num_steps, args.num_envs) + self.action_shape
+        ).to(device)
         self.logprobs = torch.zeros((args.num_steps, args.num_envs)).to(device)
         self.rewards = torch.zeros((args.num_steps, args.num_envs)).to(device)
         self.dones = torch.zeros((args.num_steps, args.num_envs)).to(device)
@@ -44,7 +51,13 @@ class PPOAlgorithm(Algorithm):
         if isinstance(self.obs_shape, dict):
             ret = {}
             for k, shape in self.obs_shape.items():
-                ret[k] = torch.from_numpy(obs[k] if not isinstance(obs[k], dict) else obs[k]['image']).to(device).float()
+                ret[k] = (
+                    torch.from_numpy(
+                        obs[k] if not isinstance(obs[k], dict) else obs[k]["image"]
+                    )
+                    .to(device)
+                    .float()
+                )
             return ret
         return torch.from_numpy(obs).to(device).float()
 
@@ -77,7 +90,9 @@ class PPOAlgorithm(Algorithm):
         log = {}
 
         pc_steps = self.args.pretrain_critic_steps
-        pretrain_critic = pc_steps is not None and pc_steps > 0 and self.global_step < pc_steps
+        pretrain_critic = (
+            pc_steps is not None and pc_steps > 0 and self.global_step < pc_steps
+        )
 
         # Annealing the rate if instructed to do so.
         lrnow = args.learning_rate
@@ -147,12 +162,12 @@ class PPOAlgorithm(Algorithm):
                     nextnonterminal = 1.0 - self.dones[t + 1]
                     nextvalues = self.values[t + 1]
                 delta = (
-                        self.rewards[t]
-                        + args.gamma * nextvalues * nextnonterminal
-                        - self.values[t]
+                    self.rewards[t]
+                    + args.gamma * nextvalues * nextnonterminal
+                    - self.values[t]
                 )
                 advantages[t] = lastgaelam = (
-                        delta + args.gamma * args.gae_lambda * nextnonterminal * lastgaelam
+                    delta + args.gamma * args.gae_lambda * nextnonterminal * lastgaelam
                 )
             returns = advantages + self.values
 
@@ -193,7 +208,7 @@ class PPOAlgorithm(Algorithm):
                 log["advantage"].extend(mb_advantages.tolist())
                 if args.norm_adv:
                     mb_advantages = (mb_advantages - mb_advantages.mean()) / (
-                            mb_advantages.std() + 1e-8
+                        mb_advantages.std() + 1e-8
                     )
 
                 # Policy loss
@@ -223,7 +238,9 @@ class PPOAlgorithm(Algorithm):
                 if pretrain_critic:
                     loss = v_loss
                 else:
-                    loss = pg_loss - args.ent_coef * entropy_loss + v_loss * args.vf_coef
+                    loss = (
+                        pg_loss - args.ent_coef * entropy_loss + v_loss * args.vf_coef
+                    )
                 loss.backward()
 
                 policy.update_params(args.max_grad_norm)
@@ -264,14 +281,15 @@ class PPOAlgorithm(Algorithm):
             "value_mean": float(np.mean(log["value"])),
             "value_std": float(np.std(log["value"])),
             "action_1": float(np.mean(log["action_1"])),
-            "action_prob": float(np.mean(log["action_prob"]))
+            "action_prob": float(np.mean(log["action_prob"])),
         }
 
     def write_summary(self, summary):
-
         log_str = "\n"
         log_str += "   Reward:     "
-        log_str += f"mean {summary['reward_mean']:7.2f} ± {summary['reward_std']:7.2f}\n"
+        log_str += (
+            f"mean {summary['reward_mean']:7.2f} ± {summary['reward_std']:7.2f}\n"
+        )
         log_str += "   Env Reward: "
         log_str += f"mean {summary['env_reward_mean']:7.2f} ± {summary['env_reward_std']:7.2f}\n"
 

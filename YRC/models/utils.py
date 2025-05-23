@@ -1,5 +1,6 @@
-import math
 import importlib
+import math
+
 import torch
 import torch.nn as nn
 
@@ -7,8 +8,9 @@ if importlib.util.find_spec("gymnasium") is None:
     import gym
 else:
     import gymnasium as gym
-import numpy as np
 import re
+
+import numpy as np
 
 
 def orthogonal_init(module, gain=nn.init.calculate_gain("relu")):
@@ -181,7 +183,7 @@ def preprocess_texts(texts, vocab, device=None):
     indexed_texts = np.zeros((len(texts), max_text_len))
 
     for i, indexed_text in enumerate(var_indexed_texts):
-        indexed_texts[i, :len(indexed_text)] = indexed_text
+        indexed_texts[i, : len(indexed_text)] = indexed_text
 
     return torch.tensor(indexed_texts, device=device, dtype=torch.long)
 
@@ -192,9 +194,7 @@ def get_obss_preprocessor(obs_space):
         obs_space = {"image": obs_space.shape}
 
         def preprocess_obss(obss, device=None):
-            return DictList({
-                "image": preprocess_images(obss, device=device)
-            })
+            return DictList({"image": preprocess_images(obss, device=device)})
 
     # Check if it is a MiniGrid observation space
     elif isinstance(obs_space, gym.spaces.Dict) and "image" in obs_space.spaces.keys():
@@ -203,10 +203,12 @@ def get_obss_preprocessor(obs_space):
         vocab = Vocabulary(obs_space["text"])
 
         def preprocess_obss(obss, device=None):
-            return DictList({
-                "image": preprocess_images(obss['image'], device=device),
-                "text": preprocess_texts(obss["mission"], vocab, device=device)
-            })
+            return DictList(
+                {
+                    "image": preprocess_images(obss["image"], device=device),
+                    "text": preprocess_texts(obss["mission"], vocab, device=device),
+                }
+            )
 
         preprocess_obss.vocab = vocab
 

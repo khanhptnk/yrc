@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from YRC.models.utils import orthogonal_init, ImpalaModel
 from YRC.core.configs.global_configs import get_global_variable
+from YRC.models.utils import ImpalaModel, orthogonal_init
 
 
 class ImpalaCoordPolicyModel(nn.Module):
@@ -22,11 +22,19 @@ class ImpalaCoordPolicyModel(nn.Module):
         elif self.feature_type == "dist":
             self.hidden_dim = coord_env.base_env.action_space.n
         elif self.feature_type == "hidden_dist":
-            self.hidden_dim = coord_env.weak_agent.hidden_dim + coord_env.base_env.action_space.n
+            self.hidden_dim = (
+                coord_env.weak_agent.hidden_dim + coord_env.base_env.action_space.n
+            )
         elif self.feature_type == "obs_dist":
-            self.hidden_dim = self.embedder.output_dim + coord_env.base_env.action_space.n
+            self.hidden_dim = (
+                self.embedder.output_dim + coord_env.base_env.action_space.n
+            )
         elif self.feature_type == "obs_hidden_dist":
-            self.hidden_dim = self.embedder.output_dim + coord_env.weak_agent.hidden_dim + coord_env.base_env.action_space.n
+            self.hidden_dim = (
+                self.embedder.output_dim
+                + coord_env.weak_agent.hidden_dim
+                + coord_env.base_env.action_space.n
+            )
         else:
             raise NotImplementedError
 
@@ -35,7 +43,11 @@ class ImpalaCoordPolicyModel(nn.Module):
         )
 
     def forward(self, obs, ret_hidden=False):
-        env_obs = obs['env_obs']['image'] if isinstance(obs['env_obs'], dict) else obs['env_obs']
+        env_obs = (
+            obs["env_obs"]["image"]
+            if isinstance(obs["env_obs"], dict)
+            else obs["env_obs"]
+        )
         if not torch.is_tensor(env_obs):
             env_obs = torch.from_numpy(env_obs).float().to(self.device)
         weak_features = obs["weak_features"]
@@ -56,9 +68,14 @@ class ImpalaCoordPolicyModel(nn.Module):
         elif self.feature_type == "hidden_dist":
             hidden = torch.cat([weak_features, weak_logit.softmax(dim=-1)], dim=-1)
         elif self.feature_type == "obs_dist":
-            hidden = torch.cat([self.embedder(env_obs), weak_logit.softmax(dim=-1)], dim=-1)
+            hidden = torch.cat(
+                [self.embedder(env_obs), weak_logit.softmax(dim=-1)], dim=-1
+            )
         elif self.feature_type == "obs_hidden_dist":
-            hidden = torch.cat([self.embedder(env_obs), weak_features, weak_logit.softmax(dim=-1)], dim=-1)
+            hidden = torch.cat(
+                [self.embedder(env_obs), weak_features, weak_logit.softmax(dim=-1)],
+                dim=-1,
+            )
         else:
             raise NotImplementedError
 
@@ -71,13 +88,14 @@ class ImpalaCoordPolicyModel(nn.Module):
 
 
 class ImpalaPolicyModel(nn.Module):
-
     def __init__(self, config, env):
         super().__init__()
         self.device = get_global_variable("device")
         self.embedder = ImpalaModel(env.obs_shape)
         self.hidden_dim = self.embedder.output_dim
-        self.fc_policy = orthogonal_init(nn.Linear(self.hidden_dim, env.action_space.n), gain=0.01)
+        self.fc_policy = orthogonal_init(
+            nn.Linear(self.hidden_dim, env.action_space.n), gain=0.01
+        )
 
     def forward(self, obs, ret_hidden=False):
         hidden = self.get_hidden(obs)

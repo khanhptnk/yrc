@@ -14,10 +14,10 @@ from YRC.core.configs.global_configs import get_global_variable
 class OODPolicy(Policy):
     def __init__(self, config, env):
         self.args = config.coord_policy
-        if config.coord_policy.collect_data_agent == "weak":
-            self.agent = env.weak_agent
-        elif config.coord_policy.collect_data_agent == "strong":
-            self.agent = env.strong_agent
+        if config.coord_policy.collect_data_agent == "novice":
+            self.agent = env.novice_agent
+        elif config.coord_policy.collect_data_agent == "expert":
+            self.agent = env.expert_agent
         self.params = {"threshold": 0.0, "explore_temp": 1.0}
         self.clf = None
         self.clf_name = None
@@ -77,12 +77,12 @@ class OODPolicy(Policy):
             """Retrieves features based on the specified feature type."""
             feature_map = {
                 "obs": lambda obs: obs["env_obs"]["image"] if get_global_variable("benchmark") == "cliport" else obs["env_obs"],
-                "hidden": lambda obs: obs["weak_features"],
-                "hidden_obs": lambda obs: [obs["env_obs"]["image"], obs["weak_features"]] if get_global_variable("benchmark") == "cliport" else [obs["env_obs"], obs["weak_features"]],
-                "dist": lambda obs: obs["weak_logit"],
-                "hidden_dist": lambda obs: [obs["weak_features"], obs["weak_logit"]],
-                "obs_dist": lambda obs: [obs["env_obs"]["image"], obs["weak_logit"]] if get_global_variable("benchmark") == "cliport" else [obs["env_obs"], obs["weak_logit"]],
-                "obs_hidden_dist": lambda obs: [obs["env_obs"]["image"], obs["weak_features"], obs["weak_logit"]] if get_global_variable("benchmark") == "cliport" else [obs["env_obs"], obs["weak_features"], obs["weak_logit"]]
+                "hidden": lambda obs: obs["novice_features"],
+                "hidden_obs": lambda obs: [obs["env_obs"]["image"], obs["novice_features"]] if get_global_variable("benchmark") == "cliport" else [obs["env_obs"], obs["novice_features"]],
+                "dist": lambda obs: obs["novice_logit"],
+                "hidden_dist": lambda obs: [obs["novice_features"], obs["novice_logit"]],
+                "obs_dist": lambda obs: [obs["env_obs"]["image"], obs["novice_logit"]] if get_global_variable("benchmark") == "cliport" else [obs["env_obs"], obs["novice_logit"]],
+                "obs_hidden_dist": lambda obs: [obs["env_obs"]["image"], obs["novice_features"], obs["novice_logit"]] if get_global_variable("benchmark") == "cliport" else [obs["env_obs"], obs["novice_features"], obs["novice_logit"]]
             }
             return feature_map[feature_type](obs)
 
@@ -122,12 +122,12 @@ class OODPolicy(Policy):
     def act(self, obs, greedy=False):
         keys = {
             "obs": ["env_obs"],
-            "hidden": ["weak_features"],
-            "dist": ["weak_logit"],
-            "hidden_obs": ["env_obs", "weak_features"],
-            "hidden_dist": ["weak_features", "weak_logit"],
-            "obs_dist": ["env_obs", "weak_logit"],
-            "obs_hidden_dist": ["env_obs", "weak_features", "weak_logit"],
+            "hidden": ["novice_features"],
+            "dist": ["novice_logit"],
+            "hidden_obs": ["env_obs", "novice_features"],
+            "hidden_dist": ["novice_features", "novice_logit"],
+            "obs_dist": ["env_obs", "novice_logit"],
+            "obs_hidden_dist": ["env_obs", "novice_features", "novice_logit"],
         }[self.feature_type]
 
         if get_global_variable("benchmark") in ["cliport", "minigrid"]:
@@ -152,25 +152,25 @@ class OODPolicy(Policy):
                     dummy_obs['env_obs']['image'] if get_global_variable("benchmark") in ["cliport", "minigrid"] else
                     dummy_obs['env_obs']
                 ).shape,
-                "hidden": lambda dummy_obs: dummy_obs['weak_features'].shape,
+                "hidden": lambda dummy_obs: dummy_obs['novice_features'].shape,
                 "hidden_obs": lambda dummy_obs: (
                         (
                             dummy_obs['env_obs']['image'] if get_global_variable("benchmark") in ["cliport", "minigrid"] else dummy_obs['env_obs']
-                        ).shape + dummy_obs['weak_features'].shape[1:]
+                        ).shape + dummy_obs['novice_features'].shape[1:]
                 ),
-                "dist": lambda dummy_obs: dummy_obs['weak_logit'].shape,
+                "dist": lambda dummy_obs: dummy_obs['novice_logit'].shape,
                 "hidden_dist": lambda dummy_obs: (
-                        dummy_obs['weak_features'].shape + dummy_obs['weak_logit'].shape[1:]
+                        dummy_obs['novice_features'].shape + dummy_obs['novice_logit'].shape[1:]
                 ),
                 "obs_dist": lambda dummy_obs: (
                         (
                             dummy_obs['env_obs']['image'] if get_global_variable("benchmark") in ["cliport", "minigrid"] else dummy_obs['env_obs']
-                        ).shape + dummy_obs['weak_logit'].shape[1:]
+                        ).shape + dummy_obs['novice_logit'].shape[1:]
                 ),
                 "obs_hidden_dist": lambda dummy_obs: (
                         (
                             dummy_obs['env_obs']['image'] if get_global_variable("benchmark") in ["cliport", "minigrid"] else dummy_obs['env_obs']
-                        ).shape + dummy_obs['weak_features'].shape[1:] + dummy_obs['weak_logit'].shape[1:]
+                        ).shape + dummy_obs['novice_features'].shape[1:] + dummy_obs['novice_logit'].shape[1:]
                 ),
             }
 

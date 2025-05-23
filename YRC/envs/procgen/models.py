@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 
 from YRC.core.configs.global_configs import get_global_variable
-from YRC.models.utils import orthogonal_init, ImpalaModel
+from YRC.models.utils import ImpalaModel, orthogonal_init
 
 
 class ProcgenModel(nn.Module):
@@ -14,7 +14,9 @@ class ProcgenModel(nn.Module):
         self.device = get_global_variable("device")
         self.embedder = ImpalaModel(env.obs_shape)
         self.hidden_dim = self.embedder.output_dim
-        self.fc_policy = orthogonal_init(nn.Linear(self.hidden_dim, env.action_space.n), gain=0.01)
+        self.fc_policy = orthogonal_init(
+            nn.Linear(self.hidden_dim, env.action_space.n), gain=0.01
+        )
         self.fc_value = orthogonal_init(nn.Linear(self.hidden_dim, 1), gain=1.0)
         self.logit_dim = env.action_space.n
 

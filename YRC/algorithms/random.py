@@ -1,6 +1,7 @@
-import numpy as np
-import pprint
 import logging
+
+import numpy as np
+
 from YRC.core import Algorithm
 from YRC.core.configs.global_configs import get_global_variable
 
@@ -10,14 +11,13 @@ class RandomAlgorithm(Algorithm):
         self.args = config
 
     def train(
-            self,
-            policy,
-            envs,
-            evaluator=None,
-            train_split=None,
-            eval_splits=None,
+        self,
+        policy,
+        envs,
+        evaluator=None,
+        train_split=None,
+        eval_splits=None,
     ):
-        args = self.args
         save_dir = get_global_variable("experiment_dir")
 
         best_summary = {}
@@ -25,12 +25,11 @@ class RandomAlgorithm(Algorithm):
             best_summary[split] = {"reward_mean": -1e9}
 
         best_prob = {}
-        cand_probs = list(np.arange(0., 1.1, 0.1))
+        cand_probs = list(np.arange(0.0, 1.1, 0.1))
 
         logging.info("Candidate probs: " + str(cand_probs))
 
         for prob in cand_probs:
-
             logging.info(f"Prob: {prob}")
 
             policy.update_params(prob)
@@ -38,8 +37,8 @@ class RandomAlgorithm(Algorithm):
 
             for split in eval_splits:
                 if (
-                        split_summary[split]["reward_mean"]
-                        > best_summary[split]["reward_mean"]
+                    split_summary[split]["reward_mean"]
+                    > best_summary[split]["reward_mean"]
                 ):
                     best_prob[split] = prob
                     best_summary[split] = split_summary[split]

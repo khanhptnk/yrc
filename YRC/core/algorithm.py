@@ -1,7 +1,7 @@
-import logging
 import importlib
-import wandb
+import logging
 
+import wandb
 from YRC.core.configs import get_global_variable
 
 
@@ -69,7 +69,9 @@ class Algorithm:
 
                 wandb.log(wandb_log)
 
-            this_train_log = self.train_one_iteration(iteration, policy, train_env=envs[train_split])
+            this_train_log = self.train_one_iteration(
+                iteration, policy, train_env=envs[train_split]
+            )
             self.aggregate_log(train_log, this_train_log)
 
         # close env after training

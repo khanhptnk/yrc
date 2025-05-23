@@ -68,8 +68,8 @@ class BasePolicy(Policy):
 class AlwaysPolicy(Policy):
     def __init__(self, config, env):
         agent = config.coord_policy.agent
-        assert agent in ["weak", "strong"], f"Unrecognized agent: {agent}!"
-        self.choice = env.WEAK if agent == "weak" else env.STRONG
+        assert agent in ["novice", "expert"], f"Unrecognized agent: {agent}!"
+        self.choice = env.NOVICE if agent == "novice" else env.EXPERT
 
     def act(self, obs, greedy=False):
         benchmark = get_global_variable("benchmark")

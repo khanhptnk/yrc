@@ -1,12 +1,15 @@
-from YRC.core.policy import Policy
 import torch
+
 from YRC.core.configs import get_global_variable
+from YRC.core.policy import Policy
 
 
 class MinigridPolicy(Policy):
     def __init__(self, model, num_envs):
         self.model = model
-        self.memory = torch.zeros(num_envs, self.model.memory_size, device=get_global_variable("device"))
+        self.memory = torch.zeros(
+            num_envs, self.model.memory_size, device=get_global_variable("device")
+        )
 
     def forward(self, obs):
         obs = self.model.preprocess_obs(obs)

@@ -1,21 +1,23 @@
-import numpy as np
-import pprint
 import logging
+import pprint
+
+import numpy as np
+
 from YRC.core import Algorithm
 from YRC.core.configs.global_configs import get_global_variable
 
 
-class ThresholdAlgorithm(Algorithm):
+class LogitAlgorithm(Algorithm):
     def __init__(self, config, env):
         self.args = config
 
     def train(
-            self,
-            policy,
-            envs,
-            evaluator=None,
-            train_split=None,
-            eval_splits=None,
+        self,
+        policy,
+        envs,
+        evaluator=None,
+        train_split=None,
+        eval_splits=None,
     ):
         args = self.args
         save_dir = get_global_variable("experiment_dir")
@@ -48,8 +50,8 @@ class ThresholdAlgorithm(Algorithm):
 
                 for split in eval_splits:
                     if (
-                            split_summary[split]["reward_mean"]
-                            > best_summary[split]["reward_mean"]
+                        split_summary[split]["reward_mean"]
+                        > best_summary[split]["reward_mean"]
                     ):
                         best_params[split] = params
                         best_summary[split] = split_summary[split]
