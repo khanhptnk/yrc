@@ -1,8 +1,0 @@
-name: 'procgen_logit'
-general:
-    benchmark: 'procgen'
-    algorithm: 'logit'
-    device: 0
-    skyline: 0
-    seed: 10
-

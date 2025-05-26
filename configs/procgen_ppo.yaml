@@ -1,0 +1,16 @@
+env:
+    suite: 'procgen'
+    name: 'coinrun'
+    train:
+        distribution_mode: 'hard'
+        seed: 0
+        start_level: 0
+        num_levels: 100000
+    test:
+        distribution_mode: 'hard'
+        seed: 0
+        start_level: 0
+        num_levels: 100000
+policy:
+    cls: 'PPOPolicy'
+    model: "ImpalaPPOModel"

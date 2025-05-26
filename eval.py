@@ -1,11 +1,11 @@
 import os
 
-import YRC
+import yrc
 
 if __name__ == "__main__":
-    config = YRC.load_config()
+    config = yrc.load_config()
 
-    envs, policy, evaluator = YRC.make(config, eval=True)
+    envs, policy, evaluator = yrc.make(config, eval=True)
 
     if config.general.algorithm != "always" and config.filename is not None:
         policy.load_model(os.path.join(config.experiment_dir, config.file_name))

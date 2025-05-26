@@ -1,27 +1,12 @@
 name: 'procgen_skyline'
-general:
-    benchmark: 'procgen'
-    algorithm: 'skyline'
-    device: 0
-    skyline: 1
-    seed: 10
-coord_policy:
-    cls: PPOPolicy
-    model_cls: ImpalaCoordPolicyModel
-    feature_type: 'hidden_obs'
-algorithm:
-    cls: PPOAlgorithm
-    log_freq: 10
-    num_steps: 256
-    total_timesteps: 1500000
-    update_epochs: 3
-    gamma: 0.999
-    gae_lambda: 0.95
-    num_minibatches: 8
-    clip_coef: 0.2
-    norm_adv: True
-    clip_vloss: True
-    vf_coef: 0.5
-    ent_coef: 0.01
-    max_grad_norm: 0.5
-    learning_rate: 0.0005
+env:
+    suite: 'procgen'
+    name: 'coinrun'
+    train: 
+        distribution_mode: 'hard'
+algorithm: 'PPOAlgorithm'
+policy: 'PPOPolicy'
+coordination:
+    expert_query_cost_alpha: 0.4
+    switch_agent_cost_beta: 0.0
+    act_greedy: False

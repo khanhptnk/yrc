@@ -1,9 +1,0 @@
-name: 'procgen_always'
-general:
-    benchmark: 'procgen'
-    algorithm: 'always'
-    device: 0
-    skyline: 0
-    seed: 10
-
-

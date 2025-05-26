@@ -1,7 +1,0 @@
-name: 'procgen_threshold'
-general:
-    benchmark: 'procgen'
-    algorithm: 'threshold'
-    device: 0
-    skyline: 0
-    seed: 10

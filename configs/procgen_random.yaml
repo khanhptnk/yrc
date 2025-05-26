@@ -1,7 +1,0 @@
-name: 'procgen_random'
-general:
-    benchmark: 'procgen'
-    algorithm: 'random'
-    device: 0
-    skyline: 0
-    seed: 10
