@@ -18,11 +18,6 @@ release = '1.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',   # for Google-style or NumPy-style docstrings
-    'sphinx.ext.viewcode',   # optional: links to source code
-]
 
 extensions = [
     'sphinx.ext.autodoc',
