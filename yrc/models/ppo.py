@@ -28,15 +28,23 @@ class ImpalaPPOModel(nn.Module):
     def forward(self, obs):
         if not torch.is_tensor(obs):
             obs = torch.FloatTensor(obs).to(device=self.device)
-        hidden = self.embedder(obs)
-        logit = self.fc_policy(hidden)
-        value = self.fc_value(hidden).reshape(-1)
-        return logit, value
+        self.hidden = self.embedder(obs)
+        self.logit = self.fc_policy(self.hidden)
+        value = self.fc_value(self.hidden).reshape(-1)
+        return self.logit, value
+
+    @property
+    def hidden_features(self):
+        return self.hidden
+
+    @property
+    def logits(self):
+        return self.logit
 
 
 @dataclass
 class ImpalaCoordPPOModelConfig:
-    cls: str = "ImpalaPPOModel"
+    cls: str = "ImpalaCoordPPOModel"
     feature_type: str = (
         "obs"  # obs, hidden, hidden_obs, dist, hidden_dist, obs_dist, obs_hidden_dist
     )

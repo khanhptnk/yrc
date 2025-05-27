@@ -1,6 +1,9 @@
 import importlib
 import logging
+from abc import ABC, abstractmethod
+from typing import Any
 
+import numpy
 import torch
 
 from yrc.utils.global_variables import get_global_variable
@@ -24,37 +27,62 @@ def load(path, env):
     return policy
 
 
-class Policy:
-    # get logit
-    def forward(self, obs):
-        pass
-
-    # get action distribution
-    def predict(self, obs):
-        pass
-
-    # draw an action
+class Policy(ABC):
+    @abstractmethod
     def act(self, obs, greedy=False):
+        """
+        Selects an action based on the given observation.
+
+        Parameters:
+            obs: The current observation from the environment.
+            greedy (bool, optional): If True, selects the action greedily (e.g., for evaluation).
+                If False, may use a stochastic or exploratory policy. Defaults to False.
+
+        Returns:
+            The selected action, format depends on the policy implementation.
+        """
         pass
 
-    # update model parameters
-    def update_params(self):
+    @abstractmethod
+    def reset(self, done: "numpy.ndarray") -> None:
+        """
+        Reset the internal state of the policy.
+
+        This method should be overridden by subclasses to implement any necessary
+        logic for resetting the policy's state to its initial configuration, such as
+        clearing hidden states or episode-specific variables.
+
+        Parameters
+        ----------
+        done : numpy.ndarray
+            Boolean array indicating which episodes in a batch require a reset.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy.reset(done)
+        """
         pass
 
-    # get pre-softmax hidden features
-    def get_hidden(self):
-        pass
+    @abstractmethod
+    def load_model_checkpoint(self, load_path: str) -> None:
+        """
+        Loads a model checkpoint from the specified file path.
 
-    # set to training mode
-    def train(self):
-        pass
+        Parameters
+        ----------
+        load_path : str
+            The file path to the model checkpoint to be loaded.
 
-    # set to eval mode
-    def eval(self):
-        pass
+        Returns
+        -------
+        None
 
-    def reset(self, should_reset):
-        pass
-
-    def load_model_checkpoint(self, load_path):
+        Examples
+        --------
+        >>> policy.load_model_checkpoint("checkpoints/model.pt")
+        """
         pass

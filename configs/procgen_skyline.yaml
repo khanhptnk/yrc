@@ -10,3 +10,7 @@ coordination:
     expert_query_cost_alpha: 0.4
     switch_agent_cost_beta: 0.0
     act_greedy: False
+train_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
+train_expert: 'experiments/procgen_ppo_novice/best_test.ckpt'
+test_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
+test_expert: 'experiments/procgen_ppo_novice/best_test.ckpt' 

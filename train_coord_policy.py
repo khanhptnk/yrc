@@ -1,45 +1,7 @@
 import argparse
-import json
-import logging
-import pprint
-from copy import deepcopy as dc
 
 import yrc
-from yrc.utils.global_variables import get_global_variable
-
-
-def get_test_eval_info(config, env):
-    with open("yrc/core/test_eval_info.json") as f:
-        data = json.load(f)
-
-    backup_data = dc(data)
-
-    env_suite = get_global_variable("env_suite")
-    env_name = config.env.name
-
-    if env_name not in data[env_suite]:
-        logging.info(f"Missing info about {env_suite}-{env_name}!")
-        logging.info("Calculating missing info (taking a few minutes)...")
-        evaluator = yrc.Evaluator(config.evaluation)
-        # eval expert agent on test environment to get statistics
-        summary = evaluator.eval(
-            env["test"].expert,
-            {"test": env["test"].base_env},
-            ["test"],
-            num_episodes=env["test"].num_envs,
-        )["test"]
-        data[env_suite][env_name] = summary
-
-        with open("yrc/core/backup_test_eval_info.json", "w") as f:
-            json.dump(backup_data, f, indent=2)
-        with open("yrc/core/test_eval_info.json", "w") as f:
-            json.dump(data, f, indent=2)
-        logging.info("Saved info!")
-
-    info = data[env_suite][env_name]
-
-    logging.info(f"{pprint.pformat(info, indent=2)}")
-    return info
+from yrc.utils.evaluation import get_test_eval_info
 
 
 def parse_args():
@@ -81,17 +43,13 @@ def main():
             novice, expert = test_novice, test_expert
         env[split] = yrc.CoordEnv(config.coordination, base_env[split], novice, expert)
 
-    test_eval_info = get_test_eval_info(config, env)
-    for split in env:
-        env[split].set_costs(test_eval_info)
-
-    policy = yrc.make_policy(config.policy, base_env["train"])
-    algorithm = yrc.make_algorithm(config.algorithm, base_env["train"])
+    policy = yrc.make_policy(config.policy, env["train"])
+    algorithm = yrc.make_algorithm(config.algorithm, env["train"])
     evaluator = yrc.make_evaluator(config.evaluation)
 
     algorithm.train(
         policy,
-        base_env,
+        env,
         evaluator,
         train_split="train",
         eval_splits=["val_sim", "val_true"],

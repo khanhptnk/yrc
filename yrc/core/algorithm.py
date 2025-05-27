@@ -1,8 +1,5 @@
 import importlib
-import logging
-
-import wandb
-from yrc.utils.global_variables import get_global_variable
+from abc import ABC, abstractmethod
 
 
 def make(config, env):
@@ -13,11 +10,38 @@ def make(config, env):
 
 
 class Algorithm:
+    @abstractmethod
     def init(self, *args, **kwargs):
-        raise NotImplementedError
+        """
+        Initializes the object with the given arguments.
 
+        Parameters
+        ----------
+        *args :
+            Variable length argument list.
+        **kwargs :
+            Arbitrary keyword arguments.
+
+        Returns
+        -------
+        None
+        """
+        pass
+
+    @abstractmethod
     def train(self, *args, **kwarg):
-        raise NotImplementedError
+        """
+        Trains the model or algorithm using the provided arguments.
 
-    def _train_one_iteration(self, *args, **kwargs):
-        raise NotImplementedError
+        Parameters
+        ----------
+        *args :
+            Variable length argument list.
+        **kwargs :
+            Arbitrary keyword arguments.
+
+        Returns
+        -------
+        None
+        """
+        pass

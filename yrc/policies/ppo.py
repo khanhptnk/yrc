@@ -1,8 +1,6 @@
-import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
-import torch
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 
@@ -15,6 +13,7 @@ from yrc.utils.global_variables import get_global_variable
 class PPOPolicyConfig:
     cls: str = "PPOPolicy"
     model: Any = "ImpalaCoordPPOModel"
+    load_path: Optional[str] = None
 
     def __post_init__(self):
         if isinstance(self.model, str):
@@ -34,6 +33,9 @@ class PPOPolicy(Policy):
         else:
             self.model = model
         self.model.to(get_global_variable("device"))
+
+    def reset(self, done: "numpy.ndarray") -> None:
+        pass
 
     def act(self, obs, greedy=False):
         logit, _ = self.model(obs)

@@ -96,10 +96,14 @@ def configure(config):
     # set up experiment directory
     config.experiment_dir = "experiments/%s" % config.name
 
-    if config.eval_name is None and not os.path.exists(config.experiment_dir):
+    if os.path.exists(config.experiment_dir):
+        if config.eval_name is None and not config.overwrite:
+            raise FileExistsError(
+                f"Experiment directory {config.experiment_dir} exists! "
+                "Set `overwrite=1` to overwrite it."
+            )
+    else:
         os.makedirs(config.experiment_dir)
-    elif not config.overwrite:
-        raise FileExistsError(f"Experiment directory {config.experiment_dir} exists!")
 
     # reproducibility
     seed = config.seed
@@ -108,9 +112,8 @@ def configure(config):
 
     if config.eval_name is not None:
         log_file = os.path.join(config.experiment_dir, f"{config.eval_name}.eval.log")
-        assert not os.path.exists(log_file), f"Eval log file {log_file} already exists!"
     else:
-        log_file = os.path.join(config.experiment_dir, "{config.name}.train.log")
+        log_file = os.path.join(config.experiment_dir, f"{config.name}.train.log")
 
     if os.path.isfile(log_file):
         os.remove(log_file)

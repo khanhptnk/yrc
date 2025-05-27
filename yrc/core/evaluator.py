@@ -1,12 +1,28 @@
 import logging
-import sys
 from dataclasses import dataclass
+from typing import Dict, List
 
+import gym
 import numpy as np
+
+import yrc
 
 
 @dataclass
 class EvaluatorConfig:
+    """
+    Configuration for the Evaluator.
+
+    Attributes
+    ----------
+    validation_episodes : int
+        Number of episodes to use for validation evaluation. Default is 256.
+    test_episodes : int
+        Number of episodes to use for test evaluation. Default is 256.
+    act_greedy : bool
+        If True, the policy acts greedily during evaluation. Default is False.
+    """
+
     validation_episodes: int = 256
     test_episodes: int = 256
     act_greedy: bool = False
@@ -16,7 +32,40 @@ class Evaluator:
     def __init__(self, config):
         self.config = config
 
-    def eval(self, policy, envs, eval_splits, num_episodes=None):
+    def eval(
+        self,
+        policy: "yrc.core.Policy",
+        envs: Dict[str, "gym.Env"],
+        eval_splits: List[str],
+        num_episodes: int = None,
+    ) -> dict:
+        """
+        Evaluate a policy on multiple environment splits and summarize the results.
+
+        For each split in `eval_splits`, this method runs evaluation episodes using the provided
+        policy and environment, collects statistics, and returns a summary dictionary for each split.
+
+        Parameters
+        ----------
+        policy : yrc.core.Policy
+            The policy to evaluate. Must implement an `act` method and have a `.model` attribute.
+        envs : Dict[str, gym.Env]
+            A dictionary mapping split names to environment instances.
+        eval_splits : List[str]
+            List of split names (keys in `envs`) to evaluate.
+        num_episodes : int, optional
+            Number of episodes to run per split. If None, uses values from config.
+
+        Returns
+        -------
+        summary : dict
+            A dictionary mapping split names to summary statistics for each evaluation.
+
+        Examples
+        --------
+        >>> summary = evaluator.eval(policy, envs, ['val', 'test'], num_episodes=100)
+        >>> print(summary['val']['reward_mean'])
+        """
         config = self.config
         policy.model.eval()
 
@@ -53,8 +102,6 @@ class Evaluator:
 
         obs = env.reset()
         has_done = np.array([False] * env.num_envs)
-        # total_reward = 0
-        # step = 0
 
         while not has_done.all():
             action = policy.act(obs, greedy=self.config.act_greedy)
@@ -65,12 +112,7 @@ class Evaluator:
                 env, action, obs, reward, done, info, has_done
             )
 
-            # total_reward += reward[0]
-
             has_done |= done
-            # step += 1
-
-        # print(step, total_reward)
 
         self.summarizer.finalize_episode()
 

@@ -19,14 +19,14 @@ config_cls = {
 }
 
 
-def load(path, env):
-    ckpt = torch.load(path, map_location=get_global_variable("device"))
-    config = ckpt["policy_config"]
+# def load(path, env):
+#     ckpt = torch.load(path, map_location=get_global_variable("device"))
+#     config = ckpt["policy_config"]
 
-    policy_cls = globals()[config.cls]
+#     policy_cls = globals()[config.cls]
 
-    policy = policy_cls(config, env)
-    policy.load_model_checkpoint(ckpt["model_state_dict"])
-    logging.info(f"Loaded policy from {path}")
+#     policy = policy_cls(config, env)
+#     policy.load_model_checkpoint(ckpt["model_state_dict"])
+#     logging.info(f"Loaded policy from {path}")
 
-    return policy
+#     return policy
