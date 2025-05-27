@@ -13,3 +13,7 @@ python:
     - requirements: requirements.txt
     - method: pip
       path: .
+
+build:
+  commands:
+    - python -m pip install --upgrade "setuptools>=68" "packaging>=23.0"
