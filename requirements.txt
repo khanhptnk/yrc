@@ -214,4 +214,4 @@ torchvision==0.16.2
 
 --index-url https://pypi.org/simple
 tomli==2.0.1
-sphinx_rtd_theme
+sphinx-rtd-theme
