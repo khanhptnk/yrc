@@ -29,17 +29,26 @@ def load(path, env):
 
 class Policy(ABC):
     @abstractmethod
-    def act(self, obs, greedy=False):
+    def act(self, obs: Any, greedy: float = False) -> torch.Tensor:
         """
         Selects an action based on the given observation.
 
-        Parameters:
-            obs: The current observation from the environment.
-            greedy (bool, optional): If True, selects the action greedily (e.g., for evaluation).
-                If False, may use a stochastic or exploratory policy. Defaults to False.
+        Parameters
+        ----------
+        obs : Any
+            The current observation from the environment.
+        greedy : bool, optional
+            If True, selects the action greedily (e.g., for evaluation).
+            If False, may use a stochastic or exploratory policy. Defaults to False.
 
-        Returns:
-            The selected action, format depends on the policy implementation.
+        Returns
+        -------
+        action : torch.Tensor
+            The selected action. The format depends on the policy implementation.
+
+        Examples
+        --------
+        >>> action = policy.act(obs, greedy=True)
         """
         pass
 

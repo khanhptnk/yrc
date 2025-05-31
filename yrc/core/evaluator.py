@@ -106,7 +106,7 @@ class Evaluator:
         while not has_done.all():
             action = policy.act(obs, greedy=self.config.act_greedy)
 
-            obs, reward, done, info = env.step(action)
+            obs, reward, done, info = env.step(action.cpu().numpy())
             # NOTE: put this before update has_done to include last step in summary
             self.summarizer.add_to_episode(
                 env, action, obs, reward, done, info, has_done

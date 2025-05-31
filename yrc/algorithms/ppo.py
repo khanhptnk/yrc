@@ -1,14 +1,15 @@
 import logging
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, List, Optional
 
 import gym
 import numpy as np
 import torch
 import torch.optim as optim
+from torch.distributions.categorical import Categorical
 
 import wandb
-from yrc.core import Algorithm
+from yrc.core import Algorithm, CoordEnv
 from yrc.utils.global_variables import get_global_variable
 from yrc.utils.logging import configure_logging
 
@@ -35,62 +36,62 @@ class PPOAlgorithmConfig:
 
 
 class PPOAlgorithm(Algorithm):
-    def __init__(self, config, env):
+    def __init__(self, config: "yrc.algorithms.PPOAlgorithm"):
         self.config = config
-        self.num_envs = env.num_envs
 
-        if isinstance(env.observation_space, gym.spaces.Dict):
-            self.obs_shape = {
-                k: space.shape for k, space in env.observation_space.spaces.items()
-            }
-        else:
-            self.obs_shape = env.observation_space.shape
-        self.action_shape = env.action_space.shape
+    def init(self, env):
+        config = self.config
+        self.num_envs = env.num_envs
 
         self.batch_size = int(self.num_envs * config.num_steps)
         self.minibatch_size = int(self.batch_size // config.num_minibatches)
         self.num_iterations = config.total_timesteps // self.batch_size
-
-    def init(self, policy):
-        config = self.config
 
         self.total_reward = {
             "reward": [0.0] * self.num_envs,
             "env_reward": [0.0] * self.num_envs,
         }
 
-        device = get_global_variable("device")
-
-        # initialize all tensors
-        if isinstance(self.obs_shape, dict):
-            self.obs = {}
-            for k, shape in self.obs_shape.items():
-                self.obs[k] = torch.zeros((config.num_steps, self.num_envs) + shape).to(
-                    device
-                )
-        else:
-            self.obs = torch.zeros(
-                (config.num_steps, self.num_envs) + self.obs_shape
-            ).to(device)
-        self.actions = torch.zeros(
-            (config.num_steps, self.num_envs) + self.action_shape
-        ).to(device)
-        self.logprobs = torch.zeros((config.num_steps, self.num_envs)).to(device)
-        self.rewards = torch.zeros((config.num_steps, self.num_envs)).to(device)
-        self.dones = torch.zeros((config.num_steps, self.num_envs)).to(device)
-        self.values = torch.zeros((config.num_steps, self.num_envs)).to(device)
-
+        self.buffer = TrainBuffer.new(env, config.num_steps)
         self.global_step = 0
 
     def train(
         self,
-        policy,
-        envs,
-        evaluator=None,
-        train_split=None,
-        eval_splits=None,
+        policy: "yrc.policies.PPOPolicy",
+        envs: Dict[str, "gym.Env"],
+        evaluator: "yrc.core.Evaluator",
+        train_split: str = "train",
+        eval_splits: List[str] = ["test"],
     ):
-        self.init(policy)
+        """
+        Trains the PPO algorithm on the specified environment(s) using the provided policy.
+
+        This method performs multiple training iterations, periodically evaluates the policy
+        on specified splits, logs statistics, and saves checkpoints for the best and last models.
+
+        Parameters
+        ----------
+        policy : yrc.policies.PPOPolicy
+            The policy to be trained. Must implement act(), train(), and eval() methods.
+        envs : Dict[str, gym.Env]
+            A dictionary mapping split names to environment instances.
+        evaluator : yrc.core.Evaluator
+            Evaluator object for policy evaluation and summary logging. Default is None.
+        train_split : str, optional
+            The environment split to use for training. Default is "train".
+        eval_splits : List[str], optional
+            List of environment splits to use for evaluation. Default is ["test"].
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> algorithm.train(policy, envs, evaluator, train_split="train", eval_splits=["val", "test"])
+        """
+        self.init(envs[train_split])
+
         self.optim = optim.Adam(
             policy.model.parameters(), lr=self.config.learning_rate, eps=1e-5
         )
@@ -113,10 +114,10 @@ class PPOAlgorithm(Algorithm):
 
                 logging.info(f"Iteration {iteration}")
                 if iteration > 0:
-                    train_summary = self.summarize(train_log)
+                    train_summary = self._summarize(train_log)
                     logging.info(f"Train {self.global_step} steps:")
-                    self.write_summary(train_summary)
-                    self.update_wandb_log(wandb_log, "train", train_summary)
+                    self._write_summary(train_summary)
+                    self._update_wandb_log(wandb_log, "train", train_summary)
 
                 split_summary = evaluator.eval(policy, envs, eval_splits)
                 for split in eval_splits:
@@ -130,8 +131,8 @@ class PPOAlgorithm(Algorithm):
                     logging.info(f"BEST {split} so far")
                     evaluator.summarizer.write(best_summary[split])
 
-                    self.update_wandb_log(wandb_log, split, split_summary[split])
-                    self.update_wandb_log(
+                    self._update_wandb_log(wandb_log, split, split_summary[split])
+                    self._update_wandb_log(
                         wandb_log, f"best_{split}", best_summary[split]
                     )
 
@@ -142,13 +143,16 @@ class PPOAlgorithm(Algorithm):
             this_train_log = self._train_one_iteration(
                 iteration, policy, train_env=envs[train_split]
             )
-            self.aggregate_log(train_log, this_train_log)
+            self._aggregate_log(train_log, this_train_log)
 
         # close env after training
         envs[train_split].close()
 
     def _train_one_iteration(self, iteration, policy, train_env=None, data_batch=None):
         config = self.config
+
+        buffer = self.buffer
+
         device = get_global_variable("device")
         log = {}
 
@@ -164,29 +168,40 @@ class PPOAlgorithm(Algorithm):
         self.optim.param_groups[0]["lr"] = lrnow
         log["lr"] = lrnow
 
-        next_obs = self._wrap_obs(train_env.get_obs())
+        next_obs = ObsTensor.from_numpy(train_env.get_obs()).to(device)
         next_done = torch.zeros(self.num_envs).to(device)
 
         log["reward"], log["env_reward"] = [], []
-        log["action_1"] = []
+        log[f"action_{CoordEnv.EXPERT}"] = []
         log["action_prob"] = []
 
         # NOTE: set policy to eval mode when collecting trajectories
-        policy.model.eval()
+        policy.eval()
 
-        for step in range(0, config.num_steps):
+        for step in range(config.num_steps):
             self.global_step += self.num_envs
-            self._add_obs(step, next_obs)
-            self.dones[step] = next_done
 
             with torch.no_grad():
-                action, logprob, _, value = policy.get_action_and_value(next_obs)
-                self.values[step] = value.flatten()
-            self.actions[step] = action
-            self.logprobs[step] = logprob
+                action = policy.act(next_obs.data)
+                log_prob = Categorical(logits=policy.model_output.logits).log_prob(
+                    action
+                )
 
-            log["action_1"].extend((action == 1).long().tolist())
-            log["action_prob"].extend(logprob.exp().tolist())
+            buffer.collect(
+                step,
+                {
+                    "obs": next_obs,
+                    "dones": next_done,
+                    "values": policy.model_output.value,
+                    "actions": action,
+                    "log_probs": log_prob,
+                },
+            )
+
+            log[f"action_{CoordEnv.EXPERT}"].extend(
+                (action == CoordEnv.EXPERT).long().tolist()
+            )
+            log["action_prob"].extend(log_prob.exp().tolist())
 
             next_obs, reward, next_done, info = train_env.step(action.cpu().numpy())
 
@@ -201,45 +216,45 @@ class PPOAlgorithm(Algorithm):
                     self.total_reward["reward"][i] = 0
                     self.total_reward["env_reward"][i] = 0
 
-            self.rewards[step] = torch.from_numpy(reward).to(device).float().view(-1)
-            next_obs, next_done = (
-                self._wrap_obs(next_obs),
-                torch.from_numpy(next_done).to(device).float(),
+            buffer.collect(
+                step, {"rewards": torch.from_numpy(reward).to(device).float().view(-1)}
             )
+
+            next_obs = ObsTensor.from_numpy(next_obs).to(device)
+            next_done = torch.from_numpy(next_done).to(device).float()
 
         # bootstrap value if not done
         with torch.no_grad():
-            next_value = policy.get_value(next_obs).reshape(1, -1)
-            advantages = torch.zeros_like(self.rewards).to(device)
-            lastgaelam = 0
+            next_value = policy.model(next_obs.data).value.reshape(1, -1)
+
+            advantages = torch.zeros_like(buffer.rewards).to(device)
+
+            last_gaelam = 0
             for t in reversed(range(config.num_steps)):
                 if t == config.num_steps - 1:
-                    nextnonterminal = 1.0 - next_done
-                    nextvalues = next_value
+                    next_nonterminal = 1.0 - next_done
+                    next_values = next_value
                 else:
-                    nextnonterminal = 1.0 - self.dones[t + 1]
-                    nextvalues = self.values[t + 1]
+                    next_nonterminal = 1.0 - buffer.dones[t + 1]
+                    next_values = buffer.values[t + 1]
                 delta = (
-                    self.rewards[t]
-                    + config.gamma * nextvalues * nextnonterminal
-                    - self.values[t]
+                    buffer.rewards[t]
+                    + config.gamma * next_values * next_nonterminal
+                    - buffer.values[t]
                 )
-                advantages[t] = lastgaelam = (
+                advantages[t] = last_gaelam = (
                     delta
-                    + config.gamma * config.gae_lambda * nextnonterminal * lastgaelam
+                    + config.gamma * config.gae_lambda * next_nonterminal * last_gaelam
                 )
-            returns = advantages + self.values
+            returns = advantages + buffer.values
 
-        # flatten the batch
-        b_obs = self._flatten_obs()
-        b_logprobs = self.logprobs.reshape(-1)
-        b_actions = self.actions.reshape((-1,) + self.action_shape)
-        b_advantages = advantages.reshape(-1)
-        b_returns = returns.reshape(-1)
-        b_values = self.values.reshape(-1)
+        # flatten buffer
+        buffer.set("advantages", advantages)
+        buffer.set("returns", returns)
+        buffer = buffer.flatten()
 
-        # Optimizing the policy and value network
         b_inds = np.arange(self.batch_size)
+
         log["pg_loss"] = []
         log["v_loss"] = []
         log["ent_loss"] = []
@@ -247,24 +262,30 @@ class PPOAlgorithm(Algorithm):
         log["advantage"] = []
         log["value"] = []
 
-        policy.model.train()
+        policy.train()
 
-        for epoch in range(config.update_epochs):
+        for _ in range(config.update_epochs):
             np.random.shuffle(b_inds)
             for start in range(0, self.batch_size, self.minibatch_size):
                 end = start + self.minibatch_size
                 mb_inds = b_inds[start:end]
 
-                _, newlogprob, entropy, newvalue = policy.get_action_and_value(
-                    self._slice_obs(b_obs, mb_inds), b_actions.long()[mb_inds]
-                )
+                action = buffer.actions[mb_inds]
+                obs = buffer.obs[mb_inds]
+                output = policy.model(obs.data)
 
-                log["value"].extend(newvalue.tolist())
+                new_dist = Categorical(logits=output.logits)
+                new_log_prob = new_dist.log_prob(action)
+                entropy = new_dist.entropy()
 
-                logratio = newlogprob - b_logprobs[mb_inds]
+                value = output.value
+
+                log["value"].extend(value.tolist())
+
+                logratio = new_log_prob - buffer.log_probs[mb_inds]
                 ratio = logratio.exp()
 
-                mb_advantages = b_advantages[mb_inds]
+                mb_advantages = buffer.advantages[mb_inds]
                 log["advantage"].extend(mb_advantages.tolist())
                 if config.norm_adv:
                     mb_advantages = (mb_advantages - mb_advantages.mean()) / (
@@ -279,19 +300,19 @@ class PPOAlgorithm(Algorithm):
                 pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 
                 # Value loss
-                newvalue = newvalue.view(-1)
+                value = value.view(-1)
                 if config.clip_vloss:
-                    v_loss_unclipped = (newvalue - b_returns[mb_inds]) ** 2
-                    v_clipped = b_values[mb_inds] + torch.clamp(
-                        newvalue - b_values[mb_inds],
+                    v_loss_unclipped = (value - buffer.returns[mb_inds]) ** 2
+                    v_clipped = buffer.values[mb_inds] + torch.clamp(
+                        value - buffer.values[mb_inds],
                         -config.clip_coef,
                         config.clip_coef,
                     )
-                    v_loss_clipped = (v_clipped - b_returns[mb_inds]) ** 2
+                    v_loss_clipped = (v_clipped - buffer.returns[mb_inds]) ** 2
                     v_loss_max = torch.max(v_loss_unclipped, v_loss_clipped)
                     v_loss = 0.5 * v_loss_max.mean()
                 else:
-                    v_loss = 0.5 * ((newvalue - b_returns[mb_inds]) ** 2).mean()
+                    v_loss = 0.5 * ((value - buffer.returns[mb_inds]) ** 2).mean()
 
                 entropy_loss = entropy.mean()
 
@@ -321,7 +342,7 @@ class PPOAlgorithm(Algorithm):
 
         return log
 
-    def aggregate_log(self, log, new_log):
+    def _aggregate_log(self, log, new_log):
         for k, v in new_log.items():
             if isinstance(v, list):
                 if k not in log:
@@ -333,7 +354,7 @@ class PPOAlgorithm(Algorithm):
             else:
                 raise NotImplementedError
 
-    def summarize(self, log):
+    def _summarize(self, log):
         return {
             "lr": log["lr"],
             "reward_mean": float(np.mean(log["reward"])),
@@ -348,11 +369,13 @@ class PPOAlgorithm(Algorithm):
             "advantage_std": float(np.std(log["advantage"])),
             "value_mean": float(np.mean(log["value"])),
             "value_std": float(np.std(log["value"])),
-            "action_1": float(np.mean(log["action_1"])),
+            f"action_{CoordEnv.EXPERT}": float(
+                np.mean(log[f"action_{CoordEnv.EXPERT}"])
+            ),
             "action_prob": float(np.mean(log["action_prob"])),
         }
 
-    def write_summary(self, summary):
+    def _write_summary(self, summary):
         log_str = "\n"
         log_str += "   Reward:     "
         log_str += (
@@ -371,48 +394,16 @@ class PPOAlgorithm(Algorithm):
         log_str += f"advantage {summary['advantage_mean']:7.4f} ± {summary['advantage_std']:7.4f}  "
         log_str += f"value {summary['value_mean']:7.4f} ± {summary['value_std']:7.4f}\n"
 
-        log_str += f"   Action 1 frac: {summary['action_1']:7.2f}\n"
+        log_str += f"   Action {CoordEnv.EXPERT} frac: {summary[f'action_{CoordEnv.EXPERT}']:7.2f}\n"
         log_str += f"   Action prob: {summary['action_prob']:7.2f}"
 
         logging.info(log_str)
 
         return summary
 
-    def update_wandb_log(self, wandb_log, split, summary):
+    def _update_wandb_log(self, wandb_log, split, summary):
         for k, v in summary.items():
             wandb_log[f"{split}/{k}"] = v
-
-    def _wrap_obs(self, obs):
-        device = get_global_variable("device")
-        if isinstance(self.obs_shape, dict):
-            ret = {}
-            for k in self.obs_shape:
-                ret[k] = torch.from_numpy(obs[k]).to(device).float()
-            return ret
-        return torch.from_numpy(obs).to(device).float()
-
-    def _add_obs(self, step, next_obs):
-        if isinstance(self.obs_shape, dict):
-            for k in self.obs_shape:
-                self.obs[k][step] = next_obs[k]
-        else:
-            self.obs[step] = next_obs
-
-    def _flatten_obs(self):
-        if isinstance(self.obs_shape, dict):
-            ret = {}
-            for k, shape in self.obs_shape.items():
-                ret[k] = self.obs[k].reshape((-1,) + shape)
-            return ret
-        return self.obs.reshape((-1,) + self.obs_shape)
-
-    def _slice_obs(self, b_obs, indices):
-        if isinstance(self.obs_shape, dict):
-            ret = {}
-            for k in self.obs_shape:
-                ret[k] = b_obs[k][indices]
-            return ret
-        return b_obs[indices]
 
     def save_checkpoint(self, policy, save_dir, name):
         save_path = f"{save_dir}/{name}.ckpt"
@@ -435,3 +426,118 @@ class PPOAlgorithm(Algorithm):
         logging.info(
             f"Loaded checkpoint from {load_path}, global step: {self.global_step}"
         )
+
+
+class TrainBuffer:
+    def __init__(self, data_dict):
+        self._fields = list(data_dict.keys())
+        for k, v in data_dict.items():
+            setattr(self, k, v)
+
+    @classmethod
+    def new(cls, env, num_steps):
+        device = get_global_variable("device")
+        num_envs = env.num_envs
+        if isinstance(env.observation_space, gym.spaces.Dict):
+            obs_shape = {
+                k: space.shape for k, space in env.observation_space.spaces.items()
+            }
+        else:
+            obs_shape = env.observation_space.shape
+        action_shape = env.action_space.shape
+
+        if isinstance(obs_shape, dict):
+            obs_buffer_shape = {
+                k: (num_steps, num_envs) + shape for k, shape in obs_shape.items()
+            }
+        else:
+            obs_buffer_shape = (num_steps, num_envs) + obs_shape
+
+        data_dict = {}
+        data_dict["obs"] = ObsTensor.zeros(obs_buffer_shape).to(device)
+        data_dict["actions"] = torch.zeros((num_steps, num_envs) + action_shape).to(
+            device
+        )
+        data_dict["log_probs"] = torch.zeros((num_steps, num_envs)).to(device)
+        data_dict["rewards"] = torch.zeros((num_steps, num_envs)).to(device)
+        data_dict["dones"] = torch.zeros((num_steps, num_envs)).to(device)
+        data_dict["values"] = torch.zeros((num_steps, num_envs)).to(device)
+
+        return cls(data_dict)
+
+    def collect(self, step, data_dict):
+        for k, v in data_dict.items():
+            getattr(self, k)[step] = v
+
+    def flatten(self):
+        new_data = {}
+        for k in self._fields:
+            v = getattr(self, k)
+            if k in ["obs", "actions"]:
+                new_data[k] = v.flatten(0, 1)
+            else:
+                new_data[k] = v.flatten()
+        return TrainBuffer(new_data)
+
+    def set(self, name, value):
+        setattr(self, name, value)
+        self._fields.append(name)
+
+
+class ObsTensor:
+    def __init__(self, data):
+        self.data = data
+
+    @classmethod
+    def zeros(cls, obs_shape):
+        if isinstance(obs_shape, dict):
+            data = {}
+            for k, shape in obs_shape.items():
+                data[k] = torch.zeros(shape)
+        else:
+            data = torch.zeros(obs_shape)
+        return ObsTensor(data)
+
+    def to(self, device):
+        if isinstance(self.data, dict):
+            data = {}
+            for k in self.data:
+                data[k] = self.data[k].to(device)
+        else:
+            data = self.data.to(device)
+        return ObsTensor(data)
+
+    def __setitem__(self, indices, next_obs):
+        if isinstance(self.data, dict):
+            for k in self.data:
+                self.data[k][indices] = next_obs.data[k]
+        else:
+            self.data[indices] = next_obs.data
+
+    def __getitem__(self, indices):
+        if isinstance(self.data, dict):
+            data = {}
+            for k in self.data:
+                data[k] = self.data[k][indices]
+        else:
+            data = self.data[indices]
+        return ObsTensor(data)
+
+    def flatten(self, start_dim=0, end_dim=-1):
+        if isinstance(self.data, dict):
+            data = {}
+            for k in self.data:
+                data[k] = self.data[k].flatten(start_dim, end_dim)
+        else:
+            data = self.data.flatten(start_dim, end_dim)
+        return ObsTensor(data)
+
+    @classmethod
+    def from_numpy(cls, obs):
+        if isinstance(obs, dict):
+            data = {}
+            for k in obs:
+                data[k] = torch.from_numpy(obs[k]).float()
+        else:
+            data = torch.from_numpy(obs).float()
+        return ObsTensor(data)

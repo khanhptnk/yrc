@@ -2,14 +2,12 @@ import importlib
 from abc import ABC, abstractmethod
 
 
-def make(config, env):
-    algorithm = getattr(importlib.import_module("yrc.algorithms"), config.cls)(
-        config, env
-    )
+def make(config):
+    algorithm = getattr(importlib.import_module("yrc.algorithms"), config.cls)(config)
     return algorithm
 
 
-class Algorithm:
+class Algorithm(ABC):
     @abstractmethod
     def init(self, *args, **kwargs):
         """

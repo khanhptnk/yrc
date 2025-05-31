@@ -27,7 +27,7 @@ def main():
         base_env[split] = yrc.make_base_env(split, config.env)
 
     policy = yrc.make_policy(config.policy, base_env["train"])
-    algorithm = yrc.make_algorithm(config.algorithm, base_env["train"])
+    algorithm = yrc.make_algorithm(config.algorithm)
     evaluator = yrc.make_evaluator(config.evaluation)
 
     algorithm.train(

@@ -20,7 +20,7 @@ from yrc.utils.logging import configure_logging
 
 
 @dataclass
-class YRCBenchConfig:
+class YRCConfig:
     name: str = "default"
     device: int = 0
     seed: int = 10

@@ -1,3 +1,6 @@
+algorithm:
+    cls: "PPOAlgorithm"
+    log_freq: 10
 env:
     suite: 'procgen'
     name: 'coinrun'

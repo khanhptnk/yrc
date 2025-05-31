@@ -43,17 +43,13 @@ class CoordEnv(gym.Env):
             Configuration object specifying coordination parameters.
         base_env : gym.Env
             The base Gym environment to be wrapped or extended.
-        novice : yrc.Policy
-            The novice policy, expected to have a model with `hidden_dim` and `logit_dim` attributes.
-        expert : yrc.Policy
+        novice : yrc.core.Policy
+            The novice policy.
+        expert : yrc.core.Policy
             The expert policy.
 
         Returns
         -------
-        None
-
-        Raises
-        ------
         None
 
         Examples
@@ -98,6 +94,8 @@ class CoordEnv(gym.Env):
         episode length to obtain the reward per action. The expert query and switch agent
         costs per action are then calculated by multiplying the reward per action by their
         respective alpha and beta coefficients from the configuration.
+
+        NOTE: current implement supports only *non-recurrent* agent policies.
 
         Parameters
         ----------
@@ -221,7 +219,6 @@ class CoordEnv(gym.Env):
 
     @torch.no_grad()
     def _compute_env_action(self, action):
-        # NOTE: this method only works with non-recurrent agent models
         is_novice = action == self.NOVICE
         is_expert = ~is_novice
 
@@ -262,11 +259,11 @@ class CoordEnv(gym.Env):
         >>> print(obs["novice_features"].shape)
         >>> print(obs["novice_logit"].shape)
         """
-        self.novice.model(self.env_obs)
+        self.novice.forward(self.env_obs)
         obs = {
             "env_obs": self.env_obs,
-            "novice_features": self.novice.model.hidden_features.detach().cpu().numpy(),
-            "novice_logit": self.novice.model.logits.detach().cpu().numpy(),
+            "novice_features": self.novice.hidden.detach().cpu().numpy(),
+            "novice_logit": self.novice.logits.detach().cpu().numpy(),
         }
         return obs
 

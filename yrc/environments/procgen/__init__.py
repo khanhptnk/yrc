@@ -11,7 +11,8 @@ from yrc.utils.global_variables import get_global_variable
 
 def create_env(split, config):
     split_config = getattr(config, split)
-
+    # print(config)
+    # print(split_config)
     env = ProcgenEnv(
         env_name=config.name,
         num_envs=config.num_envs,

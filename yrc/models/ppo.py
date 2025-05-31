@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dataclasses import dataclass
 
 import torch
@@ -6,6 +7,8 @@ import torch.nn as nn
 from yrc.models.impala import Impala
 from yrc.utils.global_variables import get_global_variable
 from yrc.utils.model import orthogonal_init
+
+ImpalaPPOModelOutput = namedtuple("PolicyOutput", ["logits", "value", "hidden"])
 
 
 @dataclass
@@ -28,18 +31,12 @@ class ImpalaPPOModel(nn.Module):
     def forward(self, obs):
         if not torch.is_tensor(obs):
             obs = torch.FloatTensor(obs).to(device=self.device)
-        self.hidden = self.embedder(obs)
-        self.logit = self.fc_policy(self.hidden)
-        value = self.fc_value(self.hidden).reshape(-1)
-        return self.logit, value
 
-    @property
-    def hidden_features(self):
-        return self.hidden
+        hidden = self.embedder(obs)
+        logits = self.fc_policy(hidden)
+        value = self.fc_value(hidden).reshape(-1)
 
-    @property
-    def logits(self):
-        return self.logit
+        return ImpalaPPOModelOutput(logits, value, hidden)
 
 
 @dataclass

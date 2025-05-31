@@ -3,8 +3,8 @@ from omegaconf import OmegaConf
 import yrc.core.algorithm as algo_factory
 import yrc.core.environment as env_factory
 import yrc.core.policy as policy_factory
-from yrc.core import CoordEnv, Evaluator
-from yrc.core.config import YRCBenchConfig, configure
+from yrc.core import Evaluator
+from yrc.core.config import YRCConfig, configure
 
 
 def make_config(args, dotlist_args=None):
@@ -12,7 +12,7 @@ def make_config(args, dotlist_args=None):
     if dotlist_args is not None:
         cli_config = OmegaConf.from_dotlist(dotlist_args)
         config = OmegaConf.merge(config, cli_config)
-    config = YRCBenchConfig(**OmegaConf.to_container(config, resolve=True))
+    config = YRCConfig(**OmegaConf.to_container(config, resolve=True))
 
     configure(config)
 
@@ -23,8 +23,8 @@ def make_base_env(split, config):
     return env_factory.make_base_env(split, config)
 
 
-def make_algorithm(config, env):
-    return algo_factory.make(config, env)
+def make_algorithm(config):
+    return algo_factory.make(config)
 
 
 def make_policy(config, env):
