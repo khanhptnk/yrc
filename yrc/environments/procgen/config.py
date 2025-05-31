@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass
@@ -12,16 +11,11 @@ class DistributionConfig:
 
 @dataclass
 class ProcgenConfig:
-    # general
     suite: str = "procgen"
     name: str = "coinrun"
     normalize_rew: bool = False
     num_envs: int = 128
     num_threads: int = 8
-    use_backgrounds: bool = True
-    use_monochrome_assets: bool = False
-    restrict_themes: bool = False
-    # env splits
     train: DistributionConfig = field(default_factory=DistributionConfig)
     val_sim: DistributionConfig = field(
         default_factory=lambda: DistributionConfig(

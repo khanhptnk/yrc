@@ -168,8 +168,8 @@ class PPOAlgorithm(Algorithm):
         self.optim.param_groups[0]["lr"] = lrnow
         log["lr"] = lrnow
 
-        next_obs = ObsTensor.from_numpy(train_env.get_obs()).to(device)
-        next_done = torch.zeros(self.num_envs).to(device)
+        obs = train_env.get_obs()
+        done = np.zeros((self.num_envs,))
 
         log["reward"], log["env_reward"] = [], []
         log[f"action_{CoordEnv.EXPERT}"] = []
@@ -181,76 +181,64 @@ class PPOAlgorithm(Algorithm):
         for step in range(config.num_steps):
             self.global_step += self.num_envs
 
+            obs = TensorDict.from_numpy(obs).to(device)
             with torch.no_grad():
-                action = policy.act(next_obs.data)
-                log_prob = Categorical(logits=policy.model_output.logits).log_prob(
-                    action
-                )
+                action = policy.act(obs.data)
+                logits = policy.model_output.logits
+                log_prob = Categorical(logits=logits).log_prob(action)
 
             buffer.collect(
                 step,
                 {
-                    "obs": next_obs,
-                    "dones": next_done,
+                    "obs": obs,
+                    "dones": torch.from_numpy(done).to(device).float(),
                     "values": policy.model_output.value,
                     "actions": action,
                     "log_probs": log_prob,
                 },
             )
 
+            obs, reward, done, info = train_env.step(action.cpu().numpy())
+
+            buffer.collect(
+                step, {"rewards": torch.from_numpy(reward).to(device).float()}
+            )
+
+            # update stats
             log[f"action_{CoordEnv.EXPERT}"].extend(
                 (action == CoordEnv.EXPERT).long().tolist()
             )
             log["action_prob"].extend(log_prob.exp().tolist())
-
-            next_obs, reward, next_done, info = train_env.step(action.cpu().numpy())
-
-            # keep track of episode reward
             for i in range(self.num_envs):
                 self.total_reward["reward"][i] += reward[i]
                 if "env_reward" in info[i]:
                     self.total_reward["env_reward"][i] += info[i]["env_reward"]
-                if next_done[i]:
+                if done[i]:
                     log["reward"].append(self.total_reward["reward"][i])
                     log["env_reward"].append(self.total_reward["env_reward"][i])
                     self.total_reward["reward"][i] = 0
                     self.total_reward["env_reward"][i] = 0
 
-            buffer.collect(
-                step, {"rewards": torch.from_numpy(reward).to(device).float().view(-1)}
-            )
-
-            next_obs = ObsTensor.from_numpy(next_obs).to(device)
-            next_done = torch.from_numpy(next_done).to(device).float()
-
-        # bootstrap value if not done
+        # last step
+        obs = TensorDict.from_numpy(obs).to(device)
         with torch.no_grad():
-            next_value = policy.model(next_obs.data).value.reshape(1, -1)
+            policy.model(obs.data)
 
-            advantages = torch.zeros_like(buffer.rewards).to(device)
+        buffer.collect(
+            step,
+            {
+                "dones": torch.from_numpy(done).to(device).float(),
+                "values": policy.model_output.value,
+            },
+        )
 
-            last_gaelam = 0
-            for t in reversed(range(config.num_steps)):
-                if t == config.num_steps - 1:
-                    next_nonterminal = 1.0 - next_done
-                    next_values = next_value
-                else:
-                    next_nonterminal = 1.0 - buffer.dones[t + 1]
-                    next_values = buffer.values[t + 1]
-                delta = (
-                    buffer.rewards[t]
-                    + config.gamma * next_values * next_nonterminal
-                    - buffer.values[t]
-                )
-                advantages[t] = last_gaelam = (
-                    delta
-                    + config.gamma * config.gae_lambda * next_nonterminal * last_gaelam
-                )
-            returns = advantages + buffer.values
+        # conpute advantages
+        advantages = self._compute_advantages()
+        returns = advantages + buffer.values[:-1]
 
         # flatten buffer
-        buffer.set("advantages", advantages)
-        buffer.set("returns", returns)
+        buffer.add("advantages", advantages)
+        buffer.add("returns", returns)
         buffer = buffer.flatten()
 
         b_inds = np.arange(self.batch_size)
@@ -341,6 +329,34 @@ class PPOAlgorithm(Algorithm):
                 log["loss"].append(loss.item())
 
         return log
+
+    def _compute_advantages(self):
+        buffer = self.buffer
+        config = self.config
+
+        advantages = torch.zeros_like(buffer.rewards)
+
+        last_gaelam = 0
+        for t in reversed(range(config.num_steps)):
+            # if t == config.num_steps - 1:
+            #     next_nonterminal = 1.0 - next_done
+            #     next_values = next_value
+            # else:
+            #     next_nonterminal = 1.0 - buffer.dones[t + 1]
+            #     next_values = buffer.values[t + 1]
+
+            next_nonterminal = 1.0 - buffer.dones[t + 1]
+            next_values = buffer.values[t + 1]
+            delta = (
+                buffer.rewards[t]
+                + config.gamma * next_values * next_nonterminal
+                - buffer.values[t]
+            )
+            advantages[t] = last_gaelam = (
+                delta
+                + config.gamma * config.gae_lambda * next_nonterminal * last_gaelam
+            )
+        return advantages
 
     def _aggregate_log(self, log, new_log):
         for k, v in new_log.items():
@@ -454,14 +470,14 @@ class TrainBuffer:
             obs_buffer_shape = (num_steps, num_envs) + obs_shape
 
         data_dict = {}
-        data_dict["obs"] = ObsTensor.zeros(obs_buffer_shape).to(device)
+        data_dict["obs"] = TensorDict.zeros(obs_buffer_shape).to(device)
         data_dict["actions"] = torch.zeros((num_steps, num_envs) + action_shape).to(
             device
         )
         data_dict["log_probs"] = torch.zeros((num_steps, num_envs)).to(device)
         data_dict["rewards"] = torch.zeros((num_steps, num_envs)).to(device)
-        data_dict["dones"] = torch.zeros((num_steps, num_envs)).to(device)
-        data_dict["values"] = torch.zeros((num_steps, num_envs)).to(device)
+        data_dict["dones"] = torch.zeros((num_steps + 1, num_envs)).to(device)
+        data_dict["values"] = torch.zeros((num_steps + 1, num_envs)).to(device)
 
         return cls(data_dict)
 
@@ -472,31 +488,27 @@ class TrainBuffer:
     def flatten(self):
         new_data = {}
         for k in self._fields:
-            v = getattr(self, k)
-            if k in ["obs", "actions"]:
-                new_data[k] = v.flatten(0, 1)
-            else:
-                new_data[k] = v.flatten()
+            new_data[k] = getattr(self, k).flatten(0, 1)
         return TrainBuffer(new_data)
 
-    def set(self, name, value):
+    def add(self, name, value):
         setattr(self, name, value)
         self._fields.append(name)
 
 
-class ObsTensor:
+class TensorDict:
     def __init__(self, data):
         self.data = data
 
     @classmethod
-    def zeros(cls, obs_shape):
-        if isinstance(obs_shape, dict):
+    def zeros(cls, shape):
+        if isinstance(shape, dict):
             data = {}
-            for k, shape in obs_shape.items():
+            for k, shape in shape.items():
                 data[k] = torch.zeros(shape)
         else:
-            data = torch.zeros(obs_shape)
-        return ObsTensor(data)
+            data = torch.zeros(shape)
+        return TensorDict(data)
 
     def to(self, device):
         if isinstance(self.data, dict):
@@ -505,14 +517,14 @@ class ObsTensor:
                 data[k] = self.data[k].to(device)
         else:
             data = self.data.to(device)
-        return ObsTensor(data)
+        return TensorDict(data)
 
-    def __setitem__(self, indices, next_obs):
+    def __setitem__(self, indices, other):
         if isinstance(self.data, dict):
             for k in self.data:
-                self.data[k][indices] = next_obs.data[k]
+                self.data[k][indices] = other.data[k]
         else:
-            self.data[indices] = next_obs.data
+            self.data[indices] = other.data
 
     def __getitem__(self, indices):
         if isinstance(self.data, dict):
@@ -521,7 +533,7 @@ class ObsTensor:
                 data[k] = self.data[k][indices]
         else:
             data = self.data[indices]
-        return ObsTensor(data)
+        return TensorDict(data)
 
     def flatten(self, start_dim=0, end_dim=-1):
         if isinstance(self.data, dict):
@@ -530,14 +542,14 @@ class ObsTensor:
                 data[k] = self.data[k].flatten(start_dim, end_dim)
         else:
             data = self.data.flatten(start_dim, end_dim)
-        return ObsTensor(data)
+        return TensorDict(data)
 
     @classmethod
-    def from_numpy(cls, obs):
-        if isinstance(obs, dict):
+    def from_numpy(cls, data):
+        if isinstance(data, dict):
             data = {}
-            for k in obs:
-                data[k] = torch.from_numpy(obs[k]).float()
+            for k in data:
+                data[k] = torch.from_numpy(data[k]).float()
         else:
-            data = torch.from_numpy(obs).float()
-        return ObsTensor(data)
+            data = torch.from_numpy(data).float()
+        return TensorDict(data)

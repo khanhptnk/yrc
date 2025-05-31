@@ -11,15 +11,11 @@ from yrc.utils.global_variables import get_global_variable
 
 def create_env(split, config):
     split_config = getattr(config, split)
-    # print(config)
-    # print(split_config)
+
     env = ProcgenEnv(
         env_name=config.name,
         num_envs=config.num_envs,
         num_threads=config.num_threads,
-        use_backgrounds=config.use_backgrounds,
-        use_monochrome_assets=config.use_monochrome_assets,
-        restrict_themes=config.restrict_themes,
         start_level=split_config.start_level,
         num_levels=split_config.num_levels,
         distribution_mode=split_config.distribution_mode,

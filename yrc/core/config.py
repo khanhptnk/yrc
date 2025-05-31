@@ -45,6 +45,8 @@ class YRCConfig:
         if isinstance(self.env, str):
             self.env = environment_factory.config_cls[self.env]()
         elif isinstance(self.env, dict):
+            if "suite" not in self.env:
+                raise IndexError("Please specify env.suite through YAML file or flag")
             self.env = environment_factory.config_cls[self.env["suite"]](**self.env)
         else:
             raise ValueError("env must be a string or a dictionary")
@@ -52,6 +54,8 @@ class YRCConfig:
         if isinstance(self.policy, str):
             self.policy = policy_factory.config_cls[self.policy]()
         elif isinstance(self.policy, dict):
+            if "cls" not in self.policy:
+                raise IndexError("Please specify policy.cls through YAML file or flag")
             self.policy = policy_factory.config_cls[self.policy["cls"]](**self.policy)
         else:
             raise ValueError("policy must be a string or a dictionary")
@@ -64,6 +68,10 @@ class YRCConfig:
                     )
             self.algorithm = algorithm_factory.config_cls[self.algorithm]()
         elif isinstance(self.algorithm, dict):
+            if "cls" not in self.algorithm:
+                raise IndexError(
+                    "Please specify algorithm.cls through YAML file or flag"
+                )
             self.algorithm = algorithm_factory.config_cls[self.algorithm["cls"]](
                 **self.algorithm
             )
