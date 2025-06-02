@@ -1,10 +1,13 @@
-class WandbSummarizer:
+class WandbLogger:
     def clear(self):
         self.log = {}
 
-    def add(self, split, key, value):
+    def __setitem__(self, key, value):
         self.log[key] = value
 
-    def add_dict(self, split, summary):
-        for k, v in summary.items():
+    def add(self, split, stats):
+        for k, v in stats.items():
             self.log[f"{split}/{k}"] = v
+
+    def get(self):
+        return self.log

@@ -1,7 +1,7 @@
 import importlib
 import json
 from copy import deepcopy as dc
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import gym
 import numpy as np
@@ -130,6 +130,8 @@ class CoordEnv(gym.Env):
             reward_per_action * self.config.switch_agent_cost_beta
         )
 
+        self.reset()
+
     def reset(self) -> dict:
         """
         Resets the coordination environment to an initial state.
@@ -153,7 +155,7 @@ class CoordEnv(gym.Env):
         >>> print(obs["novice_logit"].shape)
         """
         self.prev_action = None
-        self.env_obs = self.base_env.reset()
+        self.env_obs = self.base_env.observe()
         self.novice.model.eval()
         self.expert.model.eval()
         self._reset_agents(done=np.array([True] * self.num_envs))
@@ -224,12 +226,16 @@ class CoordEnv(gym.Env):
 
         env_action = np.zeros_like(action)
         if is_novice.any():
-            env_action[is_novice] = self.novice.act(
-                self.env_obs[is_novice], greedy=self.config.act_greedy
+            env_action[is_novice] = (
+                self.novice.act(self.env_obs[is_novice], greedy=self.config.act_greedy)
+                .cpu()
+                .numpy()
             )
         if is_expert.any():
-            env_action[is_expert] = self.expert.act(
-                self.env_obs[is_expert], greedy=self.config.act_greedy
+            env_action[is_expert] = (
+                self.expert.act(self.env_obs[is_expert], greedy=self.config.act_greedy)
+                .cpu()
+                .numpy()
             )
 
         return env_action
@@ -259,11 +265,11 @@ class CoordEnv(gym.Env):
         >>> print(obs["novice_features"].shape)
         >>> print(obs["novice_logit"].shape)
         """
-        self.novice.forward(self.env_obs)
+        model_output = self.novice.model(self.env_obs)
         obs = {
             "env_obs": self.env_obs,
-            "novice_features": self.novice.hidden.detach().cpu().numpy(),
-            "novice_logit": self.novice.logits.detach().cpu().numpy(),
+            "novice_features": model_output.hidden.detach().cpu().numpy(),
+            "novice_logit": model_output.logits.detach().cpu().numpy(),
         }
         return obs
 

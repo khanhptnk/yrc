@@ -1,16 +1,16 @@
 algorithm:
     cls: "PPOAlgorithm"
-    total_timesteps: 25000000
+    total_timesteps: 15000000
 env:
     suite: 'procgen'
     name: 'coinrun'
     train:
-        distribution_mode: 'hard'
+        distribution_mode: 'easy'
         seed: 0
         start_level: 0
         num_levels: 100000
     test:
-        distribution_mode: 'hard'
+        distribution_mode: 'easy'
         seed: 0
         start_level: 0
         num_levels: 100000

@@ -3,8 +3,9 @@ from omegaconf import OmegaConf
 import yrc.core.algorithm as algo_factory
 import yrc.core.environment as env_factory
 import yrc.core.policy as policy_factory
-from yrc.core import Evaluator
 from yrc.core.config import YRCConfig, configure
+from yrc.core.environment import CoordEnv
+from yrc.core.evaluator import Evaluator
 
 
 def make_config(args, dotlist_args=None):
@@ -29,10 +30,6 @@ def make_algorithm(config):
 
 def make_policy(config, env):
     return policy_factory.make(config, env)
-
-
-def make_evaluator(config):
-    return Evaluator(config)
 
 
 def load_policy(path, env):

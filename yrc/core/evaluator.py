@@ -21,11 +21,14 @@ class EvaluatorConfig:
         Number of episodes to use for test evaluation. Default is 256.
     act_greedy : bool
         If True, the policy acts greedily during evaluation. Default is False.
+    log_action_id: bool
+        The action index to track and log the fraction of times this action is taken during evaluation episodes.
     """
 
     validation_episodes: int = 256
     test_episodes: int = 256
     act_greedy: bool = False
+    log_action_id: int = 1
 
 
 class Evaluator:
@@ -90,15 +93,14 @@ class Evaluator:
             for _ in range(num_iterations):
                 self._eval_one_iteration(policy, envs[split])
 
-            summary[split] = self.summarizer.summarize()
-            self.summarizer.write()
+            summary[split] = self.summarizer.write()
 
             envs[split].close()
 
         return summary
 
     def _eval_one_iteration(self, policy, env):
-        self.summarizer.reset_episode(env)
+        self.summarizer.initialize_episode(env)
 
         obs = env.reset()
         has_done = np.array([False] * env.num_envs)
@@ -108,9 +110,7 @@ class Evaluator:
 
             obs, reward, done, info = env.step(action.cpu().numpy())
             # NOTE: put this before update has_done to include last step in summary
-            self.summarizer.add_to_episode(
-                env, action, obs, reward, done, info, has_done
-            )
+            self.summarizer.add_episode_step(env, action, reward, info, has_done)
 
             has_done |= done
 
@@ -119,17 +119,18 @@ class Evaluator:
 
 class EvaluationSummarizer:
     def __init__(self, config):
-        self.logged_action = 1
+        self.log_action_id = config.log_action_id
+        self.clear()
 
     def clear(self):
         self.log = {}
 
-    def reset_episode(self, env):
+    def initialize_episode(self, env):
         self.episode_log = {
             "reward": [0] * env.num_envs,
             "env_reward": [0] * env.num_envs,
             "episode_length": [0] * env.num_envs,
-            f"action_{self.logged_action}": 0,
+            f"action_{self.log_action_id}": 0,
         }
 
     def finalize_episode(self):
@@ -142,7 +143,7 @@ class EvaluationSummarizer:
         else:
             self.log.update(self.episode_log)
 
-    def add_to_episode(self, env, action, obs, reward, done, info, has_done):
+    def add_episode_step(self, env, action, reward, info, has_done):
         for i in range(env.num_envs):
             if "env_reward" in info[i]:
                 self.episode_log["env_reward"][i] += info[i]["env_reward"] * (
@@ -152,8 +153,8 @@ class EvaluationSummarizer:
             self.episode_log["reward"][i] += reward[i] * (1 - has_done[i])
             self.episode_log["episode_length"][i] += 1 - has_done[i]
             if not has_done[i]:
-                self.episode_log[f"action_{self.logged_action}"] += (
-                    action[i] == self.logged_action
+                self.episode_log[f"action_{self.log_action_id}"] += (
+                    action[i] == self.log_action_id
                 ).sum()
 
     def summarize(self):
@@ -168,27 +169,27 @@ class EvaluationSummarizer:
             "reward_std": float(np.std(log["reward"])),
             "env_reward_mean": float(np.mean(log["env_reward"])),
             "env_reward_std": float(np.std(log["env_reward"])),
-            f"action_{self.logged_action}_frac": float(
-                log[f"action_{self.logged_action}"] / sum(log["episode_length"])
+            f"action_{self.log_action_id}_frac": float(
+                log[f"action_{self.log_action_id}"] / sum(log["episode_length"])
             ),
         }
         return self.summary
 
     def write(self, summary=None):
         if summary is None:
-            summary = self.summary
+            summary = self.summarize()
 
-        log_str = f"   Steps:       {summary['steps']}\n"
-        log_str += "   Episode:    "
-        log_str += f"mean {summary['episode_length_mean']:7.2f}  "
-        log_str += f"min {summary['episode_length_min']:7.2f}  "
-        log_str += f"max {summary['episode_length_max']:7.2f}\n"
-        log_str += "   Reward:     "
-        log_str += f"mean {summary['reward_mean']:.2f} "
-        log_str += f"± {(1.96 * summary['reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
-        log_str += "   Env Reward: "
-        log_str += f"mean {summary['env_reward_mean']:.2f} "
-        log_str += f"± {(1.96 * summary['env_reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
-        log_str += f"   Action {self.logged_action} fraction: {summary[f'action_{self.logged_action}_frac']:7.2f}\n"
+        log_str = (
+            f"   Steps:         {summary['steps']}\n"
+            f"   Episode length: mean {summary['episode_length_mean']:7.2f}  "
+            f"min {summary['episode_length_min']:7.2f}  "
+            f"max {summary['episode_length_max']:7.2f}\n"
+            f"   Reward:        mean {summary['reward_mean']:.2f} "
+            f"± {(1.96 * summary['reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
+            f"   Env Reward:    mean {summary['env_reward_mean']:.2f} "
+            f"± {(1.96 * summary['env_reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
+            f"   Action {self.log_action_id} fraction: {summary[f'action_{self.log_action_id}_frac']:7.2f}\n"
+        )
 
         logging.info(log_str)
+        return summary

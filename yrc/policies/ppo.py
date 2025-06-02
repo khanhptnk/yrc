@@ -37,13 +37,15 @@ class PPOPolicy(Policy):
     def reset(self, done: "numpy.ndarray") -> None:
         pass
 
-    def act(self, obs, greedy=False):
-        self.model_output = self.model(obs)
-        dist = Categorical(logits=self.model_output.logits)
+    def act(self, obs, greedy=False, return_model_output=False):
+        model_output = self.model(obs)
+        dist = Categorical(logits=model_output.logits)
         if greedy:
             action = dist.probs.argmax(dim=-1)
         else:
             action = dist.sample()
+        if return_model_output:
+            return action, model_output
         return action
 
     def load_model_checkpoint(self, model_state_dict):

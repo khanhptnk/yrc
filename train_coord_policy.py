@@ -44,8 +44,8 @@ def main():
         env[split] = yrc.CoordEnv(config.coordination, base_env[split], novice, expert)
 
     policy = yrc.make_policy(config.policy, env["train"])
-    algorithm = yrc.make_algorithm(config.algorithm, env["train"])
-    evaluator = yrc.make_evaluator(config.evaluation)
+    algorithm = yrc.make_algorithm(config.algorithm)
+    evaluator = yrc.Evaluator(config.evaluation)
 
     algorithm.train(
         policy,

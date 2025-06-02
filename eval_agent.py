@@ -4,7 +4,7 @@ import yrc
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="YRC training script")
+    parser = argparse.ArgumentParser(description="YRC evaluation script")
     parser.add_argument(
         "--config",
         type=str,
@@ -24,21 +24,12 @@ def parse_args():
 
 def main():
     args, config = parse_args()
+    eval_splits = args.eval_splits
     # Create environments for each split
-    envs = {
-        split: yrc.make_base_env(split, config.env)
-        for split in ["train"] + args.eval_splits
-    }
-    policy = yrc.make_policy(config.policy, envs["train"])
-    algorithm = yrc.make_algorithm(config.algorithm)
+    envs = {split: yrc.make_base_env(split, config.env) for split in eval_splits}
+    policy = yrc.load_policy(config.policy.load_path, envs[eval_splits[0]])
     evaluator = yrc.Evaluator(config.evaluation)
-    algorithm.train(
-        policy=policy,
-        envs=envs,
-        evaluator=evaluator,
-        train_split="train",
-        eval_splits=args.eval_splits,
-    )
+    evaluator.eval(policy, envs, eval_splits)
 
 
 if __name__ == "__main__":

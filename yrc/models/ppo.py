@@ -119,6 +119,7 @@ class ImpalaCoordPPOModel(nn.Module):
         else:
             raise NotImplementedError
 
-        logit = self.fc_policy(hidden)
+        logits = self.fc_policy(hidden)
         value = self.fc_value(hidden).reshape(-1)
-        return logit, value
+
+        return ImpalaPPOModelOutput(logits, value, hidden)
