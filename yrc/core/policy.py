@@ -95,3 +95,39 @@ class Policy(ABC):
         >>> policy.load_model_checkpoint("checkpoints/model.pt")
         """
         pass
+
+    @abstractmethod
+    def train(self) -> None:
+        """
+        Set the policy to training mode.
+
+        This method should be overridden by subclasses to implement any necessary
+        logic for preparing the policy for training, such as setting dropout or batch normalization layers.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy.train()
+        """
+        pass
+
+    @abstractmethod
+    def eval(self) -> None:
+        """
+        Set the policy to evaluation mode.
+
+        This method should be overridden by subclasses to implement any necessary
+        logic for preparing the policy for evaluation, such as disabling dropout or batch normalization layers.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy.eval()
+        """
+        pass

@@ -12,8 +12,9 @@ from omegaconf import OmegaConf
 
 import wandb
 import yrc.algorithms as algorithm_factory
-import yrc.environments as environment_factory
+import yrc.environments as env_factory
 import yrc.policies as policy_factory
+from yrc.core.environment import CoordinationConfig
 from yrc.core.evaluator import EvaluatorConfig
 from yrc.utils.global_variables import set_global_variable
 from yrc.utils.logging import configure_logging
@@ -43,11 +44,11 @@ class YRCConfig:
 
     def __post_init__(self):
         if isinstance(self.env, str):
-            self.env = environment_factory.config_cls[self.env]()
+            self.env = env_factory.config_cls[self.env]()
         elif isinstance(self.env, dict):
             if "suite" not in self.env:
                 raise IndexError("Please specify env.suite through YAML file or flag")
-            self.env = environment_factory.config_cls[self.env["suite"]](**self.env)
+            self.env = env_factory.config_cls[self.env["suite"]](**self.env)
         else:
             raise ValueError("env must be a string or a dictionary")
 
@@ -91,13 +92,6 @@ class YRCConfig:
             self.coordination = CoordinationConfig(**self.coordination)
         else:
             raise ValueError("coordination must be a dictionary or None")
-
-
-@dataclass
-class CoordinationConfig:
-    expert_query_cost_alpha: float = 0.4
-    switch_agent_cost_beta: float = 0.0
-    act_greedy: bool = False
 
 
 def configure(config):

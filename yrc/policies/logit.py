@@ -2,8 +2,8 @@ import logging
 import os
 from copy import deepcopy as dc
 from dataclasses import dataclass
+from typing import Optional
 
-import numpy as np
 import torch
 from torch.distributions.categorical import Categorical
 
@@ -15,102 +15,46 @@ from yrc.utils.global_variables import get_global_variable
 class LogitPolicyConfig:
     cls: str = "LogitPolicy"
     metric: str = "max_logit"
-    threshold: float = None
-    explore_temp: float = 1.0
-    score_temp: float = 1.0
+    threshold: Optional[float] = None
+    temperature: Optional[float] = None
 
 
 class LogitPolicy(Policy):
     def __init__(self, config, env):
         self.args = config.coord_policy
-        self.agent = env.novice_agent
-        self.params = {"threshold": 0.0, "explore_temp": 1.0, "score_temp": 1.0}
+        self.params = {"threshold": config.threshold, "temperature": config.temperature}
         self.device = get_global_variable("device")
 
-    def act(self, obs, greedy=False):
-        if get_global_variable("benchmark") == "cliport":
-            attention_size = 3  # todo: get this shape automatically
-            attention_flat = obs["novice_logit"][:, :attention_size]
-            transport_flat = obs["novice_logit"][:, attention_size:]
-            if not torch.is_tensor(attention_flat):
-                attention_flat = (
-                    torch.from_numpy(attention_flat).float().to(self.device)
-                )
-            if not torch.is_tensor(transport_flat):
-                transport_flat = (
-                    torch.from_numpy(transport_flat).float().to(self.device)
-                )
-            attention_score = self._compute_score(attention_flat)
-            transport_score = self._compute_score(transport_flat)
-            score = torch.mean(
-                torch.stack([attention_score, transport_score])
-            ).unsqueeze(0)
-        else:
-            novice_logit = obs["novice_logit"]
-            if not torch.is_tensor(novice_logit):
-                novice_logit = torch.from_numpy(novice_logit).float().to(self.device)
-            score = self._compute_score(novice_logit)
-        # NOTE: higher score = more certain
-        action = (score < self.params["threshold"]).int()
-        return action.cpu().numpy()
+    def act(self, obs, temperature=None):
+        logits = obs["novice_logits"]
+        if not torch.is_tensor(logits):
+            logits = torch.from_numpy(logits).to(self.device).float()
+        score = self.compute_confidence(logits)
+        action = (score < self.params["threshold"]).long()
+        return action
 
-    def generate_scores(self, env, num_rollouts):
-        assert num_rollouts % env.num_envs == 0
-        scores = []
-        for i in range(num_rollouts // env.num_envs):
-            scores.extend(self._rollout_once(env))
-        return scores
-
-    def _rollout_once(self, env):
-        def sample_action(logit):
-            dist = Categorical(logits=logit / self.params["explore_temp"])
-            return dist.sample().cpu().numpy()
-
-        agent = self.agent
-        agent.eval()
-        obs = env.reset()
-        has_done = np.array([False] * env.num_envs)
-        scores = []
-
-        while not has_done.all():
-            logit = agent.forward(obs["env_obs"])
-            score = self._compute_score(logit)
-
-            if env.num_envs == 1:
-                scores.append(score.item())
-            else:
-                for i in range(env.num_envs):
-                    if not has_done[i]:
-                        scores.append(score[i].item())
-
-            action = sample_action(logit)
-            obs, reward, done, info = env.step(action)
-            has_done |= done
-
-        return scores
-
-    def _compute_score(self, logit):
-        # NOTE: higher score = more certain
-        metric = self.args.metric
-        logit = logit / self.params["score_temp"]
+    def compute_confidence(self, logits):
+        # NOTE: higher = more confident
+        metric = self.config.metric
+        logits = logits / self.params["temperature"]
         if metric == "max_logit":
-            score = logit.max(dim=-1)[0]
+            score = logits.max(dim=-1)[0]
         elif metric == "max_prob":
-            score = logit.softmax(dim=-1).max(dim=-1)[0]
+            score = logits.softmax(dim=-1).max(dim=-1)[0]
         elif metric == "margin":
-            if logit.size(-1) > 1:
+            if logits.size(-1) > 1:
                 # Original behavior for multi-class case
-                top2 = logit.softmax(dim=-1).topk(2, dim=-1)[0]
-                if len(top2.shape) == 1:
-                    top2 = top2.unsqueeze(0)
+                top2 = logits.softmax(dim=-1).topk(2, dim=-1)[0]
                 score = top2[:, 0] - top2[:, 1]
+                score = score.unsqueeze(-1)
             else:
                 # Binary case when logit has shape (..., 1)
-                score = logit.sigmoid().squeeze(-1)
+                prob = logits.sigmoid().unsqueeze(-1)
+                score = torch.abs(2 * prob - 1)
         elif metric == "neg_entropy":
-            score = -Categorical(logits=logit).entropy()
+            score = -Categorical(logits=logits).entropy()
         elif metric == "neg_energy":
-            score = logit.logsumexp(dim=-1)
+            score = logits.logsumexp(dim=-1)
         else:
             raise NotImplementedError(f"Unrecognized metric: {metric}")
 

@@ -2,6 +2,7 @@ import logging
 import os
 from dataclasses import dataclass
 
+import numpy as np
 import torch
 
 from yrc.core.policy import Policy
@@ -10,38 +11,65 @@ from yrc.utils.global_variables import get_global_variable
 
 @dataclass
 class RandomPolicyConfig:
-    prob: float = 0.5
+    """
+    Configuration dataclass for RandomPolicy.
+
+    Parameters
+    ----------
+    cls : str, optional
+        Name of the policy class. Default is "RandomPolicy".
+    prob : float, optional
+        Probability of selecting the expert action. Setting this value prevents RandomAlgorithm from conducting a grid search.
+
+    Examples
+    --------
+    >>> config = RandomPolicyConfig(prob=0.7)
+    >>> print(config.cls)
+    'RandomPolicy'
+    >>> print(config.prob)
+    0.7
+    """
+
+    cls: str = "RandomPolicy"
+    prob: Optional[float] = None
 
 
 class RandomPolicy(Policy):
     def __init__(self, config, env):
-        self.prob = config.coord_policy.prob
+        self.prob = config.prob
         self.device = get_global_variable("device")
+        self.EXPERT = env.EXPERT
+        self.config = config
 
-    def act(self, obs, greedy=False):
-        benchmark = get_global_variable("benchmark")
-        env_obs = obs["env_obs"]
-
-        if isinstance(env_obs, dict):
-            if benchmark == "cliport":
-                action_shape = (1,)
-            elif benchmark == "minigrid":
-                action_shape = (env_obs["direction"].shape[0],)
+    def act(self, obs, temperature=None):
+        if isinstance(obs, dict):
+            batch_size = obs["base_obs"].shape[0]
+        elif isinstance(obs, np.ndarray):
+            batch_size = obs.shape[0]
         else:
-            action_shape = (env_obs.shape[0],)
+            raise ValueError("obs must be a dict or a numpy array")
 
-        action = torch.rand(action_shape).to(self.device) < self.prob
-        action = action.int()
-        return action.cpu().numpy()
+        action = torch.where(
+            torch.rand(batch_size, device=self.device) < self.prob,
+            self.EXPERT,
+            1 - self.EXPERT,
+        )
+        return action
 
-    def update_params(self, prob):
+    def set_probability(self, prob):
         self.prob = prob
 
-    def save_model(self, name, save_dir):
-        save_path = os.path.join(save_dir, f"{name}.ckpt")
-        torch.save({"prob": self.prob}, save_path)
-        logging.info(f"Saved model to {save_path}")
+    def get_probability(self):
+        return self.prob
 
-    def load_model(self, load_path):
-        ckpt = torch.load(load_path)
-        self.prob = ckpt["prob"]
+    def reset(self, done):
+        pass
+
+    def load_model_checkpoint(self, model_state_dict):
+        self.set_probability(model_state_dict["prob"])
+
+    def train(self):
+        pass
+
+    def eval(self):
+        pass

@@ -1,17 +1,12 @@
-name: 'procgen_skyline'
+name: "procgen_always_novice"
+algorithm:
+    cls: "AlwaysAlgorithm"
 env:
     suite: 'procgen'
     name: 'coinrun'
-    train: 
-        distribution_mode: 'hard'
-    val_sim:
-        distribution_mode: 'hard'
-algorithm: 'PPOAlgorithm'
-policy: 'PPOPolicy'
-coordination:
-    expert_query_cost_weight: 0.4
-    switch_agent_cost_weight: 0.0
-    temperature: 1.0
+policy:
+    cls: 'AlwaysPolicy'
+    agent: "novice"
 train_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
 train_expert: 'experiments/procgen_ppo_expert/best_test.ckpt'
 test_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'

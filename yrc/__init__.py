@@ -1,5 +1,6 @@
 from omegaconf import OmegaConf
 
+import yrc
 import yrc.core.algorithm as algo_factory
 import yrc.core.environment as env_factory
 import yrc.core.policy as policy_factory
@@ -34,3 +35,7 @@ def make_policy(config, env):
 
 def load_policy(path, env):
     return policy_factory.load(path, env)
+
+
+def register_config(name, config_cls):
+    yrc.environments.config_cls[name] = config_cls

@@ -1,4 +1,3 @@
-from collections import namedtuple
 from dataclasses import dataclass
 
 import torch
@@ -8,11 +7,38 @@ from yrc.models.impala import Impala
 from yrc.utils.global_variables import get_global_variable
 from yrc.utils.model import orthogonal_init
 
-ImpalaPPOModelOutput = namedtuple("PolicyOutput", ["logits", "value", "hidden"])
+
+@dataclass
+class PPOModelOutput:
+    """
+    Output container for PPO model forward pass.
+
+    Attributes
+    ----------
+    logits : torch.Tensor
+        The raw action logits output by the policy head.
+    value : torch.Tensor
+        The value function prediction output by the value head.
+    hidden : torch.Tensor
+        The hidden feature representation from the model.
+    """
+
+    logits: torch.Tensor
+    value: torch.Tensor
+    hidden: torch.Tensor
 
 
 @dataclass
 class ImpalaPPOModelConfig:
+    """
+    Configuration dataclass for ImpalaPPOModel.
+
+    Parameters
+    ----------
+    cls : str, optional
+        Name of the model class. Default is "ImpalaPPOModel".
+    """
+
     cls: str = "ImpalaPPOModel"
 
 
@@ -36,15 +62,26 @@ class ImpalaPPOModel(nn.Module):
         logits = self.fc_policy(hidden)
         value = self.fc_value(hidden).reshape(-1)
 
-        return ImpalaPPOModelOutput(logits, value, hidden)
+        return PPOModelOutput(logits, value, hidden)
 
 
 @dataclass
 class ImpalaCoordPPOModelConfig:
+    """
+    Configuration dataclass for ImpalaCoordPPOModel.
+
+    Parameters
+    ----------
+    cls : str, optional
+        Name of the model class. Default is "ImpalaCoordPPOModel".
+    feature_type : str, optional
+        Type of feature representation to use. Options include:
+        "obs", "hidden", "hidden_obs", "dist", "hidden_dist", "obs_dist", "obs_hidden_dist".
+        Default is "obs".
+    """
+
     cls: str = "ImpalaCoordPPOModel"
-    feature_type: str = (
-        "obs"  # obs, hidden, hidden_obs, dist, hidden_dist, obs_dist, obs_hidden_dist
-    )
+    feature_type: str = "obs"
 
 
 class ImpalaCoordPPOModel(nn.Module):
@@ -83,37 +120,37 @@ class ImpalaCoordPPOModel(nn.Module):
         self.logit_dim = env.action_space.n
 
     def forward(self, obs):
-        env_obs = (
-            obs["env_obs"]["image"]
-            if isinstance(obs["env_obs"], dict)
-            else obs["env_obs"]
-        )
-        if not torch.is_tensor(env_obs):
-            env_obs = torch.from_numpy(env_obs).float().to(self.device)
-        novice_features = obs["novice_features"]
-        if not torch.is_tensor(novice_features):
-            novice_features = torch.from_numpy(novice_features).float().to(self.device)
+        base_obs = obs["base_obs"]
+        if not torch.is_tensor(base_obs):
+            base_obs = torch.from_numpy(base_obs).float().to(self.device)
+        novice_hidden = obs["novice_hidden"]
+        if not torch.is_tensor(novice_hidden):
+            novice_hidden = torch.from_numpy(novice_hidden).float().to(self.device)
         novice_logit = obs["novice_logit"]
         if not torch.is_tensor(novice_logit):
             novice_logit = torch.from_numpy(novice_logit).float().to(self.device)
 
         if self.feature_type == "obs":
-            hidden = self.embedder(env_obs)
+            hidden = self.embedder(base_obs)
         elif self.feature_type == "hidden":
-            hidden = novice_features
+            hidden = novice_hidden
         elif self.feature_type == "hidden_obs":
-            hidden = torch.cat([self.embedder(env_obs), novice_features], dim=-1)
+            hidden = torch.cat([self.embedder(base_obs), novice_hidden], dim=-1)
         elif self.feature_type == "dist":
             hidden = novice_logit.softmax(dim=-1)
         elif self.feature_type == "hidden_dist":
-            hidden = torch.cat([novice_features, novice_logit.softmax(dim=-1)], dim=-1)
+            hidden = torch.cat([novice_hidden, novice_logit.softmax(dim=-1)], dim=-1)
         elif self.feature_type == "obs_dist":
             hidden = torch.cat(
-                [self.embedder(env_obs), novice_logit.softmax(dim=-1)], dim=-1
+                [self.embedder(base_obs), novice_logit.softmax(dim=-1)], dim=-1
             )
         elif self.feature_type == "obs_hidden_dist":
             hidden = torch.cat(
-                [self.embedder(env_obs), novice_features, novice_logit.softmax(dim=-1)],
+                [
+                    self.embedder(base_obs),
+                    novice_hidden,
+                    novice_logit.softmax(dim=-1),
+                ],
                 dim=-1,
             )
         else:
@@ -122,4 +159,4 @@ class ImpalaCoordPPOModel(nn.Module):
         logits = self.fc_policy(hidden)
         value = self.fc_value(hidden).reshape(-1)
 
-        return ImpalaPPOModelOutput(logits, value, hidden)
+        return PPOModelOutput(logits, value, hidden)

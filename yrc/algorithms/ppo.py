@@ -87,9 +87,9 @@ class PPOAlgorithm(Algorithm):
     def __init__(self, config):
         self.config = config
 
-    def _initialize_training(self, env, policy):
+    def _initialize_training(self, train_env, policy):
         config = self.config
-        self.num_envs = env.num_envs
+        self.num_envs = train_env.num_envs
 
         self.batch_size = int(self.num_envs * config.num_steps)
         self.minibatch_size = int(self.batch_size // config.num_minibatches)
@@ -97,7 +97,7 @@ class PPOAlgorithm(Algorithm):
 
         self.save_dir = get_global_variable("experiment_dir")
 
-        self.buffer = TrainBuffer.new(env, config.num_steps)
+        self.buffer = TrainBuffer.new(train_env, config.num_steps)
         self.global_step = 0
         self.summarizer = PPOTrainSummarizer(config)
 
@@ -107,6 +107,8 @@ class PPOAlgorithm(Algorithm):
         # NOTE: weird bug, torch.optim messes up logging, so we need to reconfigure
         configure_logging(get_global_variable("log_file"))
         self.wandb_logger = WandbLogger()
+
+        train_env.reset()
 
     def train(
         self,
@@ -147,7 +149,7 @@ class PPOAlgorithm(Algorithm):
         config = self.config
         self._initialize_training(envs[train_split], policy)
 
-        best = {split: {"reward_mean": -float("inf")} for split in eval_splits}
+        best_result = {split: {"reward_mean": -float("inf")} for split in eval_splits}
 
         for iteration in range(self.num_iterations):
             # save checkpoint
@@ -163,13 +165,16 @@ class PPOAlgorithm(Algorithm):
 
                 self.save_checkpoint(policy, "last")
 
-                eval_result = evaluator.eval(policy, envs, eval_splits)
+                eval_results = evaluator.eval(policy, envs, eval_splits)
                 for split in eval_splits:
-                    if eval_result[split]["reward_mean"] > best[split]["reward_mean"]:
-                        best[split] = eval_result[split]
+                    if (
+                        eval_results[split]["reward_mean"]
+                        > best_result[split]["reward_mean"]
+                    ):
+                        best_result[split] = eval_results[split]
                         self.save_checkpoint(policy, f"best_{split}")
                     logging.info(f"BEST {split} so far")
-                    evaluator.summarizer.write(best[split])
+                    evaluator.summarizer.write(best_result[split])
 
                 # wandb logging
                 self.wandb_logger.clear()
@@ -177,8 +182,8 @@ class PPOAlgorithm(Algorithm):
                 if iteration > 0:
                     self.wandb_logger.add("train", train_summary)
                 for split in eval_splits:
-                    self.wandb_logger.add(split, eval_result[split])
-                    self.wandb_logger.add(f"best_{split}", best[split])
+                    self.wandb_logger.add(split, eval_results[split])
+                    self.wandb_logger.add(f"best_{split}", best_result[split])
                 wandb.log(self.wandb_logger.get())
 
             # training
@@ -227,7 +232,7 @@ class PPOAlgorithm(Algorithm):
                         info[i]["terminal_observation"]
                     ).to(device)
                     with torch.no_grad():
-                        terminal_value = self.policy.model(terminal_obs).value
+                        terminal_value = policy.model(terminal_obs).value
                     reward[i] += config.gamma * terminal_value
 
             buffer.add(
@@ -306,13 +311,13 @@ class PPOAlgorithm(Algorithm):
             else:
                 v_loss = 0.5 * ((cur_value - mb.returns) ** 2).mean()
 
-            entropy_loss = cur_dist.entropy().mean()
+            entropy_loss = -cur_dist.entropy().mean()
 
             if self.global_step < config.critic_pretrain_steps:
                 loss = v_loss
             else:
                 loss = (
-                    pg_loss - config.ent_coef * entropy_loss + config.vf_coef * v_loss
+                    pg_loss + config.vf_coef * v_loss + config.ent_coef * entropy_loss
                 )
 
             loss.backward()
@@ -366,18 +371,6 @@ class PPOAlgorithm(Algorithm):
             )
         returns = advantages + buffer.values[:-1]
         return advantages, returns
-
-    def _aggregate_log(self, log, new_log):
-        for k, v in new_log.items():
-            if isinstance(v, list):
-                if k not in log:
-                    log[k] = v
-                else:
-                    log[k].extend(v)
-            elif isinstance(v, float) or isinstance(v, int):
-                log[k] = v
-            else:
-                raise NotImplementedError
 
     def save_checkpoint(self, policy, name):
         save_path = f"{self.save_dir}/{name}.ckpt"
@@ -535,7 +528,7 @@ class TensorDict:
     @classmethod
     def from_numpy(cls, data):
         if isinstance(data, dict):
-            data = {}
+            data = data.copy()
             for k in data:
                 data[k] = torch.from_numpy(data[k]).float()
         else:
@@ -576,8 +569,6 @@ class PPOTrainSummarizer:
         for k, v in self.iter_log.items():
             if isinstance(v, list):
                 self.log.setdefault(k, []).extend(v)
-            elif isinstance(v, (float, int)):
-                self.log[k] += v
             else:
                 raise NotImplementedError
 
@@ -637,7 +628,7 @@ class PPOTrainSummarizer:
         log_str = (
             "\n"
             f"   Reward:      mean {summary['reward_mean']:7.2f} ± {summary['reward_std']:7.2f}\n"
-            f"   Env Reward:  mean {summary['base_reward_mean']:7.2f} ± {summary['base_reward_std']:7.2f}\n"
+            f"   Base Reward: mean {summary['base_reward_mean']:7.2f} ± {summary['base_reward_std']:7.2f}\n"
             f"   Loss:        pg_loss {summary['pg_loss']:7.4f}  "
             f"v_loss {summary['v_loss']:7.4f}  "
             f"ent_loss {summary['ent_loss']:7.4f}  "

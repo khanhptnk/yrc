@@ -1,6 +1,5 @@
-import importlib
-import json
 from copy import deepcopy as dc
+from dataclasses import dataclass
 from typing import List, Tuple
 
 import gym
@@ -8,18 +7,13 @@ import numpy as np
 import torch
 
 import yrc
-from yrc.utils.global_variables import get_global_variable
 
 
-def make_base_env(split, config):
-    module = importlib.import_module(
-        f"yrc.environments.{get_global_variable('env_suite')}"
-    )
-    create_fn = getattr(module, "create_env")
-    env = create_fn(split, config)
-    env.suite = config.suite
-    env.name = config.name
-    return env
+@dataclass
+class CoordinationConfig:
+    expert_query_cost_weight: float = 0.4
+    switch_agent_cost_weight: float = 0.0
+    temperature: float = 1.0
 
 
 class CoordEnv(gym.Env):
@@ -69,68 +63,72 @@ class CoordEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(2)
         self.observation_space = gym.spaces.Dict(
             {
-                "env_obs": base_env.observation_space,
-                "novice_features": gym.spaces.Box(
+                "base_obs": base_env.observation_space,
+                "novice_hidden": gym.spaces.Box(
                     -100, 100, shape=(novice.model.hidden_dim,)
                 ),
-                "novice_logit": gym.spaces.Box(
+                "novice_logits": gym.spaces.Box(
                     -100, 100, shape=(novice.model.logit_dim,)
                 ),
             }
         )
-
-        self.set_costs()
+        self.expert_query_cost_per_action = None
+        self.switch_agent_cost_per_action = None
 
     @property
     def num_envs(self):
         return self.base_env.num_envs
 
-    def set_costs(self, reward_per_action: float = None) -> None:
+    def set_costs(self, reward_per_action: float) -> None:
         """
-        Sets the cost per action for expert queries and agent switching.
+        Set the cost per action for expert queries and agent switching.
 
-        If `reward_per_action` is not provided, it is computed from environment statistics
-        loaded from a JSON metadata file. The mean episode reward is divided by the mean
-        episode length to obtain the reward per action. The expert query and switch agent
-        costs per action are then calculated by multiplying the reward per action by their
-        respective alpha and beta coefficients from the configuration.
-
-        NOTE: current implement supports only *non-recurrent* agent policies.
+        The cost per action is determined by multiplying the provided `reward_per_action`
+        by the expert query and switch agent cost coefficients (`expert_query_cost_weight` and
+        `switch_agent_cost_weight`) from the environment configuration. These costs are used to
+        penalize the agent for querying the expert or switching between agents.
 
         Parameters
         ----------
-        reward_per_action : float, optional
-            The reward value per action. If None, it is computed from metadata.
+        reward_per_action : float
+            The reward value per action. If None, it should be computed from environment
+            statistics (mean episode reward divided by mean episode length).
 
         Side Effects
         ------------
-        Sets `self.expert_query_cost_per_action` and `self.switch_agent_cost_per_action` attributes.
+        Sets the following attributes on the environment:
+            - expert_query_cost_per_action : float
+                The cost per action for querying the expert.
+            - switch_agent_cost_per_action : float
+                The cost per action for switching between agents.
+        Calls `self.reset()` to apply the new cost settings.
+
+        Notes
+        -----
+        This implementation currently supports only non-recurrent agent policies.
+
+        Examples
+        --------
+        >>> env.set_costs(0.05)
+        >>> print(env.expert_query_cost_per_action)
+        >>> print(env.switch_agent_cost_per_action)
         """
-        if reward_per_action is None:
-            with open("yrc/metadata/test_eval_info.json") as f:
-                data = json.load(f)
-            test_eval_info = data[self.base_env.suite][self.base_env.name]
-            mean_episode_reward = test_eval_info["reward_mean"]
-            mean_episode_length = test_eval_info["episode_length_mean"]
-            reward_per_action = mean_episode_reward / mean_episode_length
 
         # NOTE: paper results were generated with rounding
         # self.expert_query_cost_per_action = round(
-        #     reward_per_action * self.config.expert_query_cost_alpha, 2
+        #     reward_per_action * self.config.expert_query_cost_weight, 2
         # )
         # self.switch_agent_cost_per_action = round(
-        #     reward_per_action * self.config.switch_agent_cost_beta, 2
+        #     reward_per_action * self.config.switch_agent_cost_weight, 2
         # )
 
         self.expert_query_cost_per_action = (
-            reward_per_action * self.config.expert_query_cost_alpha,
+            reward_per_action * self.config.expert_query_cost_weight
         )
 
         self.switch_agent_cost_per_action = (
-            reward_per_action * self.config.switch_agent_cost_beta
+            reward_per_action * self.config.switch_agent_cost_weight
         )
-
-        self.reset()
 
     def reset(self) -> dict:
         """
@@ -143,19 +141,19 @@ class CoordEnv(gym.Env):
         -------
         obs : dict
             The initial observation of the environment, including:
-                - "env_obs": The initial observation from the base environment.
-                - "novice_features": Numpy array of hidden features from the novice policy.
-                - "novice_logit": Numpy array of output logits from the novice policy.
+                - "base_obs": The initial observation from the base environment.
+                - "novice_hidden": Numpy array of hidden features from the novice policy.
+                - "novice_logits": Numpy array of output logits from the novice policy.
 
         Examples
         --------
         >>> obs = env.reset()
-        >>> print(obs["env_obs"].shape)
-        >>> print(obs["novice_features"].shape)
-        >>> print(obs["novice_logit"].shape)
+        >>> print(obs["base_obs"].shape)
+        >>> print(obs["novice_hidden"].shape)
+        >>> print(obs["novice_logits"].shape)
         """
         self.prev_action = None
-        self.env_obs = self.base_env.observe()
+        self.base_obs = self.base_env.reset()
         self.novice.model.eval()
         self.expert.model.eval()
         self._reset_agents(done=np.array([True] * self.num_envs))
@@ -183,9 +181,9 @@ class CoordEnv(gym.Env):
         -------
         obs : dict
             The next observation of the environment, including:
-                - "env_obs": The initial observation from the base environment.
-                - "novice_features": Numpy array of hidden features from the novice policy.
-                - "novice_logit": Numpy array of output logits from the novice policy.
+                - "base_obs": The initial observation from the base environment.
+                - "novice_hidden": Numpy array of hidden features from the novice policy.
+                - "novice_logits": Numpy array of output logits from the novice policy.
         reward : numpy.ndarray
             The reward(s) obtained from the environment after taking the action.
         done : numpy.ndarray
@@ -202,18 +200,16 @@ class CoordEnv(gym.Env):
         --------
         >>> obs, reward, done, info = env.step(action)
         """
-        env_action = self._compute_env_action(action)
-        self.env_obs, env_reward, done, env_info = self.base_env.step(env_action)
+        base_action = self._compute_env_action(action)
+        self.base_obs, base_reward, done, base_info = self.base_env.step(base_action)
 
-        info = dc(env_info)
-        if len(info) == 0:
-            info = [{"env_reward": 0, "env_action": 0}] * self.num_envs
+        info = dc(base_info)
         for i, item in enumerate(info):
-            if "env_reward" not in item:
-                item["env_reward"] = env_reward[i]
-            item["env_action"] = env_action[i]
+            if "base_reward" not in item:
+                item["base_reward"] = base_reward[i]
+            item["base_action"] = base_action[i]
 
-        reward = self._get_reward(env_reward, action, done)
+        reward = self._get_reward(base_reward, action, done)
         self._reset_agents(done)
         self.prev_action = action
 
@@ -227,13 +223,17 @@ class CoordEnv(gym.Env):
         env_action = np.zeros_like(action)
         if is_novice.any():
             env_action[is_novice] = (
-                self.novice.act(self.env_obs[is_novice], greedy=self.config.act_greedy)
+                self.novice.act(
+                    self.base_obs[is_novice], temperature=self.config.temperature
+                )
                 .cpu()
                 .numpy()
             )
         if is_expert.any():
             env_action[is_expert] = (
-                self.expert.act(self.env_obs[is_expert], greedy=self.config.act_greedy)
+                self.expert.act(
+                    self.base_obs[is_expert], temperature=self.config.temperature
+                )
                 .cpu()
                 .numpy()
             )
@@ -246,39 +246,40 @@ class CoordEnv(gym.Env):
         Returns the current observation for the coordination environment.
 
         The observation includes:
-        - The raw observation from the base environment (`env_obs`).
-        - The hidden features from the novice policy (`novice_features`).
-        - The output logits from the novice policy (`novice_logit`).
+        - The raw observation from the base environment (`base_obs`).
+        - The hidden features from the novice policy (`novice_hidden`).
+        - The output logits from the novice policy (`novice_logits`).
 
         Returns
         -------
         obs : dict
             A dictionary containing:
-                - "env_obs": The current observation from the base environment.
-                - "novice_features": Numpy array of hidden features from the novice policy.
-                - "novice_logit": Numpy array of output logits from the novice policy.
+                - "base_obs": The current observation from the base environment.
+                - "novice_hidden": Numpy array of hidden features from the novice policy.
+                - "novice_logits": Numpy array of output logits from the novice policy.
 
         Examples
         --------
         >>> obs = env.get_obs()
-        >>> print(obs["env_obs"].shape)
-        >>> print(obs["novice_features"].shape)
-        >>> print(obs["novice_logit"].shape)
+        >>> print(obs["base_obs"].shape)
+        >>> print(obs["novice_hidden"].shape)
+        >>> print(obs["novice_logits"].shape)
         """
-        model_output = self.novice.model(self.env_obs)
+        # NOTE: novice model must be state-less
+        model_output = self.novice.model(self.base_obs)
         obs = {
-            "env_obs": self.env_obs,
-            "novice_features": model_output.hidden.detach().cpu().numpy(),
-            "novice_logit": model_output.logits.detach().cpu().numpy(),
+            "base_obs": self.base_obs,
+            "novice_hidden": model_output.hidden.detach().cpu().numpy(),
+            "novice_logits": model_output.logits.detach().cpu().numpy(),
         }
         return obs
 
-    def _get_reward(self, env_reward, action, done):
+    def _get_reward(self, base_reward, action, done):
         # cost of querying expert agent
         reward = np.where(
             action == self.EXPERT,
-            env_reward - self.expert_query_cost_per_action,
-            env_reward,
+            base_reward - self.expert_query_cost_per_action,
+            base_reward,
         )
 
         # cost of switching

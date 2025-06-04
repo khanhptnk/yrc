@@ -11,6 +11,19 @@ from yrc.utils.global_variables import get_global_variable
 
 @dataclass
 class PPOPolicyConfig:
+    """
+    Configuration dataclass for PPOPolicy.
+
+    Parameters
+    ----------
+    cls : str, optional
+        Name of the policy class. Default is "PPOPolicy".
+    model : Any, optional
+        Model configuration or class name. Default is "ImpalaCoordPPOModel".
+    load_path : Optional[str], optional
+        Path to a checkpoint to load the policy weights from. Default is None.
+    """
+
     cls: str = "PPOPolicy"
     model: Any = "ImpalaCoordPPOModel"
     load_path: Optional[str] = None
@@ -19,30 +32,31 @@ class PPOPolicyConfig:
         if isinstance(self.model, str):
             self.model = model_factory.config_cls[self.model]()
         elif isinstance(self.model, dict):
+            if "cls" not in self.model:
+                raise IndexError(
+                    "Please specify policy.model.cls through YAML file or flag"
+                )
             self.model = model_factory.config_cls[self.model["cls"]](**self.model)
         else:
             raise ValueError("model must be a string or a dictionary")
 
 
 class PPOPolicy(Policy):
-    def __init__(self, config=None, env=None, model=None):
-        if model is None:
-            model_cls = getattr(model_factory, config.model.cls)
-            self.model = model_cls(config.model, env)
-        else:
-            self.model = model
+    def __init__(self, config, env):
+        model_cls = getattr(model_factory, config.model.cls)
+        self.model = model_cls(config.model, env)
         self.model.to(get_global_variable("device"))
         self.config = config
 
     def reset(self, done: "numpy.ndarray") -> None:
         pass
 
-    def act(self, obs, greedy=False, return_model_output=False):
+    def act(self, obs, temperature=1.0, return_model_output=False):
         model_output = self.model(obs)
-        dist = Categorical(logits=model_output.logits)
-        if greedy:
-            action = dist.probs.argmax(dim=-1)
+        if temperature == 0:
+            action = model_output.logits.argmax(dim=-1)
         else:
+            dist = Categorical(logits=model_output.logits)
             action = dist.sample()
         if return_model_output:
             return action, model_output

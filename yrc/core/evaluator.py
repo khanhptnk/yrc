@@ -6,6 +6,7 @@ import gym
 import numpy as np
 
 import yrc
+from yrc.core.environment import CoordEnv
 
 
 @dataclass
@@ -27,8 +28,8 @@ class EvaluatorConfig:
 
     validation_episodes: int = 256
     test_episodes: int = 256
-    act_greedy: bool = False
-    log_action_id: int = 1
+    temperature: float = 1.0
+    log_action_id: int = CoordEnv.EXPERT
 
 
 class Evaluator:
@@ -70,7 +71,7 @@ class Evaluator:
         >>> print(summary['val']['reward_mean'])
         """
         config = self.config
-        policy.model.eval()
+        policy.eval()
 
         self.summarizer = EvaluationSummarizer(config)
         summary = {}
@@ -106,12 +107,10 @@ class Evaluator:
         has_done = np.array([False] * env.num_envs)
 
         while not has_done.all():
-            action = policy.act(obs, greedy=self.config.act_greedy)
-
+            action = policy.act(obs, temperature=self.config.temperature)
             obs, reward, done, info = env.step(action.cpu().numpy())
             # NOTE: put this before update has_done to include last step in summary
             self.summarizer.add_episode_step(env, action, reward, info, has_done)
-
             has_done |= done
 
         self.summarizer.finalize_episode()
@@ -128,7 +127,7 @@ class EvaluationSummarizer:
     def initialize_episode(self, env):
         self.episode_log = {
             "reward": [0] * env.num_envs,
-            "env_reward": [0] * env.num_envs,
+            "base_reward": [0] * env.num_envs,
             "episode_length": [0] * env.num_envs,
             f"action_{self.log_action_id}": 0,
         }
@@ -145,8 +144,8 @@ class EvaluationSummarizer:
 
     def add_episode_step(self, env, action, reward, info, has_done):
         for i in range(env.num_envs):
-            if "env_reward" in info[i]:
-                self.episode_log["env_reward"][i] += info[i]["env_reward"] * (
+            if "base_reward" in info[i]:
+                self.episode_log["base_reward"][i] += info[i]["base_reward"] * (
                     1 - has_done[i]
                 )
 
@@ -161,14 +160,14 @@ class EvaluationSummarizer:
         log = self.log
         self.summary = {
             "steps": int(sum(log["episode_length"])),
+            "all_rewards": log["reward"],
             "episode_length_mean": float(np.mean(log["episode_length"])),
             "episode_length_min": int(np.min(log["episode_length"])),
             "episode_length_max": int(np.max(log["episode_length"])),
             "reward_mean": float(np.mean(log["reward"])),
-            "raw_reward": log["reward"],
             "reward_std": float(np.std(log["reward"])),
-            "env_reward_mean": float(np.mean(log["env_reward"])),
-            "env_reward_std": float(np.std(log["env_reward"])),
+            "base_reward_mean": float(np.mean(log["base_reward"])),
+            "base_reward_std": float(np.std(log["base_reward"])),
             f"action_{self.log_action_id}_frac": float(
                 log[f"action_{self.log_action_id}"] / sum(log["episode_length"])
             ),
@@ -184,10 +183,10 @@ class EvaluationSummarizer:
             f"   Episode length: mean {summary['episode_length_mean']:7.2f}  "
             f"min {summary['episode_length_min']:7.2f}  "
             f"max {summary['episode_length_max']:7.2f}\n"
-            f"   Reward:        mean {summary['reward_mean']:.2f} "
-            f"± {(1.96 * summary['reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
-            f"   Env Reward:    mean {summary['env_reward_mean']:.2f} "
-            f"± {(1.96 * summary['env_reward_std']) / (len(summary['raw_reward']) ** 0.5):.2f}\n"
+            f"   Reward:         mean {summary['reward_mean']:.2f} "
+            f"± {(1.96 * summary['reward_std']) / (len(summary['all_rewards']) ** 0.5):.2f}\n"
+            f"   Base Reward:    mean {summary['base_reward_mean']:.2f} "
+            f"± {(1.96 * summary['base_reward_std']) / (len(summary['all_rewards']) ** 0.5):.2f}\n"
             f"   Action {self.log_action_id} fraction: {summary[f'action_{self.log_action_id}_frac']:7.2f}\n"
         )
 
