@@ -21,7 +21,7 @@ def load(path, env):
 
     policy_cls = getattr(importlib.import_module("yrc.policies"), config.cls)
     policy = policy_cls(config, env)
-    policy.load_model_checkpoint(ckpt["model_state_dict"])
+    policy.set_params(ckpt["model_state_dict"])
     logging.info(f"Loaded policy from {path}")
 
     return policy
@@ -77,14 +77,17 @@ class Policy(ABC):
         pass
 
     @abstractmethod
-    def load_model_checkpoint(self, load_path: str) -> None:
+    def set_params(self, params: dict) -> None:
         """
-        Loads a model checkpoint from the specified file path.
+        Set the parameters of the policy.
+
+        This method should be overridden by subclasses to update the policy's parameters
+        based on the provided dictionary, such as loading model weights or hyperparameters.
 
         Parameters
         ----------
-        load_path : str
-            The file path to the model checkpoint to be loaded.
+        params : dict
+            A dictionary containing the new parameters for the policy.
 
         Returns
         -------
@@ -92,7 +95,26 @@ class Policy(ABC):
 
         Examples
         --------
-        >>> policy.load_model_checkpoint("checkpoints/model.pt")
+        >>> policy.set_params(params)
+        """
+        pass
+
+    @abstractmethod
+    def get_params(self) -> dict:
+        """
+        Returns the current parameters of the policy.
+
+        This method should be overridden by subclasses to return the relevant parameters
+        of the policy, such as model weights or hyperparameters.
+
+        Returns
+        -------
+        params : dict
+            A dictionary containing the current parameters of the policy.
+
+        Examples
+        --------
+        >>> params = policy.get_params()
         """
         pass
 

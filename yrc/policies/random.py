@@ -1,6 +1,5 @@
-import logging
-import os
 from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 import torch
@@ -56,17 +55,14 @@ class RandomPolicy(Policy):
         )
         return action
 
-    def set_probability(self, prob):
-        self.prob = prob
-
-    def get_probability(self):
-        return self.prob
-
     def reset(self, done):
         pass
 
-    def load_model_checkpoint(self, model_state_dict):
-        self.set_probability(model_state_dict["prob"])
+    def set_params(self, params):
+        self.prob = params["prob"]
+
+    def get_params(self):
+        return {"prob": self.prob}
 
     def train(self):
         pass

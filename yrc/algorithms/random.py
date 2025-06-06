@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 import numpy as np
@@ -18,19 +18,12 @@ class RandomAlgorithmConfig:
     ----------
     cls : str, optional
         Name of the algorithm class. Default is "RandomAlgorithm".
-    min_prob : float, optional
-        Minimum probability value to consider. Default is 0.
-    max_prob : float, optional
-        Maximum probability value to consider. Default is 1.01.
-    prob_step : float, optional
-        Step size for probability increments. Default is 0.1.
+    probs : list of float, optional
+        List of probabilities to search. Default is np.arange(0, 1.01, 0.1).
     """
 
     cls: str = "RandomAlgorithm"
-    min_prob: float = 0
-    max_prob: float = 1.01
-    prob_step: float = 0.1
-    probs = List[float] = list(np.arange(0, 1.01, 0.1))
+    probs: List[float] = field(default_factory=lambda: np.arange(0, 1.01, 0.1).tolist())
 
 
 class RandomAlgorithm(Algorithm):
@@ -43,41 +36,46 @@ class RandomAlgorithm(Algorithm):
         envs: Dict[str, "gym.Env"],
         evaluator: "yrc.core.Evaluator",
         train_split: str = "train",
-        eval_splits: List[str] = ["test"],
+        eval_splits: List[str] = ["val_sim, val_true"],
     ):
         """
-        Train the AlwaysAlgorithm, which always returns the same action regardless of input.
+        Train the RandomAlgorithm by searching for the best probability parameter
+        that maximizes evaluation reward.
 
         Parameters
         ----------
-        policy : Policy
-            The policy to use for generating actions.
-        envs : dict
-            Dictionary of environments keyed by split name.
-        evaluator : Evaluator, optional
-            Evaluator for evaluating the policy performance. Default is None.
+        policy : yrc.policies.PPOPolicy
+            The policy to be evaluated and tuned.
+        envs : dict of str to gym.Env
+            Dictionary mapping split names to environment instances.
+        evaluator : yrc.core.Evaluator
+            Evaluator object for policy evaluation and summary logging.
         train_split : str, optional
-            The training split to use. Default is "train".
-        eval_splits : list, optional
-            List of evaluation splits. Default is None.
+            The environment split to use for training. Default is "train".
+        eval_splits : list of str, optional
+            List of environment splits to use for evaluation. Default is ["val_sim, val_true"].
 
         Returns
         -------
         None
-        """
 
+        Examples
+        --------
+        >>> algorithm = RandomAlgorithm(RandomAlgorithmConfig())
+        >>> algorithm.train(policy, envs, evaluator)
+        """
         config = self.config
         self.save_dir = get_global_variable("experiment_dir")
 
         best_prob = {}
         best_result = {}
         for split in eval_splits:
-            best_result[split] = {"reward_mean": -1e9}
+            best_result[split] = {"reward_mean": -float("inf")}
 
         for prob in config.probs:
             logging.info(f"Prob: {prob}")
 
-            policy.set_probability(prob)
+            policy.set_params({"prob": prob})
             eval_results = evaluator.eval(policy, envs, eval_splits)
 
             for split in eval_splits:
@@ -99,7 +97,7 @@ class RandomAlgorithm(Algorithm):
         torch.save(
             {
                 "policy_config": policy.config,
-                "model_state_dict": {"prob": policy.get_probability()},
+                "model_state_dict": policy.get_params(),
             },
             save_path,
         )

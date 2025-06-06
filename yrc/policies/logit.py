@@ -21,16 +21,22 @@ class LogitPolicyConfig:
 
 class LogitPolicy(Policy):
     def __init__(self, config, env):
-        self.args = config.coord_policy
+        self.config = config
         self.params = {"threshold": config.threshold, "temperature": config.temperature}
         self.device = get_global_variable("device")
+        self.EXPERT = env.EXPERT
 
     def act(self, obs, temperature=None):
         logits = obs["novice_logits"]
         if not torch.is_tensor(logits):
             logits = torch.from_numpy(logits).to(self.device).float()
         score = self.compute_confidence(logits)
-        action = (score < self.params["threshold"]).long()
+        # query expert when confidence score < threshold
+        action = torch.where(
+            score < self.params["threshold"],
+            self.EXPERT,
+            1 - self.EXPERT,
+        )
         return action
 
     def compute_confidence(self, logits):
@@ -60,13 +66,17 @@ class LogitPolicy(Policy):
 
         return score
 
-    def update_params(self, params):
+    def reset(self, done: "numpy.ndarray") -> None:
+        pass
+
+    def get_params(self):
+        return self.params
+
+    def set_params(self, params):
         self.params = dc(params)
 
-    def save_model(self, name, save_dir):
-        save_path = os.path.join(save_dir, f"{name}.ckpt")
-        torch.save(self.params, save_path)
-        logging.info(f"Saved model to {save_path}")
+    def train(self):
+        pass
 
-    def load_model(self, load_path):
-        self.params = torch.load(load_path)
+    def eval(self):
+        pass

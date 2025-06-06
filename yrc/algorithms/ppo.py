@@ -116,7 +116,7 @@ class PPOAlgorithm(Algorithm):
         envs: Dict[str, "gym.Env"],
         evaluator: "yrc.core.Evaluator",
         train_split: str = "train",
-        eval_splits: List[str] = ["test"],
+        eval_splits: List[str] = ["val_sim, val_true"],
     ):
         """
         Trains the PPO algorithm on the specified environment(s) using the provided policy.
@@ -377,7 +377,7 @@ class PPOAlgorithm(Algorithm):
         torch.save(
             {
                 "policy_config": policy.config,
-                "model_state_dict": policy.model.state_dict(),
+                "model_state_dict": policy.get_params(),
                 "optim_state_dict": self.optim.state_dict(),
                 "global_step": self.global_step,
             },
@@ -387,7 +387,7 @@ class PPOAlgorithm(Algorithm):
 
     def load_checkpoint(self, policy, load_path):
         ckpt = torch.load(load_path, map_location=get_global_variable("device"))
-        policy.model.load_state_dict(ckpt["model_state_dict"])
+        policy.set_params(ckpt["model_state_dict"])
         self.optim.load_state_dict(ckpt["optim_state_dict"])
         self.global_step = ckpt["global_step"]
         logging.info(

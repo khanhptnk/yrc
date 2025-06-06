@@ -28,7 +28,7 @@ class AlwaysAlgorithm(Algorithm):
         envs: Dict[str, "gym.Env"],
         evaluator: "yrc.core.Evaluator",
         train_split: str = "train",
-        eval_splits: List[str] = ["test"],
+        eval_splits: List[str] = ["val_sim, val_true"],
     ):
         """
         Train the AlwaysAlgorithm, which always returns the same action regardless of input.
@@ -44,7 +44,7 @@ class AlwaysAlgorithm(Algorithm):
         train_split : str, optional
             The training split to use. Default is "train".
         eval_splits : list, optional
-            List of evaluation splits. Default is None.
+            List of evaluation splits. Default is ["val_sim, val_true"].
 
         Returns
         -------

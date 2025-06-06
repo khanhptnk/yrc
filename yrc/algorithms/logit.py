@@ -1,11 +1,10 @@
 import logging
 import pprint
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 import numpy as np
 import torch
-from torch.distributions.categorical import Categorical
 
 from yrc.core import Algorithm
 from yrc.utils.global_variables import get_global_variable
@@ -13,10 +12,25 @@ from yrc.utils.global_variables import get_global_variable
 
 @dataclass
 class LogitAlgorithmConfig:
+    """
+    Configuration dataclass for LogitAlgorithm.
+
+    Parameters
+    ----------
+    num_rollouts : int, optional
+        Number of rollouts to use for score generation. Default is 128.
+    percentiles : list of float, optional
+        List of percentiles to use for threshold selection. Default is range(0, 101, 10).
+    explore_temps : list of float, optional
+        List of temperatures to use during exploration rollouts. Default is [1.0].
+    score_temps : list of float, optional
+        List of temperatures to use when scoring. Default is [1.0].
+    """
+
     num_rollouts: int = 128
-    percentiles: List[float] = list(range(0, 101, 10))
-    explore_temps: List[float] = [1.0]
-    score_temps: List[float] = [1.0]
+    percentiles: List[float] = field(default_factory=lambda: list(range(0, 101, 10)))
+    explore_temps: List[float] = field(default_factory=lambda: [1.0])
+    score_temps: List[float] = field(default_factory=lambda: [1.0])
 
 
 class LogitAlgorithm(Algorithm):
@@ -29,7 +43,7 @@ class LogitAlgorithm(Algorithm):
         envs: Dict[str, "gym.Env"],
         evaluator: "yrc.core.Evaluator",
         train_split: str = "train",
-        eval_splits: List[str] = ["test"],
+        eval_splits: List[str] = ["val_sim", "val_true"],
     ):
         """
         Train the LogitAlgorithm by searching for the best threshold and temperature parameters
@@ -46,7 +60,7 @@ class LogitAlgorithm(Algorithm):
         train_split : str, optional
             The environment split to use for training. Default is "train".
         eval_splits : list of str, optional
-            List of environment splits to use for evaluation. Default is ["test"].
+            List of environment splits to use for evaluation. Default is ["val_sim", "val_true"].
 
         Returns
         -------
@@ -58,7 +72,7 @@ class LogitAlgorithm(Algorithm):
         best_params = {}
         best_result = {}
         for split in eval_splits:
-            best_result[split] = {"reward_mean": -1e9}
+            best_result[split] = {"reward_mean": -float("inf")}
 
         train_env = envs[train_split]
 
@@ -72,11 +86,7 @@ class LogitAlgorithm(Algorithm):
             thresholds = [np.percentile(scores, pct) for pct in config.percentiles]
             for score_temp in config.score_temps:
                 for threshold in thresholds:
-                    params = {
-                        "threshold": threshold,
-                        "explore_temp": explore_temp,
-                        "score_temp": score_temp,
-                    }
+                    params = {"threshold": threshold, "temperature": score_temp}
 
                     logging.info("Parameters: " + pprint.pformat(params, indent=2))
 
@@ -100,8 +110,6 @@ class LogitAlgorithm(Algorithm):
                         )
                         evaluator.summarizer.write(best_result[split])
 
-        policy.update_params(best_params)
-
     def save_checkpoint(self, policy, name):
         save_path = f"{self.save_dir}/{name}.ckpt"
         torch.save(
@@ -115,7 +123,7 @@ class LogitAlgorithm(Algorithm):
 
     def _generate_scores(self, env, policy, num_rollouts, temperature):
         @torch.no_grad()
-        def _rollout_once():
+        def rollout_once():
             policy.eval()
             obs = env.reset()
             has_done = np.array([False] * env.num_envs)
@@ -142,5 +150,5 @@ class LogitAlgorithm(Algorithm):
         ), "LogitAlgorithm requires num_rollouts to be divisible by num_envs"
         scores = []
         for i in range(num_rollouts // env.num_envs):
-            scores.extend(self._rollout_once())
+            scores.extend(rollout_once())
         return scores

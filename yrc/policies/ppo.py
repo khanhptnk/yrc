@@ -62,8 +62,11 @@ class PPOPolicy(Policy):
             return action, model_output
         return action
 
-    def load_model_checkpoint(self, model_state_dict):
-        self.model.load_state_dict(model_state_dict)
+    def set_params(self, params):
+        self.model.load_state_dict(params)
+
+    def get_params(self):
+        return self.model.state_dict()
 
     def train(self):
         self.model.train()

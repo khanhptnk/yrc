@@ -45,7 +45,10 @@ class AlwaysPolicy(Policy):
     def reset(self, done: "numpy.ndarray") -> None:
         pass
 
-    def load_model_checkpoint(self, model_state_dict):
+    def get_params(self):
+        pass
+
+    def set_params(self, params):
         pass
 
     def train(self):
