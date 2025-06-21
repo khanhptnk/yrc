@@ -27,6 +27,7 @@ class LogitAlgorithmConfig:
         List of temperatures to use when scoring. Default is [1.0].
     """
 
+    cls: str = "LogitAlgorithm"
     num_rollouts: int = 128
     percentiles: List[float] = field(default_factory=lambda: list(range(0, 101, 10)))
     explore_temps: List[float] = field(default_factory=lambda: [1.0])
@@ -34,7 +35,7 @@ class LogitAlgorithmConfig:
 
 
 class LogitAlgorithm(Algorithm):
-    def __init__(self, config, env):
+    def __init__(self, config):
         self.config = config
 
     def train(
@@ -79,18 +80,24 @@ class LogitAlgorithm(Algorithm):
         self.score_fn = policy.compute_confidence
 
         for explore_temp in config.explore_temps:
-            # Generate scores by rolling out novice in training environment
-            scores = self._generate_scores(
-                train_env.base_env, train_env.novice, config.num_rollouts, explore_temp
-            )
-            thresholds = [np.percentile(scores, pct) for pct in config.percentiles]
+            logging.info(f"Exploration temperature: {explore_temp}")
             for score_temp in config.score_temps:
+                policy.set_params({"temperature": score_temp})
+                # Generate scores by rolling out (simulated) novice in training environment
+                scores = self._generate_scores(
+                    train_env.base_env,
+                    train_env.novice,
+                    explore_temp,
+                    config.num_rollouts,
+                )
+                thresholds = [np.percentile(scores, pct) for pct in config.percentiles]
+                logging.info("Thresholds: " + pprint.pformat(thresholds, indent=2))
                 for threshold in thresholds:
-                    params = {"threshold": threshold, "temperature": score_temp}
+                    policy.set_params({"threshold": threshold})
 
-                    logging.info("Parameters: " + pprint.pformat(params, indent=2))
+                    cur_params = policy.get_params()
+                    logging.info("Parameters: " + pprint.pformat(cur_params, indent=2))
 
-                    policy.set_params(params)
                     eval_results = evaluator.eval(policy, envs, eval_splits)
 
                     for split in eval_splits:
@@ -98,9 +105,9 @@ class LogitAlgorithm(Algorithm):
                             eval_results[split]["reward_mean"]
                             > best_result[split]["reward_mean"]
                         ):
-                            best_params[split] = params
+                            best_params[split] = cur_params
                             best_result[split] = eval_results[split]
-                            policy.save_checkpoint(policy, f"best_{split}")
+                            self.save_checkpoint(policy, f"best_{split}")
 
                         # log best result so far
                         logging.info(f"BEST {split} so far")
@@ -121,13 +128,12 @@ class LogitAlgorithm(Algorithm):
         )
         logging.info(f"Saved checkpoint to {save_path}")
 
-    def _generate_scores(self, env, policy, num_rollouts, temperature):
+    def _generate_scores(self, env, policy, temperature, num_rollouts):
         @torch.no_grad()
         def rollout_once():
             policy.eval()
             obs = env.reset()
             has_done = np.array([False] * env.num_envs)
-            scores = []
 
             while not has_done.all():
                 action, model_output = policy.act(
@@ -140,7 +146,7 @@ class LogitAlgorithm(Algorithm):
                     if not has_done[i]:
                         scores.append(score[i].item())
 
-                obs, _, done, _ = env.step(action)
+                obs, _, done, _ = env.step(action.cpu().numpy())
                 has_done |= done
 
             return scores
@@ -150,5 +156,5 @@ class LogitAlgorithm(Algorithm):
         ), "LogitAlgorithm requires num_rollouts to be divisible by num_envs"
         scores = []
         for i in range(num_rollouts // env.num_envs):
-            scores.extend(rollout_once())
+            rollout_once()
         return scores

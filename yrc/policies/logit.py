@@ -1,5 +1,3 @@
-import logging
-import os
 from copy import deepcopy as dc
 from dataclasses import dataclass
 from typing import Optional
@@ -49,31 +47,34 @@ class LogitPolicy(Policy):
             score = logits.softmax(dim=-1).max(dim=-1)[0]
         elif metric == "margin":
             if logits.size(-1) > 1:
-                # Original behavior for multi-class case
+                # Multi-class case
                 top2 = logits.softmax(dim=-1).topk(2, dim=-1)[0]
                 score = top2[:, 0] - top2[:, 1]
-                score = score.unsqueeze(-1)
+                score = score
             else:
-                # Binary case when logit has shape (..., 1)
-                prob = logits.sigmoid().unsqueeze(-1)
+                # Binary case when logits has shape (B, 1)
+                prob = logits.sigmoid().squeeze(-1)
                 score = torch.abs(2 * prob - 1)
-        elif metric == "neg_entropy":
+        elif metric == "entropy":
+            # NOTE: we compute NEGATIVE entropy so that higher = more confident
             score = -Categorical(logits=logits).entropy()
-        elif metric == "neg_energy":
+        elif metric == "energy":
             score = logits.logsumexp(dim=-1)
         else:
             raise NotImplementedError(f"Unrecognized metric: {metric}")
-
         return score
 
     def reset(self, done: "numpy.ndarray") -> None:
         pass
 
     def get_params(self):
-        return self.params
+        return dc(self.params)
 
     def set_params(self, params):
-        self.params = dc(params)
+        for k, v in params.items():
+            if k not in self.params:
+                raise KeyError(f"Parameter {k} not recognized in LogitPolicy")
+            self.params[k] = dc(v)
 
     def train(self):
         pass

@@ -126,9 +126,9 @@ class ImpalaCoordPPOModel(nn.Module):
         novice_hidden = obs["novice_hidden"]
         if not torch.is_tensor(novice_hidden):
             novice_hidden = torch.from_numpy(novice_hidden).float().to(self.device)
-        novice_logit = obs["novice_logit"]
-        if not torch.is_tensor(novice_logit):
-            novice_logit = torch.from_numpy(novice_logit).float().to(self.device)
+        novice_logits = obs["novice_logits"]
+        if not torch.is_tensor(novice_logits):
+            novice_logits = torch.from_numpy(novice_logits).float().to(self.device)
 
         if self.feature_type == "obs":
             hidden = self.embedder(base_obs)
@@ -137,19 +137,19 @@ class ImpalaCoordPPOModel(nn.Module):
         elif self.feature_type == "hidden_obs":
             hidden = torch.cat([self.embedder(base_obs), novice_hidden], dim=-1)
         elif self.feature_type == "dist":
-            hidden = novice_logit.softmax(dim=-1)
+            hidden = novice_logits.softmax(dim=-1)
         elif self.feature_type == "hidden_dist":
-            hidden = torch.cat([novice_hidden, novice_logit.softmax(dim=-1)], dim=-1)
+            hidden = torch.cat([novice_hidden, novice_logits.softmax(dim=-1)], dim=-1)
         elif self.feature_type == "obs_dist":
             hidden = torch.cat(
-                [self.embedder(base_obs), novice_logit.softmax(dim=-1)], dim=-1
+                [self.embedder(base_obs), novice_logits.softmax(dim=-1)], dim=-1
             )
         elif self.feature_type == "obs_hidden_dist":
             hidden = torch.cat(
                 [
                     self.embedder(base_obs),
                     novice_hidden,
-                    novice_logit.softmax(dim=-1),
+                    novice_logits.softmax(dim=-1),
                 ],
                 dim=-1,
             )
