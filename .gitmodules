@@ -1,12 +1,3 @@
-[submodule "lib/cliport"]
-	path = lib/cliport
-	url = https://github.com/modanesh/cliport.git
-[submodule "lib/pyod"]
-	path = lib/pyod
-	url = https://github.com/modanesh/pyod.git
-[submodule "lib/Minigrid"]
-	path = lib/Minigrid
-	url = https://github.com/modanesh/Minigrid.git
-[submodule "lib/procgenAISC"]
-	path = lib/procgenAISC
-	url = https://github.com/JacobPfau/procgenAISC.git
+[submodule "yrc/lib/pyod"]
+	path = yrc/lib/pyod
+	url = https://github.com/yzhao062/pyod

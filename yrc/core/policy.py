@@ -19,8 +19,7 @@ def load(path, env):
     ckpt = torch.load(path, map_location=get_global_variable("device"))
     config = ckpt["policy_config"]
 
-    policy_cls = getattr(importlib.import_module("yrc.policies"), config.cls)
-    policy = policy_cls(config, env)
+    policy = make(config, env)
     policy.set_params(ckpt["model_state_dict"])
     logging.info(f"Loaded policy from {path}")
 

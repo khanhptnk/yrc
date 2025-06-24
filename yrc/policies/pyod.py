@@ -16,16 +16,21 @@ class PyODPolicyConfig:
     method: str = "DeepSVDD"
     feature_type: str = "hidden"
     pyod_config: Optional[Dict[str, Any]] = None
+    load_path: Optional[str] = None
 
 
 class PyODPolicy(Policy):
     def __init__(self, config, env):
         self.config = config
         self.threshold = None
+        self.device = get_global_variable("device")
+
+        config.pyod_config["device"] = self.device
+        config.pyod_config["random_state"] = get_global_variable("seed")
         self.clf = self._get_pyod_class(config)(**config.pyod_config)
 
         if hasattr(self.clf, "model_") and isinstance(self.clf.model_, nn.Module):
-            self.clf.model_.to(get_global_variable("device"))
+            self.clf.model_.to(self.device)
 
         self.feature_type = config.feature_type
         self.EXPERT = env.EXPERT
@@ -33,7 +38,7 @@ class PyODPolicy(Policy):
     def _get_pyod_class(self, config):
         try:
             module_name, cls_name = config.method.split(".")
-            module_name = f"pyod.models.{module_name}"
+            module_name = f"yrc.lib.pyod.pyod.models.{module_name}"
             module = importlib.import_module(module_name)
             cls = getattr(module, cls_name)
             return cls

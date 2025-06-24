@@ -21,14 +21,6 @@ class PyODAlgorithmConfig:
     explore_temps: List[float] = field(default_factory=lambda: [1.0])
     accept_rate: float = 0.05
 
-    # contamination: float = 0.1
-    # use_ae: bool = False
-    # num_rollouts: int = 64
-    # num_thresholds: int = 10
-    # epoch: int = 100
-    # batch_size: int = 64
-    # feature_size: int = 64
-
 
 class PyODAlgorithm(Algorithm):
     def __init__(self, config):

@@ -15,6 +15,7 @@ class LogitPolicyConfig:
     metric: str = "max_logit"
     threshold: Optional[float] = None
     temperature: Optional[float] = None
+    load_path: Optional[str] = None
 
 
 class LogitPolicy(Policy):
