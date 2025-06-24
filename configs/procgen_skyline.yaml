@@ -7,7 +7,11 @@ env:
     val_sim:
         distribution_mode: 'hard'
 algorithm: 'PPOAlgorithm'
-policy: 'PPOPolicy'
+policy: 
+    cls: PPOPolicy
+    model:
+        cls: ImpalaCoordPPOModel
+        feature_type: obs
 coordination:
     expert_query_cost_weight: 0.4
     switch_agent_cost_weight: 0.0
