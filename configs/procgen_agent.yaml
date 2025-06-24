@@ -1,4 +1,4 @@
-name: "procgen_ppo_novice"
+name: "procgen_agent_novice"
 algorithm:
     cls: "PPOAlgorithm"
     total_timesteps: 15000000

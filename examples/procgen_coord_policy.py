@@ -21,12 +21,7 @@ def parse_args():
         default=None,
         help="Path to the configuration file",
     )
-    parser.add_argument(
-        "--eval",
-        action="store_true",
-        default=False,
-        help="Run evaluation instead of training",
-    )
+
     parser.add_argument(
         "--eval_splits",
         nargs="+",
@@ -92,7 +87,7 @@ def train(args, config):
     )
 
 
-def eval(args, config):
+def evaluate(args, config):
     splits = args.eval_splits
 
     base_envs = {}
@@ -120,7 +115,7 @@ def eval(args, config):
         logging.info("WARNING: No policy load path specified, using default policy.")
         policy = yrc.make_policy(config.policy, envs[splits[0]])
     evaluator = yrc.Evaluator(config.evaluation)
-    
+
     evaluator.eval(policy, envs, splits)
 
 
@@ -130,10 +125,10 @@ def main():
     yrc.register_config("procgen", ProcgenConfig)
 
     args, config = parse_args()
-    if args.eval:
-        eval(args, config)
-    else:
+    if config.eval_name is None:
         train(args, config)
+    else:
+        evaluate(args, config)
 
 
 if __name__ == "__main__":

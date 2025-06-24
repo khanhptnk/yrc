@@ -16,7 +16,9 @@ def make(config, env):
 
 
 def load(path, env):
-    ckpt = torch.load(path, map_location=get_global_variable("device"))
+    ckpt = torch.load(
+        path, map_location=get_global_variable("device"), weights_only=False
+    )
     config = ckpt["policy_config"]
 
     policy = make(config, env)

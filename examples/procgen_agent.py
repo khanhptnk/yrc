@@ -5,7 +5,7 @@ Training novice:
     python procgen_agent.py --config configs/procgen_ppo.yaml name=$TRAIN_NAME env.train.distribution_mode=easy env.test.distribution_mode=easy
 
 Evaluate novice:
-    python examples/procgen_agent.py --config configs/procgen_ppo.yaml --eval eval_name=$EVAL_NAME env.test.distribution_mode=easy policy.load_path=experiments/$TRAIN_NAME/best_test.ckpt
+    python examples/procgen_agent.py --config configs/procgen_ppo.yaml eval_name=$EVAL_NAME env.test.distribution_mode=easy policy.load_path=experiments/$TRAIN_NAME/best_test.ckpt
 
 To train/evaluate expert, change the distribution_model to "hard".
 For more options, see the ProcgenConfig class in environments/procgen/config.py.
@@ -31,12 +31,6 @@ def parse_args():
         type=str,
         default=None,
         help="Path to the configuration file",
-    )
-    parser.add_argument(
-        "--eval",
-        action="store_true",
-        default=False,
-        help="Run evaluation instead of training",
     )
     parser.add_argument(
         "--eval_splits",
@@ -72,7 +66,7 @@ def train(args, config):
     )
 
 
-def eval(args, config):
+def evaluate(args, config):
     eval_splits = args.eval_splits
     envs = {
         split: environments.procgen.make_env(split, config.env) for split in eval_splits
@@ -88,10 +82,10 @@ def main():
     yrc.register_config("procgen", ProcgenConfig)
 
     args, config = parse_args()
-    if args.eval:
-        eval(args, config)
-    else:
+    if config.eval_name is None:
         train(args, config)
+    else:
+        evaluate(args, config)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,6 @@
 [submodule "yrc/lib/pyod"]
 	path = yrc/lib/pyod
 	url = https://github.com/yzhao062/pyod
+[submodule "environments/procgen/procgenAISC"]
+	path = environments/procgen/procgenAISC
+	url = git@github.com:JacobPfau/procgenAISC.git
