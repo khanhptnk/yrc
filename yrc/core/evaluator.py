@@ -26,21 +26,19 @@ class EvaluatorConfig:
         The action index to track and log the fraction of times this action is taken during evaluation episodes.
     """
 
-    validation_episodes: int = 256
-    test_episodes: int = 256
+    num_episodes: int = 256
     temperature: float = 1.0
     log_action_id: int = CoordEnv.EXPERT
 
 
 class Evaluator:
-    def __init__(self, config):
+    def __init__(self, config, env):
         self.config = config
+        self.env = env
 
-    def eval(
+    def evaluate(
         self,
         policy: "yrc.core.Policy",
-        envs: Dict[str, "gym.Env"],
-        eval_splits: List[str],
         num_episodes: int = None,
     ) -> dict:
         """
@@ -70,35 +68,53 @@ class Evaluator:
         >>> summary = evaluator.eval(policy, envs, ['val', 'test'], num_episodes=100)
         >>> print(summary['val']['reward_mean'])
         """
+
         config = self.config
+        env = self.env
+
+        if num_episodes is None:
+            num_episodes = config.num_episodes
+
+        assert (
+            num_episodes % env.num_envs == 0
+        ), "Number of episodes must be divisible by the number of environments in each split."
+
         policy.eval()
 
+        num_iterations = num_episodes // env.num_envs
+
         self.summarizer = EvaluationSummarizer(config)
-        summary = {}
 
-        for split in eval_splits:
-            if num_episodes is None:
-                if "val" in split:
-                    num_episodes = config.validation_episodes
-                else:
-                    assert "test" in split
-                    num_episodes = config.test_episodes
-                assert num_episodes % envs[split].num_envs == 0
+        for _ in range(num_iterations):
+            self._eval_one_iteration(policy, env)
 
-            logging.info(f"Evaluation on {split} for {num_episodes} episodes")
-
-            num_iterations = num_episodes // envs[split].num_envs
-
-            self.summarizer.clear()
-
-            for _ in range(num_iterations):
-                self._eval_one_iteration(policy, envs[split])
-
-            summary[split] = self.summarizer.write()
-
-            envs[split].close()
+        summary = self.summarizer.write()
 
         return summary
+
+        # for split in eval_splits:
+        #     if num_episodes is None:
+        #         if "val" in split:
+        #             num_episodes = config.validation_episodes
+        #         else:
+        #             assert "test" in split
+        #             num_episodes = config.test_episodes
+        #         assert num_episodes % envs[split].num_envs == 0
+
+        #     logging.info(f"Evaluation on {split} for {num_episodes} episodes")
+
+        #     num_iterations = num_episodes // envs[split].num_envs
+
+        #     self.summarizer.clear()
+
+        #     for _ in range(num_iterations):
+        #         self._eval_one_iteration(policy, envs[split])
+
+        #     summary[split] = self.summarizer.write()
+
+        #     envs[split].close()
+
+        # return summary
 
     def _eval_one_iteration(self, policy, env):
         self.summarizer.initialize_episode(env)

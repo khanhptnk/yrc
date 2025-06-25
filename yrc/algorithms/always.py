@@ -25,10 +25,8 @@ class AlwaysAlgorithm(Algorithm):
     def train(
         self,
         policy: "yrc.policies.PPOPolicy",
-        envs: Dict[str, "gym.Env"],
-        evaluator: "yrc.core.Evaluator",
-        train_split: str = "train",
-        eval_splits: List[str] = ["val_sim, val_true"],
+        env: "gym.Env",
+        validators: Dict[str, "yrc.core.Evaluator"],
     ):
         """
         Train the AlwaysAlgorithm, which always returns the same action regardless of input.

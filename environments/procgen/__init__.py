@@ -1,6 +1,5 @@
 from environments.procgen.procgenAISC.procgen import ProcgenEnv
 
-from .config import ProcgenConfig
 from .wrappers import (
     HardResetWrapper,
     ScaledFloatFrame,

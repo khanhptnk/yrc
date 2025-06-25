@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict
 
 import gym
 import numpy as np
@@ -87,17 +87,19 @@ class PPOAlgorithm(Algorithm):
     def __init__(self, config):
         self.config = config
 
-    def _initialize_training(self, train_env, policy):
+    def _initialize(self):
         config = self.config
-        self.num_envs = train_env.num_envs
+        env = self.env
+        policy = self.policy
 
+        self.num_envs = env.num_envs
         self.batch_size = int(self.num_envs * config.num_steps)
         self.minibatch_size = int(self.batch_size // config.num_minibatches)
         self.num_iterations = config.total_timesteps // self.batch_size
 
         self.save_dir = get_global_variable("experiment_dir")
 
-        self.buffer = TrainBuffer.new(train_env, config.num_steps)
+        self.buffer = TrainBuffer.new(env, config.num_steps)
         self.global_step = 0
         self.summarizer = PPOTrainSummarizer(config)
 
@@ -108,15 +110,13 @@ class PPOAlgorithm(Algorithm):
         configure_logging(get_global_variable("log_file"))
         self.wandb_logger = WandbLogger()
 
-        train_env.reset()
+        env.reset()
 
     def train(
         self,
         policy: "yrc.policies.PPOPolicy",
-        envs: Dict[str, "gym.Env"],
-        evaluator: "yrc.core.Evaluator",
-        train_split: str = "train",
-        eval_splits: List[str] = ["val_sim, val_true"],
+        env: "gym.Env",
+        validators: Dict[str, "yrc.core.Evaluator"],
     ):
         """
         Trains the PPO algorithm on the specified environment(s) using the provided policy.
@@ -147,9 +147,12 @@ class PPOAlgorithm(Algorithm):
         """
 
         config = self.config
-        self._initialize_training(envs[train_split], policy)
+        self.env = env
+        self.policy = policy
 
-        best_result = {split: {"reward_mean": -float("inf")} for split in eval_splits}
+        self._initialize()
+
+        best_result = {split: {"reward_mean": -float("inf")} for split in validators}
 
         for iteration in range(self.num_iterations):
             # save checkpoint
@@ -165,35 +168,41 @@ class PPOAlgorithm(Algorithm):
 
                 self.save_checkpoint(policy, "last")
 
-                eval_results = evaluator.eval(policy, envs, eval_splits)
-                for split in eval_splits:
+                eval_result = {}
+                for split, validator in validators.items():
+                    logging.info(f"Evaluating on {split} split")
+                    eval_result[split] = validator.evaluate(policy)
                     if (
-                        eval_results[split]["reward_mean"]
+                        eval_result[split]["reward_mean"]
                         > best_result[split]["reward_mean"]
                     ):
-                        best_result[split] = eval_results[split]
+                        best_result[split] = eval_result[split]
                         self.save_checkpoint(policy, f"best_{split}")
+
+                for split, validator in validators.items():
                     logging.info(f"BEST {split} so far")
-                    evaluator.summarizer.write(best_result[split])
+                    validator.summarizer.write(best_result[split])
 
                 # wandb logging
                 self.wandb_logger.clear()
                 self.wandb_logger.log["step"] = self.global_step
                 if iteration > 0:
                     self.wandb_logger.add("train", train_summary)
-                for split in eval_splits:
-                    self.wandb_logger.add(split, eval_results[split])
+                for split in validators:
+                    self.wandb_logger.add(split, eval_result[split])
                     self.wandb_logger.add(f"best_{split}", best_result[split])
                 wandb.log(self.wandb_logger.get())
 
             # training
-            self._train_once(policy, envs[train_split])
+            self._train_once()
 
         # close env after training
-        envs[train_split].close()
+        env.close()
 
-    def _train_once(self, policy, env):
+    def _train_once(self):
         config = self.config
+        env = self.env
+        policy = self.policy
         buffer = self.buffer
         device = get_global_variable("device")
 

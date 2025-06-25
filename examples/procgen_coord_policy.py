@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import environments
 import yrc
-from environments.procgen import ProcgenConfig
+from environments.procgen.config import ProcgenConfig
 
 
 def parse_args():
@@ -44,20 +44,16 @@ def compute_reward_per_action(config):
     return reward_per_action
 
 
-def train(args, config):
-    eval_splits = args.eval_splits
-    splits = ["train"] + eval_splits
-
+def make_envs(splits, config):
     base_envs = {}
     for split in splits:
         base_envs[split] = environments.procgen.make_env(split, config.env)
 
-    train_novice = yrc.load_policy(config.train_novice, base_envs["train"])
-    train_expert = yrc.load_policy(config.train_expert, base_envs["train"])
-    test_novice = yrc.load_policy(config.test_novice, base_envs[eval_splits[0]])
-    test_expert = yrc.load_policy(config.test_expert, base_envs[eval_splits[0]])
-
-    reward_per_action = compute_reward_per_action(config.env)
+    some_base_env = list(base_envs.values())[0]
+    train_novice = yrc.load_policy(config.train_novice, some_base_env)
+    train_expert = yrc.load_policy(config.train_expert, some_base_env)
+    test_novice = yrc.load_policy(config.test_novice, some_base_env)
+    test_expert = yrc.load_policy(config.test_expert, some_base_env)
 
     envs = {}
     for split in splits:
@@ -74,39 +70,28 @@ def train(args, config):
     for split in splits:
         envs[split].set_costs(reward_per_action)
 
+    return envs
+
+
+def train(args, config):
+    eval_splits = args.eval_splits
+    splits = ["train"] + eval_splits
+
+    envs = make_envs(splits, config)
     policy = yrc.make_policy(config.policy, envs["train"])
     algorithm = yrc.make_algorithm(config.algorithm)
-    evaluator = yrc.Evaluator(config.evaluation)
 
-    algorithm.train(
-        policy,
-        envs,
-        evaluator,
-        train_split="train",
-        eval_splits=["val_sim", "val_true"],
-    )
+    validators = {}
+    for split in eval_splits:
+        validators[split] = yrc.Evaluator(config.evaluation, envs[split])
+
+    algorithm.train(policy, envs["train"], validators)
 
 
 def evaluate(args, config):
     splits = args.eval_splits
 
-    base_envs = {}
-    for split in splits:
-        base_envs[split] = environments.procgen.make_env(split, config.env)
-
-    novice = yrc.load_policy(config.test_novice, base_envs[splits[0]])
-    expert = yrc.load_policy(config.test_expert, base_envs[splits[0]])
-
-    envs = {}
-    for split in splits:
-        envs[split] = yrc.CoordEnv(
-            config.coordination, base_envs[split], novice, expert
-        )
-
-    # Set costs for the coordination environment
-    reward_per_action = compute_reward_per_action(config.env)
-    for split in splits:
-        envs[split].set_costs(reward_per_action)
+    envs = make_envs(splits, config)
 
     if config.policy.load_path is not None:
         # Load the policy from the specified path
@@ -114,15 +99,17 @@ def evaluate(args, config):
     else:
         logging.info("WARNING: No policy load path specified, using default policy.")
         policy = yrc.make_policy(config.policy, envs[splits[0]])
-    evaluator = yrc.Evaluator(config.evaluation)
 
-    evaluator.eval(policy, envs, splits)
+    for split in splits:
+        logging.info(f"Evaluating on {split} split")
+        evaluator = yrc.Evaluator(config.evaluation, envs[split])
+        evaluator.evaluate(policy)
 
 
 def main():
     # register the Procgen configuration with YRC
     # NOTE: do this before parsing args to ensure the config is available
-    yrc.register_config("procgen", ProcgenConfig)
+    yrc.register_env_config("procgen", ProcgenConfig)
 
     args, config = parse_args()
     if config.eval_name is None:

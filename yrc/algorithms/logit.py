@@ -41,10 +41,8 @@ class LogitAlgorithm(Algorithm):
     def train(
         self,
         policy: "yrc.policies.PPOPolicy",
-        envs: Dict[str, "gym.Env"],
-        evaluator: "yrc.core.Evaluator",
-        train_split: str = "train",
-        eval_splits: List[str] = ["val_sim", "val_true"],
+        env: "gym.Env",
+        validators: Dict[str, "yrc.core.Evaluator"],
     ):
         """
         Train the LogitAlgorithm by searching for the best threshold and temperature parameters
@@ -72,10 +70,8 @@ class LogitAlgorithm(Algorithm):
 
         best_params = {}
         best_result = {}
-        for split in eval_splits:
+        for split in validators:
             best_result[split] = {"reward_mean": -float("inf")}
-
-        train_env = envs[train_split]
 
         self.score_fn = policy.compute_confidence
 
@@ -85,8 +81,8 @@ class LogitAlgorithm(Algorithm):
                 policy.set_params({"temperature": score_temp})
                 # Generate scores by rolling out (simulated) novice in training environment
                 scores = self._generate_scores(
-                    train_env.base_env,
-                    train_env.novice,
+                    env.base_env,
+                    env.novice,
                     explore_temp,
                     config.num_rollouts,
                 )
@@ -98,24 +94,27 @@ class LogitAlgorithm(Algorithm):
                     cur_params = policy.get_params()
                     logging.info("Parameters: " + pprint.pformat(cur_params, indent=2))
 
-                    eval_results = evaluator.eval(policy, envs, eval_splits)
-
-                    for split in eval_splits:
+                    # Evaluate policy on all splits
+                    eval_result = {}
+                    for split, validator in validators.items():
+                        logging.info(f"Evaluating on {split} split")
+                        eval_result[split] = validator.evaluate(policy)
                         if (
-                            eval_results[split]["reward_mean"]
+                            eval_result[split]["reward_mean"]
                             > best_result[split]["reward_mean"]
                         ):
                             best_params[split] = cur_params
-                            best_result[split] = eval_results[split]
+                            best_result[split] = eval_result[split]
                             self.save_checkpoint(policy, f"best_{split}")
 
-                        # log best result so far
+                    # Log best result so far
+                    for split, validator in validators.items():
                         logging.info(f"BEST {split} so far")
                         logging.info(
                             "Parameters: "
                             + pprint.pformat(best_params[split], indent=2)
                         )
-                        evaluator.summarizer.write(best_result[split])
+                        validator.summarizer.write(best_result[split])
 
     def save_checkpoint(self, policy, name):
         save_path = f"{self.save_dir}/{name}.ckpt"

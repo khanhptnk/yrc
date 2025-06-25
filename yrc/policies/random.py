@@ -31,6 +31,7 @@ class RandomPolicyConfig:
 
     cls: str = "RandomPolicy"
     prob: Optional[float] = None
+    load_path: Optional[str] = None
 
 
 class RandomPolicy(Policy):

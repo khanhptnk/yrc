@@ -1,9 +1,8 @@
 import logging
 import pprint
 import random
-from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -29,27 +28,23 @@ class PyODAlgorithm(Algorithm):
 
     def train(
         self,
-        policy,
-        envs,
-        evaluator=None,
-        train_split=None,
-        eval_splits=None,
+        policy: "yrc.policies.PPOPolicy",
+        env: "gym.Env",
+        validators: Dict[str, "yrc.core.Evaluator"],
     ):
         config = self.config
         self.save_dir = get_global_variable("experiment_dir")
 
         best_threshold = {}
         best_result = {}
-        for split in eval_splits:
+        for split in validators:
             best_result[split] = {"reward_mean": -float("inf")}
-
-        train_env = envs[train_split]
 
         for explore_temp in config.explore_temps:
             logging.info(f"Exploration temperature: {explore_temp}")
             data = self._generate_data(
-                train_env.base_env,
-                train_env.novice,
+                env.base_env,
+                env.novice,
                 explore_temp,
                 config.num_rollouts,
                 config.accept_rate,
@@ -70,23 +65,25 @@ class PyODAlgorithm(Algorithm):
 
                 logging.info("Threshold: " + str(threshold))
 
-                eval_results = evaluator.eval(policy, envs, eval_splits)
-
-                for split in eval_splits:
+                eval_result = {}
+                for split, validator in validators.items():
+                    logging.info(f"Evaluating on {split} split")
+                    eval_result[split] = validator.evaluate(policy)
                     if (
-                        eval_results[split]["reward_mean"]
+                        eval_result[split]["reward_mean"]
                         > best_result[split]["reward_mean"]
                     ):
                         best_threshold[split] = threshold
-                        best_result[split] = eval_results[split]
+                        best_result[split] = eval_result[split]
                         self.save_checkpoint(policy, f"best_{split}")
 
-                    # log best result so far
+                # Log best result so far
+                for split, validator in validators.items():
                     logging.info(f"BEST {split} so far")
                     logging.info(
                         "Parameters: " + pprint.pformat(best_threshold[split], indent=2)
                     )
-                    evaluator.summarizer.write(best_result[split])
+                    validator.summarizer.write(best_result[split])
 
     def save_checkpoint(self, policy, name):
         save_path = f"{self.save_dir}/{name}.ckpt"

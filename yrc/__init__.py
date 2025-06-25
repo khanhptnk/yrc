@@ -37,5 +37,5 @@ def load_policy(path, env):
     return policy_factory.load(path, env)
 
 
-def register_config(name, config_cls):
+def register_env_config(name, config_cls):
     yrc.environments.config_cls[name] = config_cls

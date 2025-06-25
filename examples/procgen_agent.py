@@ -21,7 +21,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import environments
 import yrc
-from environments.procgen import ProcgenConfig
+from environments.procgen.config import ProcgenConfig
 
 
 def parse_args():
@@ -56,14 +56,12 @@ def train(args, config):
     }
     policy = yrc.make_policy(config.policy, envs["train"])
     algorithm = yrc.make_algorithm(config.algorithm)
-    evaluator = yrc.Evaluator(config.evaluation)
-    algorithm.train(
-        policy=policy,
-        envs=envs,
-        evaluator=evaluator,
-        train_split="train",
-        eval_splits=args.eval_splits,
-    )
+
+    validators = {}
+    for split in args.eval_splits:
+        validators[split] = yrc.Evaluator(config.evaluation, envs[split])
+
+    algorithm.train(policy, envs["train"], validators)
 
 
 def evaluate(args, config):
@@ -72,14 +70,16 @@ def evaluate(args, config):
         split: environments.procgen.make_env(split, config.env) for split in eval_splits
     }
     policy = yrc.load_policy(config.policy.load_path, envs[eval_splits[0]])
-    evaluator = yrc.Evaluator(config.evaluation)
-    evaluator.eval(policy, envs, eval_splits)
+
+    for split in eval_splits:
+        evaluator = yrc.Evaluator(config.evaluation, envs[split])
+        evaluator.evaluate(policy)
 
 
 def main():
     # register the Procgen configuration with YRC
     # NOTE: do this before parsing args to ensure the config is available
-    yrc.register_config("procgen", ProcgenConfig)
+    yrc.register_env_config("procgen", ProcgenConfig)
 
     args, config = parse_args()
     if config.eval_name is None:
