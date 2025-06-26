@@ -1,0 +1,32 @@
+name: "minigrid_ppo"
+device: "cpu"
+seed: 10
+env: "minigrid"
+policy:
+  cls: PPOPolicy
+  model:
+    cls: ImpalaPPOModel
+algorithm:
+  cls: PPOAlgorithm
+  log_freq: 10
+  save_freq: 0
+  num_steps: 25
+  total_timesteps: 1000000
+  update_epochs: 3
+  gamma: 0.999
+  gae_lambda: 0.95
+  num_minibatches: 8
+  clip_coef: 0.2
+  norm_adv: true
+  clip_vloss: true
+  vf_coef: 0.5
+  ent_coef: 0.01
+  max_grad_norm: 0.5
+  learning_rate: 0.0005
+  critic_pretrain_steps: 0
+  anneal_lr: false
+  log_action_id: 1
+evaluation:
+  num_episodes: 25
+  temperature: 0
+  log_action_id: 1

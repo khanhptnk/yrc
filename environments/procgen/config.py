@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class DistributionConfig:
+class ProcgenDistributionConfig:
     """
     Configuration for a Procgen environment distribution.
 
@@ -41,14 +41,14 @@ class ProcgenConfig:
         Number of parallel environments to run. Default is 128.
     num_threads : int, optional
         Number of threads to use for environment execution. Default is 8.
-    train : DistributionConfig, optional
-        Configuration for the training distribution. Default is DistributionConfig().
-    val_sim : DistributionConfig, optional
-        Configuration for the simulated validation distribution. Default is DistributionConfig(distribution_mode="easy", start_level=50000, num_levels=256).
-    val_true : DistributionConfig, optional
-        Configuration for the true validation distribution. Default is DistributionConfig(distribution_mode="hard", start_level=50000, num_levels=256).
-    test : DistributionConfig, optional
-        Configuration for the test distribution. Default is DistributionConfig(distribution_mode="hard", start_level=0, num_levels=100000).
+    train : ProcgenDistributionConfig, optional
+        Configuration for the training distribution. Default is ProcgenDistributionConfig().
+    val_sim : ProcgenDistributionConfig, optional
+        Configuration for the simulated validation distribution. Default is ProcgenDistributionConfig(distribution_mode="easy", start_level=50000, num_levels=256).
+    val_true : ProcgenDistributionConfig, optional
+        Configuration for the true validation distribution. Default is ProcgenDistributionConfig(distribution_mode="hard", start_level=50000, num_levels=256).
+    test : ProcgenDistributionConfig, optional
+        Configuration for the test distribution. Default is ProcgenDistributionConfig(distribution_mode="hard", start_level=0, num_levels=100000).
     """
 
     suite: str = "procgen"
@@ -56,32 +56,32 @@ class ProcgenConfig:
     normalize_rew: bool = False
     num_envs: int = 128
     num_threads: int = 8
-    train: DistributionConfig = field(default_factory=DistributionConfig)
-    val_sim: DistributionConfig = field(
-        default_factory=lambda: DistributionConfig(
+    train: ProcgenDistributionConfig = field(default_factory=ProcgenDistributionConfig)
+    val_sim: ProcgenDistributionConfig = field(
+        default_factory=lambda: ProcgenDistributionConfig(
             distribution_mode="easy", start_level=50000, num_levels=256
         )
     )
-    val_true: DistributionConfig = field(
-        default_factory=lambda: DistributionConfig(
+    val_true: ProcgenDistributionConfig = field(
+        default_factory=lambda: ProcgenDistributionConfig(
             distribution_mode="hard", start_level=50000, num_levels=256
         )
     )
-    test: DistributionConfig = field(
-        default_factory=lambda: DistributionConfig(
+    test: ProcgenDistributionConfig = field(
+        default_factory=lambda: ProcgenDistributionConfig(
             distribution_mode="hard", start_level=0, num_levels=100000
         )
     )
 
     def __post_init__(self):
         if isinstance(self.train, dict):
-            self.train = DistributionConfig(**self.train)
+            self.train = ProcgenDistributionConfig(**self.train)
 
         if isinstance(self.val_sim, dict):
-            self.val_sim = DistributionConfig(**self.val_sim)
+            self.val_sim = ProcgenDistributionConfig(**self.val_sim)
 
         if isinstance(self.val_true, dict):
-            self.val_true = DistributionConfig(**self.val_true)
+            self.val_true = ProcgenDistributionConfig(**self.val_true)
 
         if isinstance(self.test, dict):
-            self.test = DistributionConfig(**self.test)
+            self.test = ProcgenDistributionConfig(**self.test)
