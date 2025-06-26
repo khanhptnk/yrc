@@ -7,10 +7,9 @@ Welcome to yrc's documentation!
    :hidden:
  
    Quickstart <quickstart> 
-   Core Concepts <core_concepts>
-   Main classes <main_classes>
-   Configuration <configuration>
+   Core concepts <core_concepts/index>
    Algorithms <algorithms/index>
+   Tutorials <tutorials/index>
    API Reference <autoapi/index>
 
 

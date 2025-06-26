@@ -1,4 +1,4 @@
-yrc.models.impala
+﻿yrc.models.impala
 =================
 
 .. automodule:: yrc.models.impala
@@ -8,13 +8,6 @@ yrc.models.impala
    
 
    
-   
-   .. rubric:: Functions
-
-   .. autosummary::
-   
-      orthogonal_init
-      xavier_uniform_init
    
    
 
