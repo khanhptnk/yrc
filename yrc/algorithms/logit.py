@@ -13,10 +13,12 @@ from yrc.utils.global_variables import get_global_variable
 @dataclass
 class LogitAlgorithmConfig:
     """
-    Configuration dataclass for LogitAlgorithm.
+    Configuration for the LogitAlgorithm, which tunes thresholds and temperatures for confidence-based policies.
 
     Parameters
     ----------
+    cls : str, optional
+        Name of the algorithm class. Default is "LogitAlgorithm".
     num_rollouts : int, optional
         Number of rollouts to use for score generation. Default is 128.
     percentiles : list of float, optional
@@ -25,6 +27,23 @@ class LogitAlgorithmConfig:
         List of temperatures to use during exploration rollouts. Default is [1.0].
     score_temps : list of float, optional
         List of temperatures to use when scoring. Default is [1.0].
+
+    Attributes
+    ----------
+    cls : str
+        Name of the algorithm class.
+    num_rollouts : int
+        Number of rollouts to use for score generation.
+    percentiles : list of float
+        List of percentiles to use for threshold selection.
+    explore_temps : list of float
+        List of temperatures to use during exploration rollouts.
+    score_temps : list of float
+        List of temperatures to use when scoring.
+
+    Examples
+    --------
+    >>> config = LogitAlgorithmConfig()
     """
 
     cls: str = "LogitAlgorithm"
@@ -35,12 +54,42 @@ class LogitAlgorithmConfig:
 
 
 class LogitAlgorithm(Algorithm):
+    """
+    Algorithm for tuning confidence-based policies using logit thresholds and temperatures.
+
+    Parameters
+    ----------
+    config : LogitAlgorithmConfig
+        Configuration object for the LogitAlgorithm.
+
+    Attributes
+    ----------
+    config : LogitAlgorithmConfig
+        Configuration object for the algorithm.
+    save_dir : str
+        Directory for saving checkpoints.
+    score_fn : callable
+        Function to compute confidence scores from model outputs.
+
+    Examples
+    --------
+    >>> algo = LogitAlgorithm(LogitAlgorithmConfig())
+    """
+
     def __init__(self, config):
+        """
+        Initialize the LogitAlgorithm.
+
+        Parameters
+        ----------
+        config : LogitAlgorithmConfig
+            Configuration object for the LogitAlgorithm.
+        """
         self.config = config
 
     def train(
         self,
-        policy: "yrc.policies.PPOPolicy",
+        policy: "yrc.core.Policy",
         env: "gym.Env",
         validators: Dict[str, "yrc.core.Evaluator"],
     ):
@@ -50,20 +99,21 @@ class LogitAlgorithm(Algorithm):
 
         Parameters
         ----------
-        policy : yrc.policies.PPOPolicy
+        policy : Policy
             The policy to be trained and evaluated.
-        envs : dict of str to gym.Env
-            Dictionary mapping split names to environment instances.
-        evaluator : yrc.core.Evaluator
-            Evaluator object for policy evaluation and summary logging.
-        train_split : str, optional
-            The environment split to use for training. Default is "train".
-        eval_splits : list of str, optional
-            List of environment splits to use for evaluation. Default is ["val_sim", "val_true"].
+        env : gym.Env
+            The environment used for training and rollouts.
+        validators : dict of str to Evaluator
+            Dictionary mapping split names to evaluator instances for evaluation.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> algorithm = LogitAlgorithm(LogitAlgorithmConfig())
+        >>> algorithm.train(policy, env, validators)
         """
         config = self.config
         self.save_dir = get_global_variable("experiment_dir")
@@ -117,6 +167,24 @@ class LogitAlgorithm(Algorithm):
                         validator.summarizer.write(best_result[split])
 
     def save_checkpoint(self, policy, name):
+        """
+        Save the current policy configuration and parameters to a checkpoint file.
+
+        Parameters
+        ----------
+        policy : Policy
+            The policy whose parameters are to be saved.
+        name : str
+            Name for the checkpoint file.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> self.save_checkpoint(policy, "best_test")
+        """
         save_path = f"{self.save_dir}/{name}.ckpt"
         torch.save(
             {
@@ -128,6 +196,30 @@ class LogitAlgorithm(Algorithm):
         logging.info(f"Saved checkpoint to {save_path}")
 
     def _generate_scores(self, env, policy, temperature, num_rollouts):
+        """
+        Generate confidence scores by rolling out the policy in the environment.
+
+        Parameters
+        ----------
+        env : gym.Env
+            The environment used for rollouts.
+        policy : Policy
+            The policy to be evaluated.
+        temperature : float
+            Temperature parameter for action selection.
+        num_rollouts : int
+            Total number of rollout episodes to generate.
+
+        Returns
+        -------
+        scores : list of float
+            List of confidence scores collected from rollouts.
+
+        Examples
+        --------
+        >>> scores = self._generate_scores(env, policy, 1.0, 128)
+        """
+
         @torch.no_grad()
         def rollout_once():
             policy.eval()

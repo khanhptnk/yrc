@@ -4,6 +4,33 @@ import pprint
 
 
 def get_test_eval_info(env_suite, env_name, test_env, evaluator):
+    """
+    Retrieve or compute evaluation statistics for a test environment and expert agent.
+
+    If statistics for the given environment are missing, this function evaluates the expert
+    agent on the test environment, saves the results, and returns the summary.
+
+    Parameters
+    ----------
+    env_suite : str
+        Name of the environment suite (e.g., 'procgen').
+    env_name : str
+        Name of the specific environment (e.g., 'coinrun').
+    test_env : object
+        Test environment instance, expected to have 'expert', 'base_env', and 'num_envs' attributes.
+    evaluator : object
+        Evaluator instance with an 'eval' method for running evaluation.
+
+    Returns
+    -------
+    info : dict
+        Dictionary of evaluation statistics for the test environment and expert agent.
+
+    Examples
+    --------
+    >>> info = get_test_eval_info('procgen', 'coinrun', test_env, evaluator)
+    >>> print(info['reward_mean'])
+    """
     with open("yrc/metadata/test_eval_info.json") as f:
         data = json.load(f)
 

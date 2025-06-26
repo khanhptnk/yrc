@@ -11,35 +11,99 @@ import yrc
 
 @dataclass
 class CoordinationConfig:
+    """
+    Configuration for coordination environment parameters.
+
+    Parameters
+    ----------
+    expert_query_cost_weight : float, optional
+        The cost coefficient for querying the expert policy. Default is 0.4.
+    switch_agent_cost_weight : float, optional
+        The cost coefficient for switching between agents. Default is 0.0.
+    temperature : float, optional
+        The temperature parameter for action sampling. Default is 1.0.
+
+    Attributes
+    ----------
+    expert_query_cost_weight : float
+        The cost coefficient for querying the expert policy.
+    switch_agent_cost_weight : float
+        The cost coefficient for switching between agents.
+    temperature : float
+        The temperature parameter for action sampling.
+
+    Examples
+    --------
+    >>> config = CoordinationConfig()
+    """
+
     expert_query_cost_weight: float = 0.4
     switch_agent_cost_weight: float = 0.0
     temperature: float = 1.0
 
 
 class CoordEnv(gym.Env):
+    """
+    Environment for coordinating between novice and expert policies.
+
+    This class wraps a base environment and enables switching between a novice and expert policy,
+    applying costs for expert queries and agent switching.
+
+    Parameters
+    ----------
+    config : CoordinationConfig
+        Configuration object specifying coordination parameters.
+    base_env : gym.Env
+        The base Gym environment to be wrapped or extended.
+    novice : Policy
+        The novice policy.
+    expert : Policy
+        The expert policy.
+
+    Attributes
+    ----------
+    config : CoordinationConfig
+        Coordination configuration.
+    base_env : gym.Env
+        The base environment.
+    novice : Policy
+        The novice policy.
+    expert : Policy
+        The expert policy.
+    action_space : gym.spaces.Discrete
+        Discrete action space (2: novice or expert).
+    observation_space : gym.spaces.Dict
+        Observation space including base_obs, novice_hidden, and novice_logits.
+    expert_query_cost_per_action : float
+        Cost per action for querying the expert.
+    switch_agent_cost_per_action : float
+        Cost per action for switching between agents.
+
+    Examples
+    --------
+    >>> config = CoordinationConfig()
+    >>> base_env = gym.make(...)
+    >>> novice = ...
+    >>> expert = ...
+    >>> env = CoordEnv(config, base_env, novice, expert)
+    """
+
     NOVICE = 0
     EXPERT = 1
 
-    def __init__(
-        self,
-        config: "yrc.core.config.CoordinationConfig",
-        base_env: "gym.Env",
-        novice: "yrc.core.Policy",
-        expert: "yrc.core.Policy",
-    ) -> None:
+    def __init__(self, config, base_env, novice, expert):
         """
-        Initializes the environment for coordination between novice and expert policies.
-        This constructor sets up the environment with the provided configuration, base environment, and two policies (novice and expert). It defines the action and observation spaces, and initializes cost-related settings.
+        Initialize the coordination environment.
 
         Parameters
         ----------
-        config : yrc.core.config.CoordinationConfig
+        config : CoordinationConfig
             Configuration object specifying coordination parameters.
         base_env : gym.Env
             The base Gym environment to be wrapped or extended.
-        novice : yrc.core.Policy
+        novice : Policy
             The novice policy.
-        expert : yrc.core.Policy
+        expert : Policy
             The expert policy.
 
         Returns
@@ -48,11 +112,11 @@ class CoordEnv(gym.Env):
 
         Examples
         --------
-        >>> config = yrc.core.config.CoordinationConfig(...)
+        >>> config = CoordinationConfig(...)
         >>> base_env = gym.make(...)
-        >>> novice = yrc.policies.PPOPolicy(...)
-        >>> expert = yrc.policies.PPOPolicy(...)
-        >>> env = yrc.CoordEnv(config, base_env, novice, expert)
+        >>> novice = ...
+        >>> expert = ...
+        >>> env = CoordEnv(config, base_env, novice, expert)
         """
         self.config = config
         self.base_env = base_env
@@ -77,16 +141,19 @@ class CoordEnv(gym.Env):
 
     @property
     def num_envs(self):
+        """
+        Number of parallel environments.
+
+        Returns
+        -------
+        int
+            Number of parallel environments.
+        """
         return self.base_env.num_envs
 
     def set_costs(self, reward_per_action: float) -> None:
         """
         Set the cost per action for expert queries and agent switching.
-
-        The cost per action is determined by multiplying the provided `reward_per_action`
-        by the expert query and switch agent cost coefficients (`expert_query_cost_weight` and
-        `switch_agent_cost_weight`) from the environment configuration. These costs are used to
-        penalize the agent for querying the expert or switching between agents.
 
         Parameters
         ----------
@@ -94,18 +161,9 @@ class CoordEnv(gym.Env):
             The reward value per action. If None, it should be computed from environment
             statistics (mean episode reward divided by mean episode length).
 
-        Side Effects
-        ------------
-        Sets the following attributes on the environment:
-            - expert_query_cost_per_action : float
-                The cost per action for querying the expert.
-            - switch_agent_cost_per_action : float
-                The cost per action for switching between agents.
-        Calls `self.reset()` to apply the new cost settings.
-
-        Notes
-        -----
-        This implementation currently supports only non-recurrent agent policies.
+        Returns
+        -------
+        None
 
         Examples
         --------
@@ -132,10 +190,7 @@ class CoordEnv(gym.Env):
 
     def reset(self) -> dict:
         """
-        Resets the coordination environment to an initial state.
-
-        This method resets the base environment and both the novice and expert agents.
-        It also clears the previous action history and returns the initial observation.
+        Reset the coordination environment to an initial state.
 
         Returns
         -------
@@ -160,6 +215,18 @@ class CoordEnv(gym.Env):
         return self.get_obs()
 
     def _reset_agents(self, done: "numpy.ndarray") -> None:
+        """
+        Reset the internal state of the novice and expert agents.
+
+        Parameters
+        ----------
+        done : numpy.ndarray
+            Boolean array indicating which episodes in a batch require a reset.
+
+        Returns
+        -------
+        None
+        """
         self.novice.reset(done)
         self.expert.reset(done)
 
@@ -167,10 +234,7 @@ class CoordEnv(gym.Env):
         self, action: "numpy.ndarray"
     ) -> Tuple[dict, "numpy.ndarray", "numpy.ndarray", List[dict]]:
         """
-        Advances the environment by one step using the provided action.
-
-        This method computes the environment-specific action, interacts with the base environment,
-        processes the resulting observation, reward, and info, and returns the updated state.
+        Advance the environment by one step using the provided action.
 
         Parameters
         ----------
@@ -217,6 +281,19 @@ class CoordEnv(gym.Env):
 
     @torch.no_grad()
     def _compute_env_action(self, action):
+        """
+        Compute the environment-specific action for each agent.
+
+        Parameters
+        ----------
+        action : numpy.ndarray
+            Array indicating which agent (novice or expert) acts for each environment.
+
+        Returns
+        -------
+        env_action : numpy.ndarray
+            Array of actions to be passed to the base environment.
+        """
         is_novice = action == self.NOVICE
         is_expert = ~is_novice
 
@@ -243,12 +320,7 @@ class CoordEnv(gym.Env):
     @torch.no_grad()
     def get_obs(self) -> dict:
         """
-        Returns the current observation for the coordination environment.
-
-        The observation includes:
-        - The raw observation from the base environment (`base_obs`).
-        - The hidden features from the novice policy (`novice_hidden`).
-        - The output logits from the novice policy (`novice_logits`).
+        Return the current observation for the coordination environment.
 
         Returns
         -------
@@ -275,6 +347,23 @@ class CoordEnv(gym.Env):
         return obs
 
     def _get_reward(self, base_reward, action, done):
+        """
+        Compute the reward for the current step, including costs for expert queries and agent switching.
+
+        Parameters
+        ----------
+        base_reward : numpy.ndarray
+            The base reward from the environment.
+        action : numpy.ndarray
+            The action(s) taken (novice or expert).
+        done : numpy.ndarray
+            Boolean flag(s) indicating whether the episode has ended for each environment.
+
+        Returns
+        -------
+        reward : numpy.ndarray
+            The computed reward(s) after applying costs.
+        """
         # cost of querying expert agent
         reward = np.where(
             action == self.EXPERT,
@@ -292,10 +381,7 @@ class CoordEnv(gym.Env):
 
     def close(self) -> None:
         """
-        Closes the coordination environment and releases any resources held.
-
-        This method calls the `close` method of the underlying base environment to ensure
-        that all resources (such as external processes or files) are properly released.
+        Close the coordination environment and release any resources held.
 
         Returns
         -------

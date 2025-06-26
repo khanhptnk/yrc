@@ -1,17 +1,3 @@
-"""
-YRC script for Procgen environments.
-
-Training novice:
-    python procgen_agent.py --config configs/procgen_ppo.yaml name=$TRAIN_NAME env.train.distribution_mode=easy env.test.distribution_mode=easy
-
-Evaluate novice:
-    python examples/procgen_agent.py --config configs/procgen_ppo.yaml eval_name=$EVAL_NAME env.test.distribution_mode=easy policy.load_path=experiments/$TRAIN_NAME/best_test.ckpt
-
-To train/evaluate expert, change the distribution_model to "hard".
-For more options, see the ProcgenConfig class in environments/procgen/config.py.
-
-"""
-
 import argparse
 import importlib
 import os

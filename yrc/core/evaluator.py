@@ -14,16 +14,23 @@ class EvaluatorConfig:
     """
     Configuration for the Evaluator.
 
+    Parameters
+    ----------
+    num_episodes : int, optional
+        Number of episodes to use for evaluation. Default is 256.
+    temperature : float, optional
+        Temperature parameter for action selection. Default is 1.0.
+    log_action_id : int, optional
+        The action index to track and log during evaluation. Default is CoordEnv.EXPERT.
+
     Attributes
     ----------
-    validation_episodes : int
-        Number of episodes to use for validation evaluation. Default is 256.
-    test_episodes : int
-        Number of episodes to use for test evaluation. Default is 256.
-    act_greedy : bool
-        If True, the policy acts greedily during evaluation. Default is False.
-    log_action_id: bool
-        The action index to track and log the fraction of times this action is taken during evaluation episodes.
+    num_episodes : int
+        Number of episodes to use for evaluation.
+    temperature : float
+        Temperature parameter for action selection.
+    log_action_id : int
+        The action index to track and log during evaluation.
     """
 
     num_episodes: int = 256
@@ -32,7 +39,42 @@ class EvaluatorConfig:
 
 
 class Evaluator:
+    """
+    Evaluator for running policy evaluation on environments and summarizing results.
+
+    Parameters
+    ----------
+    config : EvaluatorConfig
+        Configuration object for the evaluator.
+    env : gym.Env
+        The environment instance to evaluate on.
+
+    Attributes
+    ----------
+    config : EvaluatorConfig
+        Configuration object for the evaluator.
+    env : gym.Env
+        The environment instance to evaluate on.
+    summarizer : EvaluationSummarizer
+        Summarizer for evaluation statistics.
+
+    Examples
+    --------
+    >>> evaluator = Evaluator(EvaluatorConfig(), env)
+    >>> summary = evaluator.evaluate(policy)
+    """
+
     def __init__(self, config, env):
+        """
+        Initialize the Evaluator.
+
+        Parameters
+        ----------
+        config : EvaluatorConfig
+            Configuration object for the evaluator.
+        env : gym.Env
+            The environment instance to evaluate on.
+        """
         self.config = config
         self.env = env
 
@@ -42,21 +84,14 @@ class Evaluator:
         num_episodes: int = None,
     ) -> dict:
         """
-        Evaluate a policy on multiple environment splits and summarize the results.
-
-        For each split in `eval_splits`, this method runs evaluation episodes using the provided
-        policy and environment, collects statistics, and returns a summary dictionary for each split.
+        Evaluate a policy on the environment and summarize the results.
 
         Parameters
         ----------
         policy : yrc.core.Policy
             The policy to evaluate. Must implement an `act` method and have a `.model` attribute.
-        envs : Dict[str, gym.Env]
-            A dictionary mapping split names to environment instances.
-        eval_splits : List[str]
-            List of split names (keys in `envs`) to evaluate.
         num_episodes : int, optional
-            Number of episodes to run per split. If None, uses values from config.
+            Number of episodes to run. If None, uses value from config.
 
         Returns
         -------
@@ -65,8 +100,8 @@ class Evaluator:
 
         Examples
         --------
-        >>> summary = evaluator.eval(policy, envs, ['val', 'test'], num_episodes=100)
-        >>> print(summary['val']['reward_mean'])
+        >>> summary = evaluator.evaluate(policy, num_episodes=100)
+        >>> print(summary['reward_mean'])
         """
 
         config = self.config
@@ -92,31 +127,21 @@ class Evaluator:
 
         return summary
 
-        # for split in eval_splits:
-        #     if num_episodes is None:
-        #         if "val" in split:
-        #             num_episodes = config.validation_episodes
-        #         else:
-        #             assert "test" in split
-        #             num_episodes = config.test_episodes
-        #         assert num_episodes % envs[split].num_envs == 0
-
-        #     logging.info(f"Evaluation on {split} for {num_episodes} episodes")
-
-        #     num_iterations = num_episodes // envs[split].num_envs
-
-        #     self.summarizer.clear()
-
-        #     for _ in range(num_iterations):
-        #         self._eval_one_iteration(policy, envs[split])
-
-        #     summary[split] = self.summarizer.write()
-
-        #     envs[split].close()
-
-        # return summary
-
     def _eval_one_iteration(self, policy, env):
+        """
+        Run a single evaluation iteration for the policy on the environment.
+
+        Parameters
+        ----------
+        policy : yrc.core.Policy
+            The policy to evaluate.
+        env : gym.Env
+            The environment instance to evaluate on.
+
+        Returns
+        -------
+        None
+        """
         self.summarizer.initialize_episode(env)
 
         obs = env.reset()
@@ -133,14 +158,61 @@ class Evaluator:
 
 
 class EvaluationSummarizer:
+    """
+    Summarizer for evaluation statistics and logging.
+
+    Parameters
+    ----------
+    config : EvaluatorConfig
+        Configuration object for the summarizer.
+
+    Attributes
+    ----------
+    log_action_id : int
+        Action ID to log statistics for.
+    log : dict
+        Dictionary for storing summary statistics.
+
+    Examples
+    --------
+    >>> summarizer = EvaluationSummarizer(EvaluatorConfig())
+    """
+
     def __init__(self, config):
+        """
+        Initialize the EvaluationSummarizer.
+
+        Parameters
+        ----------
+        config : EvaluatorConfig
+            Configuration object for the summarizer.
+        """
         self.log_action_id = config.log_action_id
         self.clear()
 
     def clear(self):
+        """
+        Clear the summary statistics log.
+
+        Returns
+        -------
+        None
+        """
         self.log = {}
 
     def initialize_episode(self, env):
+        """
+        Initialize logging for a new evaluation episode.
+
+        Parameters
+        ----------
+        env : gym.Env
+            The environment instance for the episode.
+
+        Returns
+        -------
+        None
+        """
         self.episode_log = {
             "reward": [0] * env.num_envs,
             "base_reward": [0] * env.num_envs,
@@ -149,6 +221,13 @@ class EvaluationSummarizer:
         }
 
     def finalize_episode(self):
+        """
+        Finalize and aggregate statistics for the episode.
+
+        Returns
+        -------
+        None
+        """
         if self.log:
             for k, v in self.episode_log.items():
                 if isinstance(v, list):
@@ -159,6 +238,26 @@ class EvaluationSummarizer:
             self.log.update(self.episode_log)
 
     def add_episode_step(self, env, action, reward, info, has_done):
+        """
+        Log statistics for each episode step.
+
+        Parameters
+        ----------
+        env : gym.Env
+            The environment instance.
+        action : torch.Tensor
+            Actions taken at this step.
+        reward : np.ndarray or torch.Tensor
+            Rewards received at this step.
+        info : list of dict
+            Additional info for each environment.
+        has_done : np.ndarray or torch.Tensor
+            Boolean array indicating which episodes are done.
+
+        Returns
+        -------
+        None
+        """
         for i in range(env.num_envs):
             if "base_reward" in info[i]:
                 self.episode_log["base_reward"][i] += info[i]["base_reward"] * (
@@ -173,6 +272,14 @@ class EvaluationSummarizer:
                 ).sum()
 
     def summarize(self):
+        """
+        Compute summary statistics for the current log.
+
+        Returns
+        -------
+        dict
+            Dictionary of summary statistics.
+        """
         log = self.log
         self.summary = {
             "steps": int(sum(log["episode_length"])),
@@ -191,6 +298,19 @@ class EvaluationSummarizer:
         return self.summary
 
     def write(self, summary=None):
+        """
+        Pretty-print and log the summary statistics.
+
+        Parameters
+        ----------
+        summary : dict, optional
+            Precomputed summary statistics. If None, will compute from log.
+
+        Returns
+        -------
+        dict
+            The summary statistics that were logged.
+        """
         if summary is None:
             summary = self.summarize()
 

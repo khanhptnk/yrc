@@ -37,12 +37,50 @@ class ImpalaPPOModelConfig:
     ----------
     cls : str, optional
         Name of the model class. Default is "ImpalaPPOModel".
+
+    Attributes
+    ----------
+    cls : str
+        Name of the model class.
     """
 
     cls: str = "ImpalaPPOModel"
 
 
 class ImpalaPPOModel(nn.Module):
+    """
+    PPO model using an IMPALA encoder for feature extraction.
+
+    Parameters
+    ----------
+    config : ImpalaPPOModelConfig
+        Configuration object for the model.
+    env : gym.Env
+        The environment instance, used to determine input and output dimensions.
+
+    Attributes
+    ----------
+    device : torch.device or str
+        Device for computation.
+    embedder : Impala
+        IMPALA feature extractor.
+    hidden_dim : int
+        Dimension of the hidden feature representation.
+    fc_policy : nn.Linear
+        Policy head linear layer.
+    fc_value : nn.Linear
+        Value head linear layer.
+    logit_dim : int
+        Number of action logits.
+
+    Examples
+    --------
+    >>> model = ImpalaPPOModel(ImpalaPPOModelConfig(), env)
+    >>> obs = torch.randn(8, 3, 64, 64)
+    >>> out = model(obs)
+    >>> print(out.logits.shape, out.value.shape)
+    """
+
     def __init__(self, config, env):
         super().__init__()
         self.device = get_global_variable("device")
@@ -55,6 +93,24 @@ class ImpalaPPOModel(nn.Module):
         self.logit_dim = env.action_space.n
 
     def forward(self, obs):
+        """
+        Forward pass of the ImpalaPPOModel.
+
+        Parameters
+        ----------
+        obs : torch.Tensor or np.ndarray
+            Observation input to the model.
+
+        Returns
+        -------
+        PPOModelOutput
+            Output container with logits, value, and hidden features.
+
+        Examples
+        --------
+        >>> out = model(obs)
+        >>> print(out.logits.shape, out.value.shape)
+        """
         if not torch.is_tensor(obs):
             obs = torch.FloatTensor(obs).to(device=self.device)
 
@@ -78,6 +134,13 @@ class ImpalaCoordPPOModelConfig:
         Type of feature representation to use. Options include:
         "obs", "hidden", "hidden_obs", "dist", "hidden_dist", "obs_dist", "obs_hidden_dist".
         Default is "obs".
+
+    Attributes
+    ----------
+    cls : str
+        Name of the model class.
+    feature_type : str
+        Type of feature representation to use.
     """
 
     cls: str = "ImpalaCoordPPOModel"
@@ -85,6 +148,41 @@ class ImpalaCoordPPOModelConfig:
 
 
 class ImpalaCoordPPOModel(nn.Module):
+    """
+    PPO model for coordination environments, supporting multiple feature types.
+
+    Parameters
+    ----------
+    config : ImpalaCoordPPOModelConfig
+        Configuration object for the model.
+    env : gym.Env
+        The coordination environment instance.
+
+    Attributes
+    ----------
+    device : torch.device or str
+        Device for computation.
+    embedder : Impala
+        IMPALA feature extractor.
+    feature_type : str
+        Type of feature representation used.
+    hidden_dim : int
+        Dimension of the hidden feature representation.
+    fc_policy : nn.Linear
+        Policy head linear layer.
+    fc_value : nn.Linear
+        Value head linear layer.
+    logit_dim : int
+        Number of action logits.
+
+    Examples
+    --------
+    >>> model = ImpalaCoordPPOModel(ImpalaCoordPPOModelConfig(), env)
+    >>> obs = {"base_obs": ..., "novice_hidden": ..., "novice_logits": ...}
+    >>> out = model(obs)
+    >>> print(out.logits.shape, out.value.shape)
+    """
+
     def __init__(self, config, env):
         super().__init__()
 
@@ -120,6 +218,24 @@ class ImpalaCoordPPOModel(nn.Module):
         self.logit_dim = env.action_space.n
 
     def forward(self, obs):
+        """
+        Forward pass of the ImpalaCoordPPOModel.
+
+        Parameters
+        ----------
+        obs : dict
+            Dictionary containing observation components (base_obs, novice_hidden, novice_logits).
+
+        Returns
+        -------
+        PPOModelOutput
+            Output container with logits, value, and hidden features.
+
+        Examples
+        --------
+        >>> out = model(obs)
+        >>> print(out.logits.shape, out.value.shape)
+        """
         base_obs = obs["base_obs"]
         if not torch.is_tensor(base_obs):
             base_obs = torch.from_numpy(base_obs).float().to(self.device)

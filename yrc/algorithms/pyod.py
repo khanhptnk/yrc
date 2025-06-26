@@ -14,6 +14,23 @@ from yrc.utils.logging import configure_logging
 
 @dataclass
 class PyODAlgorithmConfig:
+    """
+    Configuration dataclass for PyODAlgorithm.
+
+    Parameters
+    ----------
+    cls : str, optional
+        Name of the algorithm class. Default is "PyODAlgorithm".
+    num_rollouts : int, optional
+        Number of rollouts to use for data generation. Default is 128.
+    percentiles : list of float, optional
+        List of percentiles to use for threshold selection. Default is range(0, 101, 10).
+    explore_temps : list of float, optional
+        List of temperatures to use during exploration rollouts. Default is [1.0].
+    accept_rate : float, optional
+        Acceptance rate for sampling data during rollouts. Default is 0.05.
+    """
+
     cls: str = "PyODAlgorithm"
     num_rollouts: int = 128
     percentiles: List[float] = field(default_factory=lambda: list(range(0, 101, 10)))
@@ -22,7 +39,37 @@ class PyODAlgorithmConfig:
 
 
 class PyODAlgorithm(Algorithm):
+    """
+    Algorithm for out-of-distribution (OOD) detection using PyOD models.
+
+    Parameters
+    ----------
+    config : PyODAlgorithmConfig
+        Configuration object for the PyODAlgorithm.
+
+    Attributes
+    ----------
+    config : PyODAlgorithmConfig
+        Configuration object for the algorithm.
+    random : random.Random
+        Random number generator for sampling.
+    save_dir : str
+        Directory for saving checkpoints.
+
+    Examples
+    --------
+    >>> algo = PyODAlgorithm(PyODAlgorithmConfig())
+    """
+
     def __init__(self, config):
+        """
+        Initialize the PyODAlgorithm.
+
+        Parameters
+        ----------
+        config : PyODAlgorithmConfig
+            Configuration object for the PyODAlgorithm.
+        """
         self.config = config
         self.random = random.Random(get_global_variable("seed") + 543)
 
@@ -32,6 +79,28 @@ class PyODAlgorithm(Algorithm):
         env: "gym.Env",
         validators: Dict[str, "yrc.core.Evaluator"],
     ):
+        """
+        Train the PyODAlgorithm by searching for the best threshold parameter
+        that maximizes evaluation reward.
+
+        Parameters
+        ----------
+        policy : Policy
+            The policy to be evaluated and tuned.
+        env : gym.Env
+            The environment instance for training and data generation.
+        validators : dict of str to Evaluator
+            Dictionary mapping split names to evaluator instances for evaluation.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> algorithm = PyODAlgorithm(PyODAlgorithmConfig())
+        >>> algorithm.train(policy, env, validators)
+        """
         config = self.config
         self.save_dir = get_global_variable("experiment_dir")
 
@@ -86,6 +155,24 @@ class PyODAlgorithm(Algorithm):
                     validator.summarizer.write(best_result[split])
 
     def save_checkpoint(self, policy, name):
+        """
+        Save the current policy configuration and parameters to a checkpoint file.
+
+        Parameters
+        ----------
+        policy : Policy
+            The policy whose parameters are to be saved.
+        name : str
+            Name for the checkpoint file.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> self.save_checkpoint(policy, "best_test")
+        """
         save_path = f"{self.save_dir}/{name}.ckpt"
         torch.save(
             {
@@ -97,6 +184,32 @@ class PyODAlgorithm(Algorithm):
         logging.info(f"Saved checkpoint to {save_path}")
 
     def _generate_data(self, env, policy, temperature, num_rollouts, accept_rate):
+        """
+        Generate data for OOD detection by rolling out the policy in the environment.
+
+        Parameters
+        ----------
+        env : gym.Env
+            The environment used for rollouts.
+        policy : Policy
+            The policy to be evaluated.
+        temperature : float
+            Temperature parameter for action selection.
+        num_rollouts : int
+            Total number of rollout episodes to generate.
+        accept_rate : float
+            Acceptance rate for sampling data during rollouts.
+
+        Returns
+        -------
+        data : dict
+            Dictionary containing collected data arrays for each feature.
+
+        Examples
+        --------
+        >>> data = self._generate_data(env, policy, 1.0, 128, 0.05)
+        """
+
         @torch.no_grad()
         def rollout_once():
             policy.eval()

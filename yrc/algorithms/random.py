@@ -20,6 +20,17 @@ class RandomAlgorithmConfig:
         Name of the algorithm class. Default is "RandomAlgorithm".
     probs : list of float, optional
         List of probabilities to search. Default is np.arange(0, 1.01, 0.1).
+
+    Attributes
+    ----------
+    cls : str
+        Name of the algorithm class.
+    probs : list of float
+        List of probabilities to search.
+
+    Examples
+    --------
+    >>> config = RandomAlgorithmConfig()
     """
 
     cls: str = "RandomAlgorithm"
@@ -27,7 +38,35 @@ class RandomAlgorithmConfig:
 
 
 class RandomAlgorithm(Algorithm):
+    """
+    Algorithm that searches for the best probability parameter to maximize evaluation reward.
+
+    Parameters
+    ----------
+    config : RandomAlgorithmConfig
+        Configuration object for the RandomAlgorithm.
+
+    Attributes
+    ----------
+    config : RandomAlgorithmConfig
+        Configuration object for the algorithm.
+    save_dir : str
+        Directory for saving checkpoints.
+
+    Examples
+    --------
+    >>> algo = RandomAlgorithm(RandomAlgorithmConfig())
+    """
+
     def __init__(self, config):
+        """
+        Initialize the RandomAlgorithm.
+
+        Parameters
+        ----------
+        config : RandomAlgorithmConfig
+            Configuration object for the RandomAlgorithm.
+        """
         self.config = config
 
     def train(
@@ -37,21 +76,16 @@ class RandomAlgorithm(Algorithm):
         validators: Dict[str, "yrc.core.Evaluator"],
     ):
         """
-        Train the RandomAlgorithm by searching for the best probability parameter
-        that maximizes evaluation reward.
+        Train the RandomAlgorithm by searching for the best probability parameter that maximizes evaluation reward.
 
         Parameters
         ----------
-        policy : yrc.policies.PPOPolicy
+        policy : Policy
             The policy to be evaluated and tuned.
-        envs : dict of str to gym.Env
-            Dictionary mapping split names to environment instances.
-        evaluator : yrc.core.Evaluator
-            Evaluator object for policy evaluation and summary logging.
-        train_split : str, optional
-            The environment split to use for training. Default is "train".
-        eval_splits : list of str, optional
-            List of environment splits to use for evaluation. Default is ["val_sim, val_true"].
+        env : gym.Env
+            The environment instance for training and data generation.
+        validators : dict of str to Evaluator
+            Dictionary mapping split names to evaluator instances for evaluation.
 
         Returns
         -------
@@ -60,7 +94,7 @@ class RandomAlgorithm(Algorithm):
         Examples
         --------
         >>> algorithm = RandomAlgorithm(RandomAlgorithmConfig())
-        >>> algorithm.train(policy, envs, evaluator)
+        >>> algorithm.train(policy, env, validators)
         """
         config = self.config
         self.save_dir = get_global_variable("experiment_dir")
@@ -94,6 +128,24 @@ class RandomAlgorithm(Algorithm):
                 validator.summarizer.write(best_result[split])
 
     def save_checkpoint(self, policy, name):
+        """
+        Save the current policy configuration and parameters to a checkpoint file.
+
+        Parameters
+        ----------
+        policy : Policy
+            The policy whose parameters are to be saved.
+        name : str
+            Name for the checkpoint file.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> self.save_checkpoint(policy, "best_test")
+        """
         save_path = f"{self.save_dir}/{name}.ckpt"
         torch.save(
             {

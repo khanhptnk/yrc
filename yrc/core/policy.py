@@ -10,12 +10,50 @@ from yrc.utils.global_variables import get_global_variable
 
 
 def make(config, env):
+    """
+    Instantiate and return a policy object based on the provided configuration and environment.
+
+    Parameters
+    ----------
+    config : object
+        Configuration object with a 'cls' attribute specifying the policy class name.
+    env : object
+        The environment instance to be passed to the policy constructor.
+
+    Returns
+    -------
+    policy : Policy
+        Instantiated policy object.
+
+    Examples
+    --------
+    >>> policy = make(config, env)
+    """
     policy_cls = getattr(importlib.import_module("yrc.policies"), config.cls)
     policy = policy_cls(config, env)
     return policy
 
 
 def load(path, env):
+    """
+    Load a policy from a checkpoint file.
+
+    Parameters
+    ----------
+    path : str
+        Path to the checkpoint file.
+    env : object
+        The environment instance to be passed to the policy constructor.
+
+    Returns
+    -------
+    policy : Policy
+        Instantiated policy object with loaded parameters.
+
+    Examples
+    --------
+    >>> policy = load('checkpoint.ckpt', env)
+    """
     ckpt = torch.load(
         path, map_location=get_global_variable("device"), weights_only=False
     )
@@ -29,6 +67,28 @@ def load(path, env):
 
 
 class Policy(ABC):
+    """
+    Abstract base class for all policies in the YRC framework.
+
+    This class defines the interface that all policy implementations must follow.
+
+    Examples
+    --------
+    >>> class MyPolicy(Policy):
+    ...     def act(self, obs):
+    ...         return ...
+    ...     def reset(self, done):
+    ...         pass
+    ...     def set_params(self, params):
+    ...         pass
+    ...     def get_params(self):
+    ...         return {}
+    ...     def train(self):
+    ...         pass
+    ...     def eval(self):
+    ...         pass
+    """
+
     @abstractmethod
     def act(self, obs: Any, *args, **kwargs) -> torch.Tensor:
         """

@@ -22,6 +22,86 @@ from yrc.utils.logging import configure_logging
 
 @dataclass
 class YRCConfig:
+    """
+    Main configuration class for the YRC framework.
+
+    This class holds all experiment-level configuration, including environment, policy, algorithm, evaluation, and coordination settings.
+
+    Parameters
+    ----------
+    name : str, optional
+        Name of the experiment. Default is "default".
+    device : int, optional
+        Device index for CUDA. Default is 0.
+    seed : int, optional
+        Random seed for reproducibility. Default is 10.
+    env : Any, optional
+        Environment configuration or name. Default is "procgen".
+    policy : Any, optional
+        Policy configuration or name. Default is "PPOPolicy".
+    algorithm : Any, optional
+        Algorithm configuration or name. Default is "PPOAlgorithm".
+    evaluation : Any, optional
+        Evaluation configuration. Default is None.
+    eval_name : str, optional
+        Name for evaluation run. Default is None.
+    overwrite : bool, optional
+        Whether to overwrite existing experiment directory. Default is False.
+    use_wandb : bool, optional
+        Whether to use Weights & Biases logging. Default is False.
+    experiment_dir : str, optional
+        Path to the experiment directory. Default is "".
+    train_novice : str, optional
+        Path to novice training checkpoint. Default is None.
+    train_expert : str, optional
+        Path to expert training checkpoint. Default is None.
+    test_novice : str, optional
+        Path to novice test checkpoint. Default is None.
+    test_expert : str, optional
+        Path to expert test checkpoint. Default is None.
+    coordination : Any, optional
+        Coordination configuration. Default is None.
+
+    Attributes
+    ----------
+    name : str
+        Name of the experiment.
+    device : int
+        Device index for CUDA.
+    seed : int
+        Random seed for reproducibility.
+    env : Any
+        Environment configuration or object.
+    policy : Any
+        Policy configuration or object.
+    algorithm : Any
+        Algorithm configuration or object.
+    evaluation : Any
+        Evaluation configuration or object.
+    eval_name : str or None
+        Name for evaluation run.
+    overwrite : bool
+        Whether to overwrite existing experiment directory.
+    use_wandb : bool
+        Whether to use Weights & Biases logging.
+    experiment_dir : str
+        Path to the experiment directory.
+    train_novice : str or None
+        Path to novice training checkpoint.
+    train_expert : str or None
+        Path to expert training checkpoint.
+    test_novice : str or None
+        Path to novice test checkpoint.
+    test_expert : str or None
+        Path to expert test checkpoint.
+    coordination : Any
+        Coordination configuration or object.
+
+    Examples
+    --------
+    >>> config = YRCConfig(name="my_experiment", env="procgen", policy="PPOPolicy")
+    """
+
     name: str = "default"
     device: int = 0
     seed: int = 10
@@ -43,6 +123,19 @@ class YRCConfig:
     coordination: Any = None
 
     def __post_init__(self):
+        """
+        Post-initialization logic for YRCConfig.
+
+        Converts string or dictionary fields for env, policy, algorithm, evaluation, and coordination
+        into their respective configuration objects.
+
+        Raises
+        ------
+        IndexError
+            If required keys are missing in configuration dictionaries.
+        ValueError
+            If configuration fields are not of expected types.
+        """
         if isinstance(self.env, str):
             self.env = env_factory.config_cls[self.env]()
         elif isinstance(self.env, dict):
@@ -95,6 +188,27 @@ class YRCConfig:
 
 
 def configure(config):
+    """
+    Set up experiment directory, logging, random seeds, and global variables for the experiment.
+
+    Parameters
+    ----------
+    config : YRCConfig
+        The experiment configuration object.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    FileExistsError
+        If the experiment directory exists and overwrite is not set.
+
+    Examples
+    --------
+    >>> configure(config)
+    """
     # set up experiment directory
     config.experiment_dir = "experiments/%s" % config.name
 
