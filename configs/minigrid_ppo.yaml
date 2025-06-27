@@ -27,6 +27,7 @@ algorithm:
   log_action_id: 1
 evaluation:
   num_episodes: 32
+  num_steps: 25
   temperature: 0
   log_action_id: 1
 train_novice: "experiments/minigrid_novice/best_test_easy.ckpt"

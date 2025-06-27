@@ -33,7 +33,8 @@ class EvaluatorConfig:
         The action index to track and log during evaluation.
     """
 
-    num_episodes: int = 256
+    num_episodes: int = 500
+    num_steps: int = 256
     temperature: float = 1.0
     log_action_id: int = CoordEnv.EXPERT
 
@@ -147,12 +148,15 @@ class Evaluator:
         obs = env.reset()
         has_done = np.array([False] * env.num_envs)
 
-        while not has_done.all():
+        for _ in range(self.config.num_steps):
             action = policy.act(obs, temperature=self.config.temperature)
             obs, reward, done, info = env.step(action.cpu().numpy())
             # NOTE: put this before update has_done to include last step in summary
             self.summarizer.add_episode_step(env, action, reward, info, has_done)
             has_done |= done
+
+            if has_done.all():
+                break
 
         self.summarizer.finalize_episode()
 
