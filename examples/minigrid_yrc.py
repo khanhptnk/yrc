@@ -15,14 +15,14 @@ class MiniGridConfig:
     num_envs: int = 8
     seed: int = 0
     train: Optional[str] = None
-    test_easy: Optional[str] = "Empty-5x5-v0"
-    test_hard: Optional[str] = "Empty-8x8-v0"
+    test_easy: Optional[str] = "DistShift1-v0"
+    test_hard: Optional[str] = "DistShift2-v0"
 
 
 config_dict = {
-    "novice": MiniGridConfig(train="Empty-5x5-v0"),
-    "expert": MiniGridConfig(train="Empty-8x8-v0"),
-    "coord": MiniGridConfig(train="Empty-8x8-v0"),
+    "novice": MiniGridConfig(train="DistShift1-v0"),
+    "expert": MiniGridConfig(train="DistShift2-v0"),
+    "coord": MiniGridConfig(train="DistShift2-v0"),
 }
 
 splits = ["train", "test_easy", "test_hard"]
