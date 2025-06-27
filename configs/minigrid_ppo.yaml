@@ -1,5 +1,4 @@
 name: "minigrid_ppo"
-device: "cpu"
 seed: 10
 env: "minigrid"
 policy:
@@ -11,7 +10,7 @@ algorithm:
   log_freq: 10
   save_freq: 0
   num_steps: 25
-  total_timesteps: 1000000
+  total_timesteps: 10000
   update_epochs: 3
   gamma: 0.999
   gae_lambda: 0.95
@@ -27,6 +26,8 @@ algorithm:
   anneal_lr: false
   log_action_id: 1
 evaluation:
-  num_episodes: 25
+  num_episodes: 32
   temperature: 0
   log_action_id: 1
+train_novice: "experiments/minigrid_novice/best_test_easy.ckpt"
+train_expert: "experiments/minigrid_expert/best_test_hard.ckpt"

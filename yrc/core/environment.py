@@ -212,7 +212,7 @@ class CoordEnv(gym.Env):
         self.novice.model.eval()
         self.expert.model.eval()
         self._reset_agents(done=np.array([True] * self.num_envs))
-        return self.get_obs()
+        return self._get_obs()
 
     def _reset_agents(self, done: "numpy.ndarray") -> None:
         """
@@ -277,7 +277,7 @@ class CoordEnv(gym.Env):
         self._reset_agents(done)
         self.prev_action = action
 
-        return self.get_obs(), reward, done, info
+        return self._get_obs(), reward, done, info
 
     @torch.no_grad()
     def _compute_env_action(self, action):
@@ -318,7 +318,7 @@ class CoordEnv(gym.Env):
         return env_action
 
     @torch.no_grad()
-    def get_obs(self) -> dict:
+    def _get_obs(self) -> dict:
         """
         Return the current observation for the coordination environment.
 

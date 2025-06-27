@@ -120,7 +120,7 @@ class PPOAlgorithm(Algorithm):
         configure_logging(get_global_variable("log_file"))
         self.wandb_logger = WandbLogger()
 
-        env.reset()
+        self.last_obs = env.reset()
 
     def train(
         self,
@@ -226,7 +226,7 @@ class PPOAlgorithm(Algorithm):
         policy.eval()
 
         next_done = np.zeros((self.num_envs,))
-        next_obs = env.get_obs()
+        next_obs = self.last_obs
 
         for step in range(config.num_steps):
             self.global_step += self.num_envs
@@ -277,6 +277,9 @@ class PPOAlgorithm(Algorithm):
                 next_done,
                 info,
             )
+
+        # Keep track of the last observation
+        self.last_obs = next_obs
 
         # NOTE: don't forget to add done and value of last step
         done = torch.from_numpy(next_done).to(device).float()

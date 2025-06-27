@@ -8,9 +8,9 @@ from typing import Any, Optional, Union
 
 import numpy as np
 import torch
-import wandb
 from omegaconf import OmegaConf
 
+import wandb
 import yrc.algorithms as algorithm_factory
 import yrc.environments as env_factory
 import yrc.policies as policy_factory
@@ -103,7 +103,7 @@ class YRCConfig:
     """
 
     name: str = "default"
-    device: Union[int, str] = 0
+    device: int = 0
     seed: int = 10
     env: Any = "procgen"
     policy: Any = "PPOPolicy"

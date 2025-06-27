@@ -39,3 +39,7 @@ def load_policy(path, env):
 
 def register_env_config(name, config_cls):
     yrc.environments.config_cls[name] = config_cls
+
+
+def register_model_config(name, config_cls):
+    yrc.models.config_cls[name] = config_cls
