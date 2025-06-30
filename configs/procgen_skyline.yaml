@@ -1,22 +1,26 @@
-name: 'procgen_skyline'
+name: "procgen_skyline"
+
 env:
-    suite: 'procgen'
-    name: 'coinrun'
-    train: 
-        distribution_mode: 'hard'
-    val_sim:
-        distribution_mode: 'hard'
-algorithm: 'PPOAlgorithm'
-policy: 
-    cls: PPOPolicy
-    model:
-        cls: ImpalaCoordPPOModel
-        feature_type: obs
+  name: "procgen"
+  train:
+    distribution_mode: "hard"
+  val_sim:
+    distribution_mode: "hard"
+
+algorithm: "ppo"
+
+policy:
+  name: "ppo"
+  model:
+    name: "impala_coord_ppo"
+    feature_type: obs
+
 coordination:
-    expert_query_cost_weight: 0.4
-    switch_agent_cost_weight: 0.0
-    temperature: 1.0
-train_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-train_expert: 'experiments/procgen_ppo_expert/best_test.ckpt'
-test_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-test_expert: 'experiments/procgen_ppo_expert/best_test.ckpt' 
+  expert_query_cost_weight: 0.4
+  switch_agent_cost_weight: 0.0
+  temperature: 1.0
+
+train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
+test_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+test_expert: "experiments/procgen_ppo_expert/best_test.ckpt"

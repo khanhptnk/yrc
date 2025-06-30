@@ -1,6 +1,6 @@
 from copy import deepcopy as dc
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import torch
 from torch.distributions.categorical import Categorical
@@ -16,8 +16,8 @@ class LogitPolicyConfig:
 
     Parameters
     ----------
-    cls : str, optional
-        Name of the policy class. Default is "LogitPolicy".
+    name : str, optional
+        Name of the policy class. Default is "logit".
     metric : str, optional
         Confidence metric to use. Default is "max_logit".
     threshold : float, optional
@@ -27,21 +27,12 @@ class LogitPolicyConfig:
     load_path : str, optional
         Path to a checkpoint to load. Default is None.
 
-    Attributes
-    ----------
-    cls : str
-        Name of the policy class.
-    metric : str
-        Confidence metric to use.
-    threshold : float or None
-        Confidence threshold for expert query.
-    temperature : float or None
-        Temperature for scaling logits.
-    load_path : str or None
-        Path to a checkpoint to load.
+    Examples
+    --------
+    >>> config = LogitPolicyConfig(metric="max_prob", threshold=0.8)
     """
 
-    cls: str = "LogitPolicy"
+    name: str = "logit"
     metric: str = "max_logit"
     threshold: Optional[float] = None
     temperature: Optional[float] = None
@@ -52,24 +43,6 @@ class LogitPolicy(Policy):
     """
     Policy that selects actions based on logit confidence metrics and thresholds.
 
-    Parameters
-    ----------
-    config : LogitPolicyConfig
-        Configuration object for the policy.
-    env : object
-        The environment instance, used to determine expert index.
-
-    Attributes
-    ----------
-    config : LogitPolicyConfig
-        Configuration object for the policy.
-    params : dict
-        Dictionary of current policy parameters (threshold, temperature).
-    device : torch.device or str
-        Device for computation.
-    EXPERT : int
-        Index of the expert action.
-
     Examples
     --------
     >>> policy = LogitPolicy(LogitPolicyConfig(), env)
@@ -77,7 +50,9 @@ class LogitPolicy(Policy):
     >>> action = policy.act(obs)
     """
 
-    def __init__(self, config, env):
+    config_cls = LogitPolicyConfig
+
+    def __init__(self, config: LogitPolicyConfig, env: "gym.Env") -> None:
         """
         Initialize the LogitPolicy.
 
@@ -85,15 +60,25 @@ class LogitPolicy(Policy):
         ----------
         config : LogitPolicyConfig
             Configuration object for the policy.
-        env : object
+        env : gym.Env
             The environment instance, used to determine expert index.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy = LogitPolicy(LogitPolicyConfig(), env)
         """
         self.config = config
         self.params = {"threshold": config.threshold, "temperature": config.temperature}
         self.device = get_global_variable("device")
         self.EXPERT = env.EXPERT
 
-    def act(self, obs, temperature=None):
+    def act(
+        self, obs: Dict[str, Any], temperature: Optional[float] = None
+    ) -> torch.Tensor:
         """
         Select actions based on confidence scores and threshold.
 
@@ -108,6 +93,10 @@ class LogitPolicy(Policy):
         -------
         torch.Tensor
             Tensor of selected actions (expert or not) for the batch.
+
+        Examples
+        --------
+        >>> action = policy.act(obs)
         """
         logits = obs["novice_logits"]
         if not torch.is_tensor(logits):
@@ -121,7 +110,7 @@ class LogitPolicy(Policy):
         )
         return action
 
-    def compute_confidence(self, logits):
+    def compute_confidence(self, logits: torch.Tensor) -> torch.Tensor:
         """
         Compute confidence scores from logits using the configured metric.
 
@@ -134,6 +123,15 @@ class LogitPolicy(Policy):
         -------
         torch.Tensor
             Confidence scores for each sample in the batch.
+
+        Raises
+        ------
+        NotImplementedError
+            If the configured metric is not recognized.
+
+        Examples
+        --------
+        >>> score = policy.compute_confidence(logits)
         """
         # NOTE: higher = more confident
         metric = self.config.metric
@@ -173,10 +171,14 @@ class LogitPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.reset(done)
         """
         pass
 
-    def get_params(self):
+    def get_params(self) -> Dict[str, Any]:
         """
         Get the current parameters of the policy.
 
@@ -184,10 +186,14 @@ class LogitPolicy(Policy):
         -------
         dict
             Dictionary of policy parameters.
+
+        Examples
+        --------
+        >>> params = policy.get_params()
         """
         return dc(self.params)
 
-    def set_params(self, params):
+    def set_params(self, params: Dict[str, Any]) -> None:
         """
         Set the parameters of the policy.
 
@@ -204,28 +210,40 @@ class LogitPolicy(Policy):
         ------
         KeyError
             If a parameter key is not recognized by the policy.
+
+        Examples
+        --------
+        >>> policy.set_params({'threshold': 0.7})
         """
         for k, v in params.items():
             if k not in self.params:
                 raise KeyError(f"Parameter {k} not recognized in LogitPolicy")
             self.params[k] = dc(v)
 
-    def train(self):
+    def train(self) -> None:
         """
         Set the policy to training mode.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.train()
         """
         pass
 
-    def eval(self):
+    def eval(self) -> None:
         """
         Set the policy to evaluation mode.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.eval()
         """
         pass

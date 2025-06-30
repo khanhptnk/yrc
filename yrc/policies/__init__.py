@@ -1,13 +1,13 @@
-from .always import AlwaysPolicy, AlwaysPolicyConfig
-from .logit import LogitPolicy, LogitPolicyConfig
-from .ppo import PPOPolicy, PPOPolicyConfig
-from .pyod import PyODPolicy, PyODPolicyConfig
-from .random import RandomPolicy, RandomPolicyConfig
+from .always import AlwaysPolicy
+from .logit import LogitPolicy
+from .ppo import PPOPolicy
+from .pyod import PyODPolicy
+from .random import RandomPolicy
 
-config_cls = {
-    "AlwaysPolicy": AlwaysPolicyConfig,
-    "LogitPolicy": LogitPolicyConfig,
-    "PyODPolicy": PyODPolicyConfig,
-    "PPOPolicy": PPOPolicyConfig,
-    "RandomPolicy": RandomPolicyConfig,
+registry = {
+    "always": AlwaysPolicy,
+    "logit": LogitPolicy,
+    "pyod": PyODPolicy,
+    "ppo": PPOPolicy,
+    "random": RandomPolicy,
 }

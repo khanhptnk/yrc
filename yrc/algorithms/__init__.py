@@ -1,13 +1,13 @@
-from .always import AlwaysAlgorithm, AlwaysAlgorithmConfig
-from .logit import LogitAlgorithm, LogitAlgorithmConfig
-from .ppo import PPOAlgorithm, PPOAlgorithmConfig
-from .pyod import PyODAlgorithm, PyODAlgorithmConfig
-from .random import RandomAlgorithm, RandomAlgorithmConfig
+from .always import AlwaysAlgorithm
+from .logit import LogitAlgorithm
+from .ppo import PPOAlgorithm
+from .pyod import PyODAlgorithm
+from .random import RandomAlgorithm
 
-config_cls = {
-    "AlwaysAlgorithm": AlwaysAlgorithmConfig,
-    "LogitAlgorithm": LogitAlgorithmConfig,
-    "PyODAlgorithm": PyODAlgorithmConfig,
-    "PPOAlgorithm": PPOAlgorithmConfig,
-    "RandomAlgorithm": RandomAlgorithmConfig,
+registry = {
+    "always": AlwaysAlgorithm,
+    "logit": LogitAlgorithm,
+    "pyod": PyODAlgorithm,
+    "ppo": PPOAlgorithm,
+    "random": RandomAlgorithm,
 }

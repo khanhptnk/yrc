@@ -1,12 +1,13 @@
+import logging
+
+import torch
 from omegaconf import OmegaConf
 
 import yrc
-import yrc.core.algorithm as algo_factory
-import yrc.core.environment as env_factory
-import yrc.core.policy as policy_factory
 from yrc.core.config import YRCConfig, configure
 from yrc.core.environment import CoordEnv
 from yrc.core.evaluator import Evaluator
+from yrc.utils.global_variables import get_global_variable
 
 
 def make_config(args, dotlist_args=None):
@@ -21,25 +22,30 @@ def make_config(args, dotlist_args=None):
     return config
 
 
-def make_base_env(split, config):
-    return env_factory.make_base_env(split, config)
-
-
 def make_algorithm(config):
-    return algo_factory.make(config)
+    return yrc.algorithms.registry[config.name](config)
 
 
 def make_policy(config, env):
-    return policy_factory.make(config, env)
+    return yrc.policies.registry[config.name](config, env)
 
 
 def load_policy(path, env):
-    return policy_factory.load(path, env)
+    ckpt = torch.load(
+        path, map_location=get_global_variable("device"), weights_only=False
+    )
+    config = ckpt["policy_config"]
+
+    policy = make_policy(config, env)
+    policy.set_params(ckpt["model_state_dict"])
+    logging.info(f"Loaded policy from {path}")
+
+    return policy
 
 
-def register_env_config(name, config_cls):
-    yrc.environments.config_cls[name] = config_cls
+def register_environment(name, config_cls):
+    yrc.environments.registry[name] = config_cls
 
 
-def register_model_config(name, config_cls):
-    yrc.models.config_cls[name] = config_cls
+def register_model(name, model_cls):
+    yrc.models.registry[name] = model_cls

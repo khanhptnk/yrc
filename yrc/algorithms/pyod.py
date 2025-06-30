@@ -31,7 +31,7 @@ class PyODAlgorithmConfig:
         Acceptance rate for sampling data during rollouts. Default is 0.05.
     """
 
-    cls: str = "PyODAlgorithm"
+    name: str = "pyod"
     num_rollouts: int = 128
     percentiles: List[float] = field(default_factory=lambda: list(range(0, 101, 10)))
     explore_temps: List[float] = field(default_factory=lambda: [1.0])
@@ -42,26 +42,14 @@ class PyODAlgorithm(Algorithm):
     """
     Algorithm for out-of-distribution (OOD) detection using PyOD models.
 
-    Parameters
-    ----------
-    config : PyODAlgorithmConfig
-        Configuration object for the PyODAlgorithm.
-
-    Attributes
-    ----------
-    config : PyODAlgorithmConfig
-        Configuration object for the algorithm.
-    random : random.Random
-        Random number generator for sampling.
-    save_dir : str
-        Directory for saving checkpoints.
-
     Examples
     --------
     >>> algo = PyODAlgorithm(PyODAlgorithmConfig())
     """
 
-    def __init__(self, config):
+    config_cls = PyODAlgorithmConfig
+
+    def __init__(self, config: PyODAlgorithmConfig) -> None:
         """
         Initialize the PyODAlgorithm.
 
@@ -69,6 +57,14 @@ class PyODAlgorithm(Algorithm):
         ----------
         config : PyODAlgorithmConfig
             Configuration object for the PyODAlgorithm.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> algo = PyODAlgorithm(PyODAlgorithmConfig())
         """
         self.config = config
         self.random = random.Random(get_global_variable("seed") + 543)
@@ -78,18 +74,18 @@ class PyODAlgorithm(Algorithm):
         policy: "yrc.policies.PPOPolicy",
         env: "gym.Env",
         validators: Dict[str, "yrc.core.Evaluator"],
-    ):
+    ) -> None:
         """
         Train the PyODAlgorithm by searching for the best threshold parameter
         that maximizes evaluation reward.
 
         Parameters
         ----------
-        policy : Policy
+        policy : yrc.policies.PPOPolicy
             The policy to be evaluated and tuned.
         env : gym.Env
             The environment instance for training and data generation.
-        validators : dict of str to Evaluator
+        validators : dict of str to yrc.core.Evaluator
             Dictionary mapping split names to evaluator instances for evaluation.
 
         Returns
@@ -154,13 +150,13 @@ class PyODAlgorithm(Algorithm):
                     )
                     validator.summarizer.write(best_result[split])
 
-    def save_checkpoint(self, policy, name):
+    def save_checkpoint(self, policy: "yrc.policies.PPOPolicy", name: str) -> None:
         """
         Save the current policy configuration and parameters to a checkpoint file.
 
         Parameters
         ----------
-        policy : Policy
+        policy : yrc.policies.PPOPolicy
             The policy whose parameters are to be saved.
         name : str
             Name for the checkpoint file.
@@ -183,7 +179,14 @@ class PyODAlgorithm(Algorithm):
         )
         logging.info(f"Saved checkpoint to {save_path}")
 
-    def _generate_data(self, env, policy, temperature, num_rollouts, accept_rate):
+    def _generate_data(
+        self,
+        env: "gym.Env",
+        policy: "yrc.policies.PPOPolicy",
+        temperature: float,
+        num_rollouts: int,
+        accept_rate: float,
+    ) -> dict:
         """
         Generate data for OOD detection by rolling out the policy in the environment.
 
@@ -191,7 +194,7 @@ class PyODAlgorithm(Algorithm):
         ----------
         env : gym.Env
             The environment used for rollouts.
-        policy : Policy
+        policy : yrc.policies.PPOPolicy
             The policy to be evaluated.
         temperature : float
             Temperature parameter for action selection.

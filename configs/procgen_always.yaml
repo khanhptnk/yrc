@@ -1,13 +1,16 @@
 name: "procgen_always_novice"
-algorithm:
-    cls: "AlwaysAlgorithm"
+
 env:
-    suite: 'procgen'
-    name: 'coinrun'
+  name: "procgen"
+
+algorithm:
+  name: "always"
+
 policy:
-    cls: 'AlwaysPolicy'
-    agent: "novice"
-train_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-train_expert: 'experiments/procgen_ppo_expert/best_test.ckpt'
-test_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-test_expert: 'experiments/procgen_ppo_expert/best_test.ckpt' 
+  cls: "AlwaysPolicy"
+  agent: "novice"
+
+train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
+test_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+test_expert: "experiments/procgen_ppo_expert/best_test.ckpt"

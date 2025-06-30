@@ -1,27 +1,4 @@
-import importlib
 from abc import ABC, abstractmethod
-
-
-def make(config):
-    """
-    Instantiate and return an algorithm object based on the provided configuration.
-
-    Parameters
-    ----------
-    config : object
-        Configuration object with a 'cls' attribute specifying the algorithm class name.
-
-    Returns
-    -------
-    Algorithm
-        Instantiated algorithm object.
-
-    Examples
-    --------
-    >>> algo = make(config)
-    """
-    algorithm = getattr(importlib.import_module("yrc.algorithms"), config.cls)(config)
-    return algorithm
 
 
 class Algorithm(ABC):
@@ -38,7 +15,7 @@ class Algorithm(ABC):
     """
 
     @abstractmethod
-    def train(self, *args, **kwargs):
+    def train(self, *args, **kwargs) -> None:
         """
         Train the model or algorithm using the provided arguments.
 
@@ -52,5 +29,9 @@ class Algorithm(ABC):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> algo.train(data)
         """
         pass

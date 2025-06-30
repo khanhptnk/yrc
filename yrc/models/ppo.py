@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any, Dict, Union
 
 import torch
 import torch.nn as nn
@@ -13,7 +14,7 @@ class PPOModelOutput:
     """
     Output container for PPO model forward pass.
 
-    Attributes
+    Parameters
     ----------
     logits : torch.Tensor
         The raw action logits output by the policy head.
@@ -21,6 +22,10 @@ class PPOModelOutput:
         The value function prediction output by the value head.
     hidden : torch.Tensor
         The hidden feature representation from the model.
+
+    Examples
+    --------
+    >>> output = PPOModelOutput(logits, value, hidden)
     """
 
     logits: torch.Tensor
@@ -38,10 +43,9 @@ class ImpalaPPOModelConfig:
     cls : str, optional
         Name of the model class. Default is "ImpalaPPOModel".
 
-    Attributes
-    ----------
-    cls : str
-        Name of the model class.
+    Examples
+    --------
+    >>> config = ImpalaPPOModelConfig()
     """
 
     cls: str = "ImpalaPPOModel"
@@ -51,28 +55,6 @@ class ImpalaPPOModel(nn.Module):
     """
     PPO model using an IMPALA encoder for feature extraction.
 
-    Parameters
-    ----------
-    config : ImpalaPPOModelConfig
-        Configuration object for the model.
-    env : gym.Env
-        The environment instance, used to determine input and output dimensions.
-
-    Attributes
-    ----------
-    device : torch.device or str
-        Device for computation.
-    embedder : Impala
-        IMPALA feature extractor.
-    hidden_dim : int
-        Dimension of the hidden feature representation.
-    fc_policy : nn.Linear
-        Policy head linear layer.
-    fc_value : nn.Linear
-        Value head linear layer.
-    logit_dim : int
-        Number of action logits.
-
     Examples
     --------
     >>> model = ImpalaPPOModel(ImpalaPPOModelConfig(), env)
@@ -81,7 +63,27 @@ class ImpalaPPOModel(nn.Module):
     >>> print(out.logits.shape, out.value.shape)
     """
 
-    def __init__(self, config, env):
+    config_cls = ImpalaPPOModelConfig
+
+    def __init__(self, config: ImpalaPPOModelConfig, env: "gym.Env") -> None:
+        """
+        Initialize the ImpalaPPOModel.
+
+        Parameters
+        ----------
+        config : ImpalaPPOModelConfig
+            Configuration object for the model.
+        env : gym.Env
+            The environment instance, used to determine input and output dimensions.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> model = ImpalaPPOModel(ImpalaPPOModelConfig(), env)
+        """
         super().__init__()
         self.device = get_global_variable("device")
         self.embedder = Impala(env.observation_space.shape)
@@ -92,7 +94,7 @@ class ImpalaPPOModel(nn.Module):
         self.fc_value = orthogonal_init(nn.Linear(self.hidden_dim, 1), gain=1.0)
         self.logit_dim = env.action_space.n
 
-    def forward(self, obs):
+    def forward(self, obs: Any) -> PPOModelOutput:
         """
         Forward pass of the ImpalaPPOModel.
 
@@ -135,12 +137,9 @@ class ImpalaCoordPPOModelConfig:
         "obs", "hidden", "hidden_obs", "dist", "hidden_dist", "obs_dist", "obs_hidden_dist".
         Default is "obs".
 
-    Attributes
-    ----------
-    cls : str
-        Name of the model class.
-    feature_type : str
-        Type of feature representation to use.
+    Examples
+    --------
+    >>> config = ImpalaCoordPPOModelConfig(feature_type="obs_hidden_dist")
     """
 
     cls: str = "ImpalaCoordPPOModel"
@@ -151,30 +150,6 @@ class ImpalaCoordPPOModel(nn.Module):
     """
     PPO model for coordination environments, supporting multiple feature types.
 
-    Parameters
-    ----------
-    config : ImpalaCoordPPOModelConfig
-        Configuration object for the model.
-    env : gym.Env
-        The coordination environment instance.
-
-    Attributes
-    ----------
-    device : torch.device or str
-        Device for computation.
-    embedder : Impala
-        IMPALA feature extractor.
-    feature_type : str
-        Type of feature representation used.
-    hidden_dim : int
-        Dimension of the hidden feature representation.
-    fc_policy : nn.Linear
-        Policy head linear layer.
-    fc_value : nn.Linear
-        Value head linear layer.
-    logit_dim : int
-        Number of action logits.
-
     Examples
     --------
     >>> model = ImpalaCoordPPOModel(ImpalaCoordPPOModelConfig(), env)
@@ -183,7 +158,27 @@ class ImpalaCoordPPOModel(nn.Module):
     >>> print(out.logits.shape, out.value.shape)
     """
 
-    def __init__(self, config, env):
+    config_cls = ImpalaCoordPPOModelConfig
+
+    def __init__(self, config: ImpalaCoordPPOModelConfig, env: "gym.Env") -> None:
+        """
+        Initialize the ImpalaCoordPPOModel.
+
+        Parameters
+        ----------
+        config : ImpalaCoordPPOModelConfig
+            Configuration object for the model.
+        env : gym.Env
+            The coordination environment instance.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> model = ImpalaCoordPPOModel(ImpalaCoordPPOModelConfig(), env)
+        """
         super().__init__()
 
         self.device = get_global_variable("device")
@@ -217,7 +212,7 @@ class ImpalaCoordPPOModel(nn.Module):
         self.fc_value = orthogonal_init(nn.Linear(self.hidden_dim, 1), gain=1.0)
         self.logit_dim = env.action_space.n
 
-    def forward(self, obs):
+    def forward(self, obs: Dict[str, Any]) -> PPOModelOutput:
         """
         Forward pass of the ImpalaCoordPPOModel.
 

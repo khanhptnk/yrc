@@ -17,10 +17,10 @@ class PyODPolicyConfig:
 
     Parameters
     ----------
-    cls : str, optional
-        Name of the policy class. Default is "PyODPolicy".
+    name : str, optional
+        Name of the policy class. Default is "pyod".
     method : str, optional
-        PyOD method to use. Default is "DeepSVDD".
+        PyOD method to use. Default is "deepsvdd.DeepSVDD".
     feature_type : str, optional
         Type of feature representation to use. Default is "hidden".
     pyod_config : dict, optional
@@ -28,22 +28,13 @@ class PyODPolicyConfig:
     load_path : str, optional
         Path to a checkpoint to load. Default is None.
 
-    Attributes
-    ----------
-    cls : str
-        Name of the policy class.
-    method : str
-        PyOD method to use.
-    feature_type : str
-        Type of feature representation to use.
-    pyod_config : dict or None
-        Additional configuration for the PyOD model.
-    load_path : str or None
-        Path to a checkpoint to load.
+    Examples
+    --------
+    >>> config = PyODPolicyConfig(method="deepsvdd.DeepSVDD", feature_type="hidden")
     """
 
-    cls: str = "PyODPolicy"
-    method: str = "DeepSVDD"
+    name: str = "pyod"
+    method: str = "deepsvdd.DeepSVDD"
     feature_type: str = "hidden"
     pyod_config: Optional[Dict[str, Any]] = None
     load_path: Optional[str] = None
@@ -53,30 +44,16 @@ class PyODPolicy(Policy):
     """
     Policy that uses a PyOD outlier detector for action selection based on OOD scores.
 
-    Parameters
-    ----------
-    config : PyODPolicyConfig
-        Configuration object for the policy.
-    env : object
-        The environment instance, used to determine expert index.
-
-    Attributes
-    ----------
-    config : PyODPolicyConfig
-        Configuration object for the policy.
-    threshold : float or None
-        Threshold for OOD score to select expert action.
-    device : torch.device or str
-        Device for computation.
-    clf : object
-        PyOD model instance.
-    feature_type : str
-        Type of feature representation used.
-    EXPERT : int
-        Index of the expert action.
+    Examples
+    --------
+    >>> policy = PyODPolicy(PyODPolicyConfig(), env)
+    >>> obs = ...
+    >>> action = policy.act(obs)
     """
 
-    def __init__(self, config, env):
+    config_cls = PyODPolicyConfig
+
+    def __init__(self, config: PyODPolicyConfig, env: "gym.Env") -> None:
         """
         Initialize the PyODPolicy.
 
@@ -84,8 +61,16 @@ class PyODPolicy(Policy):
         ----------
         config : PyODPolicyConfig
             Configuration object for the policy.
-        env : object
+        env : gym.Env
             The environment instance, used to determine expert index.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy = PyODPolicy(PyODPolicyConfig(), env)
         """
         self.config = config
         self.threshold = None
@@ -101,7 +86,7 @@ class PyODPolicy(Policy):
         self.feature_type = config.feature_type
         self.EXPERT = env.EXPERT
 
-    def _get_pyod_class(self, config):
+    def _get_pyod_class(self, config: PyODPolicyConfig) -> type:
         """
         Dynamically import and return the PyOD class specified in the config.
 
@@ -119,6 +104,10 @@ class PyODPolicy(Policy):
         ------
         ImportError
             If the specified class cannot be imported.
+
+        Examples
+        --------
+        >>> cls = policy._get_pyod_class(config)
         """
         try:
             module_name, cls_name = config.method.split(".")
@@ -129,7 +118,7 @@ class PyODPolicy(Policy):
         except Exception as e:
             raise ImportError(f"Could not import {config.method} from PyOD: {e}")
 
-    def reset(self, done):
+    def reset(self, done: "numpy.ndarray") -> None:
         """
         Reset the policy state at episode boundaries.
 
@@ -141,10 +130,14 @@ class PyODPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.reset(done)
         """
         pass
 
-    def _make_input(self, obs):
+    def _make_input(self, obs: Dict[str, Any]) -> np.ndarray:
         """
         Construct the input feature array for the PyOD model from the observation.
 
@@ -162,6 +155,10 @@ class PyODPolicy(Policy):
         ------
         AssertionError
             If no features are selected for PyOD input.
+
+        Examples
+        --------
+        >>> inp = policy._make_input(obs)
         """
         inp = []
         if "obs" in self.feature_type:
@@ -182,7 +179,7 @@ class PyODPolicy(Policy):
 
         return inp
 
-    def fit(self, data):
+    def fit(self, data: Dict[str, Any]) -> None:
         """
         Fit the PyOD model using the provided data.
 
@@ -194,11 +191,15 @@ class PyODPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.fit(data)
         """
         X = self._make_input(data)
         self.clf.fit(X)
 
-    def get_train_scores(self):
+    def get_train_scores(self) -> np.ndarray:
         """
         Get the OOD decision scores from the PyOD model after fitting.
 
@@ -206,10 +207,16 @@ class PyODPolicy(Policy):
         -------
         np.ndarray
             Array of decision scores for the training data.
+
+        Examples
+        --------
+        >>> scores = policy.get_train_scores()
         """
         return self.clf.decision_scores_
 
-    def act(self, obs, temperature=None):
+    def act(
+        self, obs: Dict[str, Any], temperature: Optional[float] = None
+    ) -> torch.Tensor:
         """
         Select actions based on OOD scores from the PyOD model.
 
@@ -224,6 +231,10 @@ class PyODPolicy(Policy):
         -------
         torch.Tensor
             Tensor of selected actions (expert or not) for the batch.
+
+        Examples
+        --------
+        >>> action = policy.act(obs)
         """
         inp = self._make_input(obs)
         score = self.clf.decision_function(inp)
@@ -236,7 +247,7 @@ class PyODPolicy(Policy):
         )
         return action
 
-    def set_params(self, params):
+    def set_params(self, params: Dict[str, Any]) -> None:
         """
         Set the parameters of the policy.
 
@@ -248,13 +259,17 @@ class PyODPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.set_params({'threshold': 0.5, 'clf': clf})
         """
         if "threshold" in params:
             self.threshold = params["threshold"]
         if "clf" in params:
             self.clf = params["clf"]
 
-    def get_params(self):
+    def get_params(self) -> Dict[str, Any]:
         """
         Get the current parameters of the policy.
 
@@ -262,27 +277,39 @@ class PyODPolicy(Policy):
         -------
         dict
             Dictionary of policy parameters.
+
+        Examples
+        --------
+        >>> params = policy.get_params()
         """
         return {"threshold": self.threshold, "clf": self.clf}
 
-    def train(self):
+    def train(self) -> None:
         """
         Set the PyOD model to training mode if applicable.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.train()
         """
         if hasattr(self.clf, "model_") and isinstance(self.clf.model_, nn.Module):
             self.clf.model_.train()
 
-    def eval(self):
+    def eval(self) -> None:
         """
         Set the PyOD model to evaluation mode if applicable.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.eval()
         """
         if hasattr(self.clf, "model_") and isinstance(self.clf.model_, nn.Module):
             self.clf.model_.eval()

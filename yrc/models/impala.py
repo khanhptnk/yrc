@@ -10,26 +10,6 @@ class Impala(nn.Module):
     """
     IMPALA convolutional neural network for feature extraction from image observations.
 
-    Parameters
-    ----------
-    input_size : tuple of int
-        Shape of the input observation (C, H, W).
-    scale : int, optional
-        Scaling factor for the number of channels. Default is 1.
-
-    Attributes
-    ----------
-    block1 : ImpalaBlock
-        First convolutional block.
-    block2 : ImpalaBlock
-        Second convolutional block.
-    block3 : ImpalaBlock
-        Third convolutional block.
-    fc : nn.Linear
-        Fully connected layer after convolutional blocks.
-    output_dim : int
-        Output feature dimension (default 256).
-
     Examples
     --------
     >>> model = Impala((3, 64, 64))
@@ -38,7 +18,25 @@ class Impala(nn.Module):
     >>> print(out.shape)
     """
 
-    def __init__(self, input_size, scale=1):
+    def __init__(self, input_size: tuple, scale: int = 1) -> None:
+        """
+        Initialize the IMPALA model.
+
+        Parameters
+        ----------
+        input_size : tuple of int
+            Shape of the input observation (C, H, W).
+        scale : int, optional
+            Scaling factor for the number of channels. Default is 1.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> model = Impala((3, 64, 64))
+        """
         super(Impala, self).__init__()
         self.block1 = ImpalaBlock(in_channels=input_size[0], out_channels=16 * scale)
         self.block2 = ImpalaBlock(in_channels=16 * scale, out_channels=32 * scale)
@@ -50,7 +48,7 @@ class Impala(nn.Module):
         self.output_dim = 256
         self.apply(xavier_uniform_init)
 
-    def _get_fc_input_size(self, input_size):
+    def _get_fc_input_size(self, input_size: tuple) -> int:
         """
         Compute the input size for the fully connected layer after convolutions.
 
@@ -63,12 +61,17 @@ class Impala(nn.Module):
         -------
         int
             Flattened feature size after convolutional blocks.
+
+        Examples
+        --------
+        >>> model = Impala((3, 64, 64))
+        >>> size = model._get_fc_input_size((3, 64, 64))
         """
         test_in = torch.zeros((1,) + input_size)
         test_out = self.block3(self.block2(self.block1(test_in)))
         return math.prod(test_out.shape[1:])
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the IMPALA model.
 
@@ -81,6 +84,12 @@ class Impala(nn.Module):
         -------
         torch.Tensor
             Output feature tensor of shape (batch_size, output_dim).
+
+        Examples
+        --------
+        >>> model = Impala((3, 64, 64))
+        >>> x = torch.randn(8, 3, 64, 64)
+        >>> out = model(x)
         """
         x = self.block1(x)
         x = self.block2(x)
@@ -99,22 +108,6 @@ class ImpalaBlock(nn.Module):
     """
     A convolutional block used in the IMPALA architecture, consisting of a convolution, max pooling, and two residual blocks.
 
-    Parameters
-    ----------
-    in_channels : int
-        Number of input channels.
-    out_channels : int
-        Number of output channels.
-
-    Attributes
-    ----------
-    conv : nn.Conv2d
-        Convolutional layer.
-    res1 : ResidualBlock
-        First residual block.
-    res2 : ResidualBlock
-        Second residual block.
-
     Examples
     --------
     >>> block = ImpalaBlock(3, 16)
@@ -123,7 +116,25 @@ class ImpalaBlock(nn.Module):
     >>> print(out.shape)
     """
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int) -> None:
+        """
+        Initialize the ImpalaBlock.
+
+        Parameters
+        ----------
+        in_channels : int
+            Number of input channels.
+        out_channels : int
+            Number of output channels.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> block = ImpalaBlock(3, 16)
+        """
         super(ImpalaBlock, self).__init__()
         self.conv = nn.Conv2d(
             in_channels=in_channels,
@@ -135,7 +146,7 @@ class ImpalaBlock(nn.Module):
         self.res1 = ResidualBlock(out_channels)
         self.res2 = ResidualBlock(out_channels)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the ImpalaBlock.
 
@@ -148,6 +159,12 @@ class ImpalaBlock(nn.Module):
         -------
         torch.Tensor
             Output tensor after convolution, pooling, and residual blocks.
+
+        Examples
+        --------
+        >>> block = ImpalaBlock(3, 16)
+        >>> x = torch.randn(8, 3, 64, 64)
+        >>> out = block(x)
         """
         x = self.conv(x)
         x = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)(x)
@@ -160,18 +177,6 @@ class ResidualBlock(nn.Module):
     """
     Residual block with two convolutional layers and ReLU activations.
 
-    Parameters
-    ----------
-    in_channels : int
-        Number of input and output channels.
-
-    Attributes
-    ----------
-    conv1 : nn.Conv2d
-        First convolutional layer.
-    conv2 : nn.Conv2d
-        Second convolutional layer.
-
     Examples
     --------
     >>> block = ResidualBlock(16)
@@ -180,7 +185,23 @@ class ResidualBlock(nn.Module):
     >>> print(out.shape)
     """
 
-    def __init__(self, in_channels):
+    def __init__(self, in_channels: int) -> None:
+        """
+        Initialize the ResidualBlock.
+
+        Parameters
+        ----------
+        in_channels : int
+            Number of input and output channels.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> block = ResidualBlock(16)
+        """
         super(ResidualBlock, self).__init__()
         self.conv1 = nn.Conv2d(
             in_channels=in_channels,
@@ -197,7 +218,7 @@ class ResidualBlock(nn.Module):
             padding=1,
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the residual block.
 
@@ -210,6 +231,12 @@ class ResidualBlock(nn.Module):
         -------
         torch.Tensor
             Output tensor after residual connection.
+
+        Examples
+        --------
+        >>> block = ResidualBlock(16)
+        >>> x = torch.randn(8, 16, 32, 32)
+        >>> out = block(x)
         """
         out = nn.ReLU()(x)
         out = self.conv1(out)
@@ -230,7 +257,7 @@ class Flatten(nn.Module):
     >>> print(out.shape)
     """
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Flatten the input tensor except for the batch dimension.
 
@@ -243,5 +270,11 @@ class Flatten(nn.Module):
         -------
         torch.Tensor
             Flattened tensor of shape (batch_size, -1).
+
+        Examples
+        --------
+        >>> flatten = Flatten()
+        >>> x = torch.randn(8, 16, 4, 4)
+        >>> out = flatten(x)
         """
         return torch.flatten(x, start_dim=1)

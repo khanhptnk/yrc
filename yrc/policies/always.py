@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import torch
@@ -15,28 +15,19 @@ class AlwaysPolicyConfig:
 
     Parameters
     ----------
-    cls : str, optional
-        Name of the policy class. Default is "AlwaysPolicy".
+    name : str, optional
+        Name of the policy class. Default is "always".
     agent : str, optional
         The agent type to always select. Options are "novice" or "expert". Default is "novice".
     load_path : str, optional
         Path to a checkpoint to load. Default is None.
-
-    Attributes
-    ----------
-    cls : str
-        Name of the policy class.
-    agent : str
-        The agent type to always select.
-    load_path : str or None
-        Path to a checkpoint to load.
 
     Examples
     --------
     >>> config = AlwaysPolicyConfig(agent="expert")
     """
 
-    cls: str = "AlwaysPolicy"
+    name: str = "always"
     agent: str = "novice"
     load_path: Optional[str] = None
 
@@ -45,22 +36,6 @@ class AlwaysPolicy(Policy):
     """
     Policy that always selects the same agent (novice or expert) for every action.
 
-    Parameters
-    ----------
-    config : AlwaysPolicyConfig
-        Configuration object for the policy.
-    env : object
-        The environment instance, used to determine agent indices.
-
-    Attributes
-    ----------
-    choice : int
-        The constant action (agent index) to select.
-    device : torch.device or str
-        Device for computation.
-    config : AlwaysPolicyConfig
-        Configuration object for the policy.
-
     Examples
     --------
     >>> policy = AlwaysPolicy(AlwaysPolicyConfig(agent="novice"), env)
@@ -68,7 +43,9 @@ class AlwaysPolicy(Policy):
     >>> action = policy.act(obs)
     """
 
-    def __init__(self, config, env):
+    config_cls = AlwaysPolicyConfig
+
+    def __init__(self, config: AlwaysPolicyConfig, env: "gym.Env") -> None:
         """
         Initialize the AlwaysPolicy.
 
@@ -76,14 +53,22 @@ class AlwaysPolicy(Policy):
         ----------
         config : AlwaysPolicyConfig
             Configuration object for the policy.
-        env : object
+        env : gym.Env
             The environment instance, used to determine agent indices.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy = AlwaysPolicy(AlwaysPolicyConfig(agent="novice"), env)
         """
         self.choice = env.NOVICE if config.agent == "novice" else env.EXPERT
         self.device = get_global_variable("device")
         self.config = config
 
-    def act(self, obs, temperature=None):
+    def act(self, obs: Any, temperature: Optional[float] = None) -> torch.Tensor:
         """
         Select the constant action for a batch of observations.
 
@@ -103,6 +88,10 @@ class AlwaysPolicy(Policy):
         ------
         ValueError
             If obs is not a dict or numpy array.
+
+        Examples
+        --------
+        >>> action = policy.act(obs)
         """
         if isinstance(obs, dict):
             batch_size = obs["base_obs"].shape[0]
@@ -113,22 +102,26 @@ class AlwaysPolicy(Policy):
 
         return torch.ones((batch_size,)).to(self.device) * self.choice
 
-    def reset(self, done: "numpy.ndarray") -> None:
+    def reset(self, done: np.ndarray) -> None:
         """
         Reset the policy state at episode boundaries.
 
         Parameters
         ----------
-        done : numpy.ndarray
+        done : np.ndarray
             Boolean array indicating which episodes in a batch require a reset.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.reset(done)
         """
         pass
 
-    def get_params(self):
+    def get_params(self) -> Dict[str, Any]:
         """
         Get the current parameters of the policy.
 
@@ -136,10 +129,14 @@ class AlwaysPolicy(Policy):
         -------
         dict
             Dictionary of policy parameters.
+
+        Examples
+        --------
+        >>> params = policy.get_params()
         """
         pass
 
-    def set_params(self, params):
+    def set_params(self, params: Dict[str, Any]) -> None:
         """
         Set the parameters of the policy.
 
@@ -151,25 +148,37 @@ class AlwaysPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.set_params(params)
         """
         pass
 
-    def train(self):
+    def train(self) -> None:
         """
         Set the policy to training mode.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.train()
         """
         pass
 
-    def eval(self):
+    def eval(self) -> None:
         """
         Set the policy to evaluation mode.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.eval()
         """
         pass

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict
 
 from yrc.core.algorithm import Algorithm
 
@@ -11,42 +11,29 @@ class AlwaysAlgorithmConfig:
 
     Parameters
     ----------
-    cls : str, optional
-        Name of the algorithm class. Default is "AlwaysAlgorithm".
-
-    Attributes
-    ----------
-    cls : str
-        Name of the algorithm class.
+    name : str, optional
+        Name of the algorithm class. Default is "always".
 
     Examples
     --------
     >>> config = AlwaysAlgorithmConfig()
     """
 
-    cls: str = "AlwaysAlgorithm"
+    name: str = "always"
 
 
 class AlwaysAlgorithm(Algorithm):
     """
     Algorithm that always returns the same action, regardless of input.
 
-    Parameters
-    ----------
-    config : AlwaysAlgorithmConfig
-        Configuration object for the AlwaysAlgorithm.
-
-    Attributes
-    ----------
-    config : AlwaysAlgorithmConfig
-        Configuration object for the algorithm.
-
     Examples
     --------
     >>> algo = AlwaysAlgorithm(AlwaysAlgorithmConfig())
     """
 
-    def __init__(self, config):
+    config_cls = AlwaysAlgorithmConfig
+
+    def __init__(self, config: AlwaysAlgorithmConfig) -> None:
         """
         Initialize the AlwaysAlgorithm.
 
@@ -54,6 +41,14 @@ class AlwaysAlgorithm(Algorithm):
         ----------
         config : AlwaysAlgorithmConfig
             Configuration object for the AlwaysAlgorithm.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> algo = AlwaysAlgorithm(AlwaysAlgorithmConfig())
         """
         pass
 
@@ -62,7 +57,7 @@ class AlwaysAlgorithm(Algorithm):
         policy: "yrc.core.Policy",
         env: "gym.Env",
         validators: Dict[str, "yrc.core.Evaluator"],
-    ):
+    ) -> None:
         """
         Run the AlwaysAlgorithm training procedure.
 

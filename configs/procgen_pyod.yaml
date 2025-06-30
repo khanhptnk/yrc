@@ -1,19 +1,20 @@
 name: "procgen_pyod"
-algorithm:
-    cls: "PyODAlgorithm"
+
 env:
-    suite: 'procgen'
-    name: 'coinrun'
+  name: "procgen"
+
+algorithm:
+  name: "pyod"
+
 policy:
-    cls: 'PyODPolicy'
-    method: "deep_svdd.DeepSVDD"
-    feature_type: "hidden"
-    pyod_config:
-      n_features: 256
-      epochs: 100
-      # hidden_neurons: [256, 128]
-      optimizer: 'adamw'
-train_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-train_expert: 'experiments/procgen_ppo_expert/best_test.ckpt'
-test_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-test_expert: 'experiments/procgen_ppo_expert/best_test.ckpt' 
+  name: "pyod"
+  method: "deep_svdd.DeepSVDD"
+  feature_type: "hidden"
+  pyod_config:
+    n_features: 256
+    epochs: 100
+
+train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
+test_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+test_expert: "experiments/procgen_ppo_expert/best_test.ckpt"

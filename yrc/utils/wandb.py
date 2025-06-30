@@ -1,11 +1,9 @@
+from typing import Any, Dict
+
+
 class WandbLogger:
     """
     Simple logger for aggregating statistics and logging to Weights & Biases (wandb).
-
-    Attributes
-    ----------
-    log : dict
-        Dictionary storing logged statistics.
 
     Examples
     --------
@@ -16,17 +14,22 @@ class WandbLogger:
     >>> stats = logger.get()
     """
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clear the logger's internal statistics dictionary.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> logger = WandbLogger()
+        >>> logger.clear()
         """
         self.log = {}
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         """
         Set a statistic in the logger by key.
 
@@ -40,10 +43,15 @@ class WandbLogger:
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> logger = WandbLogger()
+        >>> logger['step'] = 1
         """
         self.log[key] = value
 
-    def add(self, split, stats):
+    def add(self, split: str, stats: Dict[str, Any]) -> None:
         """
         Add multiple statistics for a given split, prefixing keys with the split name.
 
@@ -57,11 +65,16 @@ class WandbLogger:
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> logger = WandbLogger()
+        >>> logger.add('train', {'loss': 0.1, 'acc': 0.9})
         """
         for k, v in stats.items():
             self.log[f"{split}/{k}"] = v
 
-    def get(self):
+    def get(self) -> Dict[str, Any]:
         """
         Retrieve the current statistics dictionary.
 

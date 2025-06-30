@@ -1,11 +1,9 @@
 from .ppo import (
     ImpalaCoordPPOModel,
-    ImpalaCoordPPOModelConfig,
     ImpalaPPOModel,
-    ImpalaPPOModelConfig,
 )
 
-config_cls = {
-    "ImpalaPPOModel": ImpalaPPOModelConfig,
-    "ImpalaCoordPPOModel": ImpalaCoordPPOModelConfig,
+registry = {
+    "impala_ppo": ImpalaPPOModel,
+    "impala_coord_ppo": ImpalaCoordPPOModel,
 }

@@ -1,8 +1,7 @@
 import logging
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
-import gym
 import numpy as np
 
 import yrc
@@ -17,20 +16,17 @@ class EvaluatorConfig:
     Parameters
     ----------
     num_episodes : int, optional
-        Number of episodes to use for evaluation. Default is 256.
+        Number of episodes to use for evaluation. Default is 500.
+    num_steps : int, optional
+        Number of steps per episode. Default is 256.
     temperature : float, optional
         Temperature parameter for action selection. Default is 1.0.
     log_action_id : int, optional
         The action index to track and log during evaluation. Default is CoordEnv.EXPERT.
 
-    Attributes
-    ----------
-    num_episodes : int
-        Number of episodes to use for evaluation.
-    temperature : float
-        Temperature parameter for action selection.
-    log_action_id : int
-        The action index to track and log during evaluation.
+    Examples
+    --------
+    >>> config = EvaluatorConfig(num_episodes=100, temperature=0.5)
     """
 
     num_episodes: int = 500
@@ -43,29 +39,15 @@ class Evaluator:
     """
     Evaluator for running policy evaluation on environments and summarizing results.
 
-    Parameters
-    ----------
-    config : EvaluatorConfig
-        Configuration object for the evaluator.
-    env : gym.Env
-        The environment instance to evaluate on.
-
-    Attributes
-    ----------
-    config : EvaluatorConfig
-        Configuration object for the evaluator.
-    env : gym.Env
-        The environment instance to evaluate on.
-    summarizer : EvaluationSummarizer
-        Summarizer for evaluation statistics.
-
     Examples
     --------
     >>> evaluator = Evaluator(EvaluatorConfig(), env)
     >>> summary = evaluator.evaluate(policy)
     """
 
-    def __init__(self, config, env):
+    config_cls = EvaluatorConfig
+
+    def __init__(self, config: EvaluatorConfig, env: "gym.Env") -> None:
         """
         Initialize the Evaluator.
 
@@ -75,6 +57,10 @@ class Evaluator:
             Configuration object for the evaluator.
         env : gym.Env
             The environment instance to evaluate on.
+
+        Returns
+        -------
+        None
         """
         self.config = config
         self.env = env
@@ -82,8 +68,8 @@ class Evaluator:
     def evaluate(
         self,
         policy: "yrc.core.Policy",
-        num_episodes: int = None,
-    ) -> dict:
+        num_episodes: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """
         Evaluate a policy on the environment and summarize the results.
 
@@ -96,7 +82,7 @@ class Evaluator:
 
         Returns
         -------
-        summary : dict
+        dict
             A dictionary mapping split names to summary statistics for each evaluation.
 
         Examples
@@ -104,7 +90,6 @@ class Evaluator:
         >>> summary = evaluator.evaluate(policy, num_episodes=100)
         >>> print(summary['reward_mean'])
         """
-
         config = self.config
         env = self.env
 
@@ -128,7 +113,7 @@ class Evaluator:
 
         return summary
 
-    def _eval_one_iteration(self, policy, env):
+    def _eval_one_iteration(self, policy: "yrc.core.Policy", env: "gym.Env") -> None:
         """
         Run a single evaluation iteration for the policy on the environment.
 
@@ -165,24 +150,12 @@ class EvaluationSummarizer:
     """
     Summarizer for evaluation statistics and logging.
 
-    Parameters
-    ----------
-    config : EvaluatorConfig
-        Configuration object for the summarizer.
-
-    Attributes
-    ----------
-    log_action_id : int
-        Action ID to log statistics for.
-    log : dict
-        Dictionary for storing summary statistics.
-
     Examples
     --------
     >>> summarizer = EvaluationSummarizer(EvaluatorConfig())
     """
 
-    def __init__(self, config):
+    def __init__(self, config: EvaluatorConfig) -> None:
         """
         Initialize the EvaluationSummarizer.
 
@@ -190,11 +163,15 @@ class EvaluationSummarizer:
         ----------
         config : EvaluatorConfig
             Configuration object for the summarizer.
+
+        Returns
+        -------
+        None
         """
         self.log_action_id = config.log_action_id
         self.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clear the summary statistics log.
 
@@ -204,7 +181,7 @@ class EvaluationSummarizer:
         """
         self.log = {}
 
-    def initialize_episode(self, env):
+    def initialize_episode(self, env: "gym.Env") -> None:
         """
         Initialize logging for a new evaluation episode.
 
@@ -224,7 +201,7 @@ class EvaluationSummarizer:
             f"action_{self.log_action_id}": 0,
         }
 
-    def finalize_episode(self):
+    def finalize_episode(self) -> None:
         """
         Finalize and aggregate statistics for the episode.
 
@@ -241,7 +218,14 @@ class EvaluationSummarizer:
         else:
             self.log.update(self.episode_log)
 
-    def add_episode_step(self, env, action, reward, info, has_done):
+    def add_episode_step(
+        self,
+        env: "gym.Env",
+        action: "torch.Tensor",
+        reward: np.ndarray,
+        info: List[Dict[str, Any]],
+        has_done: np.ndarray,
+    ) -> None:
         """
         Log statistics for each episode step.
 
@@ -251,11 +235,11 @@ class EvaluationSummarizer:
             The environment instance.
         action : torch.Tensor
             Actions taken at this step.
-        reward : np.ndarray or torch.Tensor
+        reward : np.ndarray
             Rewards received at this step.
         info : list of dict
             Additional info for each environment.
-        has_done : np.ndarray or torch.Tensor
+        has_done : np.ndarray
             Boolean array indicating which episodes are done.
 
         Returns
@@ -275,7 +259,7 @@ class EvaluationSummarizer:
                     action[i] == self.log_action_id
                 ).sum()
 
-    def summarize(self):
+    def summarize(self) -> Dict[str, Any]:
         """
         Compute summary statistics for the current log.
 
@@ -283,6 +267,10 @@ class EvaluationSummarizer:
         -------
         dict
             Dictionary of summary statistics.
+
+        Examples
+        --------
+        >>> summary = summarizer.summarize()
         """
         log = self.log
         self.summary = {
@@ -301,7 +289,7 @@ class EvaluationSummarizer:
         }
         return self.summary
 
-    def write(self, summary=None):
+    def write(self, summary: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Pretty-print and log the summary statistics.
 
@@ -314,6 +302,10 @@ class EvaluationSummarizer:
         -------
         dict
             The summary statistics that were logged.
+
+        Examples
+        --------
+        >>> logged_summary = summarizer.write()
         """
         if summary is None:
             summary = self.summarize()

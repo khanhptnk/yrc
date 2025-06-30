@@ -1,12 +1,16 @@
+import os
 from copy import deepcopy as dc
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Any, List, Tuple, Dict
 
-import gym
+# Import gym or gymnasium based on environment variable
+if os.environ.get("GYM_BACKEND", "gym") == "gymnasium":
+    import gymnasium as gym
+else:
+    import gym
+
 import numpy as np
 import torch
-
-import yrc
 
 
 @dataclass
@@ -22,15 +26,6 @@ class CoordinationConfig:
         The cost coefficient for switching between agents. Default is 0.0.
     temperature : float, optional
         The temperature parameter for action sampling. Default is 1.0.
-
-    Attributes
-    ----------
-    expert_query_cost_weight : float
-        The cost coefficient for querying the expert policy.
-    switch_agent_cost_weight : float
-        The cost coefficient for switching between agents.
-    temperature : float
-        The temperature parameter for action sampling.
 
     Examples
     --------
@@ -49,36 +44,6 @@ class CoordEnv(gym.Env):
     This class wraps a base environment and enables switching between a novice and expert policy,
     applying costs for expert queries and agent switching.
 
-    Parameters
-    ----------
-    config : CoordinationConfig
-        Configuration object specifying coordination parameters.
-    base_env : gym.Env
-        The base Gym environment to be wrapped or extended.
-    novice : Policy
-        The novice policy.
-    expert : Policy
-        The expert policy.
-
-    Attributes
-    ----------
-    config : CoordinationConfig
-        Coordination configuration.
-    base_env : gym.Env
-        The base environment.
-    novice : Policy
-        The novice policy.
-    expert : Policy
-        The expert policy.
-    action_space : gym.spaces.Discrete
-        Discrete action space (2: novice or expert).
-    observation_space : gym.spaces.Dict
-        Observation space including base_obs, novice_hidden, and novice_logits.
-    expert_query_cost_per_action : float
-        Cost per action for querying the expert.
-    switch_agent_cost_per_action : float
-        Cost per action for switching between agents.
-
     Examples
     --------
     >>> config = CoordinationConfig()
@@ -88,10 +53,18 @@ class CoordEnv(gym.Env):
     >>> env = CoordEnv(config, base_env, novice, expert)
     """
 
+    config_cls = CoordinationConfig
+
     NOVICE = 0
     EXPERT = 1
 
-    def __init__(self, config, base_env, novice, expert):
+    def __init__(
+        self,
+        config: CoordinationConfig,
+        base_env: gym.Env,
+        novice: "yrc.core.Policy",
+        expert: "yrc.core.Policy",
+    ) -> None:
         """
         Initialize the coordination environment.
 
@@ -101,9 +74,9 @@ class CoordEnv(gym.Env):
             Configuration object specifying coordination parameters.
         base_env : gym.Env
             The base Gym environment to be wrapped or extended.
-        novice : Policy
+        novice : yrc.core.Policy
             The novice policy.
-        expert : Policy
+        expert : yrc.core.Policy
             The expert policy.
 
         Returns
@@ -140,7 +113,7 @@ class CoordEnv(gym.Env):
         self.switch_agent_cost_per_action = None
 
     @property
-    def num_envs(self):
+    def num_envs(self) -> int:
         """
         Number of parallel environments.
 
@@ -148,18 +121,21 @@ class CoordEnv(gym.Env):
         -------
         int
             Number of parallel environments.
+
+        Examples
+        --------
+        >>> n = env.num_envs
         """
         return self.base_env.num_envs
 
-    def set_costs(self, reward_per_action: float) -> None:
+    def set_costs(self, base_penalty: float) -> None:
         """
         Set the cost per action for expert queries and agent switching.
 
         Parameters
         ----------
-        reward_per_action : float
-            The reward value per action. If None, it should be computed from environment
-            statistics (mean episode reward divided by mean episode length).
+        base_penalty : float
+            The reward value per action.
 
         Returns
         -------
@@ -168,10 +144,7 @@ class CoordEnv(gym.Env):
         Examples
         --------
         >>> env.set_costs(0.05)
-        >>> print(env.expert_query_cost_per_action)
-        >>> print(env.switch_agent_cost_per_action)
         """
-
         # NOTE: paper results were generated with rounding
         # self.expert_query_cost_per_action = round(
         #     reward_per_action * self.config.expert_query_cost_weight, 2
@@ -181,14 +154,14 @@ class CoordEnv(gym.Env):
         # )
 
         self.expert_query_cost_per_action = (
-            reward_per_action * self.config.expert_query_cost_weight
+            base_penalty * self.config.expert_query_cost_weight
         )
 
         self.switch_agent_cost_per_action = (
-            reward_per_action * self.config.switch_agent_cost_weight
+            base_penalty * self.config.switch_agent_cost_weight
         )
 
-    def reset(self) -> dict:
+    def reset(self) -> Dict[str, Any]:
         """
         Reset the coordination environment to an initial state.
 
@@ -203,9 +176,6 @@ class CoordEnv(gym.Env):
         Examples
         --------
         >>> obs = env.reset()
-        >>> print(obs["base_obs"].shape)
-        >>> print(obs["novice_hidden"].shape)
-        >>> print(obs["novice_logits"].shape)
         """
         self.prev_action = None
         self.base_obs = self.base_env.reset()
@@ -214,7 +184,7 @@ class CoordEnv(gym.Env):
         self._reset_agents(done=np.array([True] * self.num_envs))
         return self._get_obs()
 
-    def _reset_agents(self, done: "numpy.ndarray") -> None:
+    def _reset_agents(self, done: np.ndarray) -> None:
         """
         Reset the internal state of the novice and expert agents.
 
@@ -226,13 +196,17 @@ class CoordEnv(gym.Env):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> env._reset_agents(np.array([True, False]))
         """
         self.novice.reset(done)
         self.expert.reset(done)
 
     def step(
-        self, action: "numpy.ndarray"
-    ) -> Tuple[dict, "numpy.ndarray", "numpy.ndarray", List[dict]]:
+        self, action: np.ndarray
+    ) -> Tuple[Dict[str, Any], np.ndarray, np.ndarray, List[Dict[str, Any]]]:
         """
         Advance the environment by one step using the provided action.
 
@@ -280,7 +254,7 @@ class CoordEnv(gym.Env):
         return self._get_obs(), reward, done, info
 
     @torch.no_grad()
-    def _compute_env_action(self, action):
+    def _compute_env_action(self, action: np.ndarray) -> np.ndarray:
         """
         Compute the environment-specific action for each agent.
 
@@ -293,9 +267,13 @@ class CoordEnv(gym.Env):
         -------
         env_action : numpy.ndarray
             Array of actions to be passed to the base environment.
+
+        Examples
+        --------
+        >>> env_action = env._compute_env_action(action)
         """
         is_novice = action == self.NOVICE
-        is_expert = ~is_novice
+        is_expert = np.logical_not(is_novice)
 
         env_action = np.zeros_like(action)
         if is_novice.any():
@@ -318,7 +296,7 @@ class CoordEnv(gym.Env):
         return env_action
 
     @torch.no_grad()
-    def _get_obs(self) -> dict:
+    def _get_obs(self) -> Dict[str, Any]:
         """
         Return the current observation for the coordination environment.
 
@@ -332,10 +310,7 @@ class CoordEnv(gym.Env):
 
         Examples
         --------
-        >>> obs = env.get_obs()
-        >>> print(obs["base_obs"].shape)
-        >>> print(obs["novice_hidden"].shape)
-        >>> print(obs["novice_logits"].shape)
+        >>> obs = env._get_obs()
         """
         # NOTE: novice model must be state-less
         model_output = self.novice.model(self.base_obs)
@@ -346,7 +321,9 @@ class CoordEnv(gym.Env):
         }
         return obs
 
-    def _get_reward(self, base_reward, action, done):
+    def _get_reward(
+        self, base_reward: np.ndarray, action: np.ndarray, done: np.ndarray
+    ) -> np.ndarray:
         """
         Compute the reward for the current step, including costs for expert queries and agent switching.
 
@@ -363,6 +340,10 @@ class CoordEnv(gym.Env):
         -------
         reward : numpy.ndarray
             The computed reward(s) after applying costs.
+
+        Examples
+        --------
+        >>> reward = env._get_reward(base_reward, action, done)
         """
         # cost of querying expert agent
         reward = np.where(

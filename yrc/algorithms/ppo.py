@@ -1,8 +1,14 @@
 import logging
+import os
 from dataclasses import dataclass
 from typing import Dict
 
-import gym
+# Import gym or gymnasium based on environment variable
+if os.environ.get("GYM_BACKEND", "gym") == "gymnasium":
+    import gymnasium as gym
+else:
+    import gym
+
 import numpy as np
 import torch
 import torch.optim as optim
@@ -18,14 +24,12 @@ from yrc.utils.wandb import WandbLogger
 @dataclass
 class PPOAlgorithmConfig:
     """
-    Configuration dataclass for PPOAlgorithm.
-
-    Contains all hyperparameters and settings required to initialize and run PPO training.
+    Configuration for the PPOAlgorithm.
 
     Parameters
     ----------
-    cls : str, optional
-        Name of the algorithm class (default: "PPOAlgorithm").
+    name : str, optional
+        Name of the algorithm (default: "ppo").
     log_freq : int, optional
         Frequency (in iterations) to log training statistics.
     save_freq : int, optional
@@ -62,9 +66,13 @@ class PPOAlgorithmConfig:
         Whether to linearly anneal the learning rate.
     log_action_id : int, optional
         Action ID to log statistics for (e.g., expert action).
+
+    Examples
+    --------
+    >>> cfg = PPOAlgorithmConfig(num_steps=128, total_timesteps=10000)
     """
 
-    cls: str = "PPOAlgorithm"
+    name: str = "ppo"
     log_freq: int = 10
     save_freq: int = 0
     num_steps: int = 256
@@ -86,7 +94,18 @@ class PPOAlgorithmConfig:
 
 
 class PPOAlgorithm(Algorithm):
-    def __init__(self, config):
+    """
+    Proximal Policy Optimization (PPO) algorithm implementation.
+
+    Examples
+    --------
+    >>> algo = PPOAlgorithm(PPOAlgorithmConfig())
+    >>> algo.train(policy, env, validators)
+    """
+
+    config_cls = PPOAlgorithmConfig
+
+    def __init__(self, config: PPOAlgorithmConfig) -> None:
         """
         Initialize the PPOAlgorithm.
 
@@ -94,10 +113,25 @@ class PPOAlgorithm(Algorithm):
         ----------
         config : PPOAlgorithmConfig
             Configuration object containing PPO hyperparameters.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> algo = PPOAlgorithm(PPOAlgorithmConfig())
         """
         self.config = config
 
-    def _initialize(self):
+    def _initialize(self) -> None:
+        """
+        Initialize PPO training state, buffers, optimizer, and logging.
+
+        Returns
+        -------
+        None
+        """
         config = self.config
         env = self.env
         policy = self.policy
@@ -127,17 +161,17 @@ class PPOAlgorithm(Algorithm):
         policy: "yrc.policies.PPOPolicy",
         env: "gym.Env",
         validators: Dict[str, "yrc.core.Evaluator"],
-    ):
+    ) -> None:
         """
         Train the PPO algorithm on the specified environment(s) using the provided policy.
 
-        This method performs multiple training iterations, periodically evaluates the policy
-        on specified splits, logs statistics, and saves checkpoints for the best and last models.
+        This method performs multiple training iterations, periodically evaluates the policy,
+        logs statistics, and saves checkpoints for the best and last models.
 
         Parameters
         ----------
         policy : yrc.policies.PPOPolicy
-            The policy to be trained. Must implement act(), train(), and eval() methods.
+            The policy to be trained.
         env : gym.Env
             The environment instance for training.
         validators : dict of str to yrc.core.Evaluator
@@ -205,7 +239,7 @@ class PPOAlgorithm(Algorithm):
         # close env after training
         env.close()
 
-    def _train_once(self):
+    def _train_once(self) -> None:
         """
         Perform a single training iteration of PPO, including trajectory collection,
         advantage computation, and policy/value updates.
@@ -367,7 +401,7 @@ class PPOAlgorithm(Algorithm):
 
         self.summarizer.finalize_iteration()
 
-    def _update_learning_rate(self):
+    def _update_learning_rate(self) -> None:
         """
         Update the learning rate for the optimizer, optionally annealing it over time.
 
@@ -393,6 +427,10 @@ class PPOAlgorithm(Algorithm):
             Advantage estimates for each step.
         returns : torch.Tensor
             Computed returns for each step.
+
+        Examples
+        --------
+        >>> adv, ret = algo._compute_advantages_and_returns()
         """
         buffer = self.buffer
         config = self.config
@@ -415,7 +453,7 @@ class PPOAlgorithm(Algorithm):
         returns = advantages + buffer.values[:-1]
         return advantages, returns
 
-    def save_checkpoint(self, policy, name):
+    def save_checkpoint(self, policy: "yrc.policies.PPOPolicy", name: str) -> None:
         """
         Save the current policy and optimizer state to a checkpoint file.
 
@@ -429,6 +467,10 @@ class PPOAlgorithm(Algorithm):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> algo.save_checkpoint(policy, "last")
         """
         save_path = f"{self.save_dir}/{name}.ckpt"
         torch.save(
@@ -442,7 +484,7 @@ class PPOAlgorithm(Algorithm):
         )
         logging.info(f"Saved checkpoint to {save_path}")
 
-    def load_checkpoint(self, policy, load_path):
+    def load_checkpoint(self, policy: "yrc.policies.PPOPolicy", load_path: str) -> None:
         """
         Load policy and optimizer state from a checkpoint file.
 
@@ -456,6 +498,10 @@ class PPOAlgorithm(Algorithm):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> algo.load_checkpoint(policy, "checkpoint.ckpt")
         """
         ckpt = torch.load(load_path, map_location=get_global_variable("device"))
         policy.set_params(ckpt["model_state_dict"])
@@ -471,6 +517,21 @@ class PPOBatch:
     """
     Data structure for a batch of PPO training data.
 
+    Parameters
+    ----------
+    obs : TensorDict
+        Batch of observations.
+    actions : torch.Tensor
+        Batch of actions taken.
+    log_probs : torch.Tensor
+        Log probabilities of the actions.
+    advantages : torch.Tensor
+        Advantage estimates for the batch.
+    returns : torch.Tensor
+        Computed returns for the batch.
+    values : torch.Tensor
+        Value function predictions for the batch.
+
     Attributes
     ----------
     obs : TensorDict
@@ -485,6 +546,10 @@ class PPOBatch:
         Computed returns for the batch.
     values : torch.Tensor
         Value function predictions for the batch.
+
+    Examples
+    --------
+    >>> batch = PPOBatch(obs, actions, log_probs, advantages, returns, values)
     """
 
     obs: "TensorDict"
@@ -564,6 +629,10 @@ class TrainBuffer:
         -------
         TrainBuffer
             A new buffer instance with allocated arrays.
+
+        Examples
+        --------
+        >>> buffer = TrainBuffer.new(env, 128)
         """
         device = get_global_variable("device")
         num_envs = env.num_envs
@@ -621,6 +690,10 @@ class TrainBuffer:
         -------
         TrainBuffer
             A new buffer with flattened arrays.
+
+        Examples
+        --------
+        >>> flat_buffer = buffer.flatten()
         """
         new_data = {}
         for k, v in self.data.items():
@@ -659,6 +732,11 @@ class TrainBuffer:
         ------
         PPOBatch
             A minibatch of PPO training data.
+
+        Examples
+        --------
+        >>> for mb in buffer.generate_minibatches(3, 64):
+        ...     # train on mb
         """
         batch_size = self.actions.shape[0]
         b_inds = np.arange(batch_size)
@@ -686,17 +764,12 @@ class TensorDict:
     data : dict or torch.Tensor
         Dictionary of tensors or a single tensor.
 
-    Attributes
-    ----------
-    data : dict or torch.Tensor
-        The underlying tensor data.
-
     Examples
     --------
     >>> td = TensorDict({'obs': torch.zeros(4, 3)})
     """
 
-    def __init__(self, data):
+    def __init__(self, data: dict | torch.Tensor) -> None:
         """
         Initialize a TensorDict.
 
@@ -704,11 +777,15 @@ class TensorDict:
         ----------
         data : dict or torch.Tensor
             Dictionary of tensors or a single tensor.
+
+        Returns
+        -------
+        None
         """
         self.data = data
 
     @classmethod
-    def zeros(cls, shape):
+    def zeros(cls, shape: dict | tuple) -> "TensorDict":
         """
         Create a TensorDict of zeros with the given shape.
 
@@ -721,6 +798,10 @@ class TensorDict:
         -------
         TensorDict
             A TensorDict of zeros.
+
+        Examples
+        --------
+        >>> td = TensorDict.zeros({'obs': (4, 3)})
         """
         if isinstance(shape, dict):
             data = {}
@@ -730,7 +811,7 @@ class TensorDict:
             data = torch.zeros(shape)
         return TensorDict(data)
 
-    def to(self, device):
+    def to(self, device: torch.device | str) -> "TensorDict":
         """
         Move all tensors in the TensorDict to the specified device.
 
@@ -743,6 +824,10 @@ class TensorDict:
         -------
         TensorDict
             A new TensorDict with tensors on the specified device.
+
+        Examples
+        --------
+        >>> td = td.to("cuda")
         """
         if isinstance(self.data, dict):
             data = {}
@@ -752,7 +837,7 @@ class TensorDict:
             data = self.data.to(device)
         return TensorDict(data)
 
-    def __setitem__(self, indices, other):
+    def __setitem__(self, indices: object, other: "TensorDict") -> None:
         """
         Set values in the TensorDict at the given indices.
 
@@ -773,7 +858,7 @@ class TensorDict:
         else:
             self.data[indices] = other.data
 
-    def __getitem__(self, indices):
+    def __getitem__(self, indices: object) -> "TensorDict":
         """
         Retrieve values from the TensorDict at the given indices.
 
@@ -786,6 +871,10 @@ class TensorDict:
         -------
         TensorDict
             A new TensorDict with the selected values.
+
+        Examples
+        --------
+        >>> td_slice = td[0:2]
         """
         if isinstance(self.data, dict):
             data = {}
@@ -795,7 +884,7 @@ class TensorDict:
             data = self.data[indices]
         return TensorDict(data)
 
-    def flatten(self, start_dim=0, end_dim=-1):
+    def flatten(self, start_dim: int = 0, end_dim: int = -1) -> "TensorDict":
         """
         Flatten tensors in the TensorDict along specified dimensions.
 
@@ -810,6 +899,10 @@ class TensorDict:
         -------
         TensorDict
             A new TensorDict with flattened tensors.
+
+        Examples
+        --------
+        >>> td_flat = td.flatten(0, 1)
         """
         if isinstance(self.data, dict):
             data = {}
@@ -820,7 +913,7 @@ class TensorDict:
         return TensorDict(data)
 
     @classmethod
-    def from_numpy(cls, data):
+    def from_numpy(cls, data: dict | np.ndarray) -> "TensorDict":
         """
         Convert numpy arrays to a TensorDict.
 
@@ -833,6 +926,10 @@ class TensorDict:
         -------
         TensorDict
             A TensorDict with tensors converted from numpy arrays.
+
+        Examples
+        --------
+        >>> td = TensorDict.from_numpy({'obs': np.zeros((4, 3))})
         """
         if isinstance(data, dict):
             data = data.copy()
@@ -847,24 +944,12 @@ class PPOTrainSummarizer:
     """
     Summarizer for PPO training statistics and logging.
 
-    Parameters
-    ----------
-    config : PPOAlgorithmConfig
-        Configuration object for the summarizer.
-
-    Attributes
-    ----------
-    log_action_id : int
-        Action ID to log statistics for.
-    log : dict
-        Dictionary for storing summary statistics.
-
     Examples
     --------
     >>> summarizer = PPOTrainSummarizer(config)
     """
 
-    def __init__(self, config):
+    def __init__(self, config: PPOAlgorithmConfig) -> None:
         """
         Initialize the PPOTrainSummarizer.
 
@@ -872,11 +957,15 @@ class PPOTrainSummarizer:
         ----------
         config : PPOAlgorithmConfig
             Configuration object for the summarizer.
+
+        Returns
+        -------
+        None
         """
         self.log_action_id = config.log_action_id
         self.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clear the summary statistics log.
 
@@ -886,7 +975,7 @@ class PPOTrainSummarizer:
         """
         self.log = {}
 
-    def initialize_iteration(self, env):
+    def initialize_iteration(self, env: "gym.Env") -> None:
         """
         Initialize logging for a new training iteration.
 
@@ -919,7 +1008,7 @@ class PPOTrainSummarizer:
             "base_reward": [0.0] * env.num_envs,
         }
 
-    def finalize_iteration(self):
+    def finalize_iteration(self) -> None:
         """
         Finalize and aggregate statistics for the iteration.
 
@@ -933,7 +1022,14 @@ class PPOTrainSummarizer:
             else:
                 raise NotImplementedError
 
-    def add_episode_step(self, action, log_prob, reward, done, info):
+    def add_episode_step(
+        self,
+        action: torch.Tensor,
+        log_prob: torch.Tensor,
+        reward: np.ndarray | torch.Tensor,
+        done: np.ndarray | torch.Tensor,
+        info: list,
+    ) -> None:
         """
         Log statistics for each episode step.
 
@@ -971,8 +1067,14 @@ class PPOTrainSummarizer:
                 self.episode_total_reward["base_reward"][i] = 0
 
     def add_training_iteration(
-        self, value, advantage, pg_loss, v_loss, entropy_loss, loss
-    ):
+        self,
+        value: torch.Tensor,
+        advantage: torch.Tensor,
+        pg_loss: torch.Tensor,
+        v_loss: torch.Tensor,
+        entropy_loss: torch.Tensor,
+        loss: torch.Tensor,
+    ) -> None:
         """
         Log statistics for each training minibatch.
 
@@ -1002,7 +1104,7 @@ class PPOTrainSummarizer:
         self.iter_log["ent_loss"].append(entropy_loss.item())
         self.iter_log["loss"].append(loss.item())
 
-    def summarize(self):
+    def summarize(self) -> dict:
         """
         Compute summary statistics for the current log.
 
@@ -1010,6 +1112,10 @@ class PPOTrainSummarizer:
         -------
         dict
             Dictionary of summary statistics.
+
+        Examples
+        --------
+        >>> stats = summarizer.summarize()
         """
         log = self.log
         return {
@@ -1032,7 +1138,7 @@ class PPOTrainSummarizer:
             "action_prob": float(np.mean(log["action_prob"])),
         }
 
-    def write(self, summary=None):
+    def write(self, summary: dict = None) -> dict:
         """
         Pretty-print and log the summary statistics.
 
@@ -1045,6 +1151,10 @@ class PPOTrainSummarizer:
         -------
         dict
             The summary statistics that were logged.
+
+        Examples
+        --------
+        >>> summarizer.write()
         """
         if summary is None:
             summary = self.summarize()

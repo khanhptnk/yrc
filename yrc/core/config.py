@@ -4,7 +4,7 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import numpy as np
 import torch
@@ -62,41 +62,6 @@ class YRCConfig:
     coordination : Any, optional
         Coordination configuration. Default is None.
 
-    Attributes
-    ----------
-    name : str
-        Name of the experiment.
-    device : int
-        Device index for CUDA.
-    seed : int
-        Random seed for reproducibility.
-    env : Any
-        Environment configuration or object.
-    policy : Any
-        Policy configuration or object.
-    algorithm : Any
-        Algorithm configuration or object.
-    evaluation : Any
-        Evaluation configuration or object.
-    eval_name : str or None
-        Name for evaluation run.
-    overwrite : bool
-        Whether to overwrite existing experiment directory.
-    use_wandb : bool
-        Whether to use Weights & Biases logging.
-    experiment_dir : str
-        Path to the experiment directory.
-    train_novice : str or None
-        Path to novice training checkpoint.
-    train_expert : str or None
-        Path to expert training checkpoint.
-    test_novice : str or None
-        Path to novice test checkpoint.
-    test_expert : str or None
-        Path to expert test checkpoint.
-    coordination : Any
-        Coordination configuration or object.
-
     Examples
     --------
     >>> config = YRCConfig(name="my_experiment", env="procgen", policy="PPOPolicy")
@@ -122,7 +87,7 @@ class YRCConfig:
     evaluation: Any = None
     coordination: Any = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """
         Post-initialization logic for YRCConfig.
 
@@ -135,40 +100,42 @@ class YRCConfig:
             If required keys are missing in configuration dictionaries.
         ValueError
             If configuration fields are not of expected types.
+
+        Examples
+        --------
+        >>> config = YRCConfig(env={"name": "procgen"})
+        >>> config.__post_init__()
         """
         if isinstance(self.env, str):
-            self.env = env_factory.config_cls[self.env]()
+            self.env = env_factory.registry[self.env]()
         elif isinstance(self.env, dict):
-            if "suite" not in self.env:
-                raise IndexError("Please specify env.suite through YAML file or flag")
-            self.env = env_factory.config_cls[self.env["suite"]](**self.env)
+            if "name" not in self.env:
+                raise IndexError("Please specify env.name through YAML file or flag")
+            self.env = env_factory.registry[self.env["name"]](**self.env)
         else:
             raise ValueError("env must be a string or a dictionary")
 
         if isinstance(self.policy, str):
-            self.policy = policy_factory.config_cls[self.policy]()
+            self.policy = policy_factory.registry[self.policy].config_cls()
         elif isinstance(self.policy, dict):
-            if "cls" not in self.policy:
-                raise IndexError("Please specify policy.cls through YAML file or flag")
-            self.policy = policy_factory.config_cls[self.policy["cls"]](**self.policy)
+            if "name" not in self.policy:
+                raise IndexError("Please specify policy.name through YAML file or flag")
+            self.policy = policy_factory.registry[self.policy["name"]].config_cls(
+                **self.policy
+            )
         else:
             raise ValueError("policy must be a string or a dictionary")
 
         if isinstance(self.algorithm, str):
-            if self.algorithm not in algorithm_factory.config_cls:
-                if self.algorithm != "AlwaysAlgorithm":
-                    raise ValueError(
-                        f"Algorithm {self.algorithm} not found in algorithm factory"
-                    )
-            self.algorithm = algorithm_factory.config_cls[self.algorithm]()
+            self.algorithm = algorithm_factory.registry[self.algorithm].config_cls()
         elif isinstance(self.algorithm, dict):
-            if "cls" not in self.algorithm:
+            if "name" not in self.algorithm:
                 raise IndexError(
-                    "Please specify algorithm.cls through YAML file or flag"
+                    "Please specify algorithm.name through YAML file or flag"
                 )
-            self.algorithm = algorithm_factory.config_cls[self.algorithm["cls"]](
-                **self.algorithm
-            )
+            self.algorithm = algorithm_factory.registry[
+                self.algorithm["name"]
+            ].config_cls(**self.algorithm)
         else:
             raise ValueError("algorithm must be a string or a dictionary")
 
@@ -187,7 +154,7 @@ class YRCConfig:
             raise ValueError("coordination must be a dictionary or None")
 
 
-def configure(config):
+def configure(config: YRCConfig) -> None:
     """
     Set up experiment directory, logging, random seeds, and global variables for the experiment.
 
@@ -255,7 +222,6 @@ def configure(config):
 
     # some useful global variables
     set_global_variable("device", device)
-    set_global_variable("env_suite", config.env.suite)
     set_global_variable("experiment_dir", config.experiment_dir)
     set_global_variable("seed", config.seed)
     set_global_variable("log_file", log_file)

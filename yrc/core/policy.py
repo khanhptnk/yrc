@@ -1,69 +1,8 @@
-import importlib
-import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Dict
 
 import numpy
 import torch
-
-from yrc.utils.global_variables import get_global_variable
-
-
-def make(config, env):
-    """
-    Instantiate and return a policy object based on the provided configuration and environment.
-
-    Parameters
-    ----------
-    config : object
-        Configuration object with a 'cls' attribute specifying the policy class name.
-    env : object
-        The environment instance to be passed to the policy constructor.
-
-    Returns
-    -------
-    policy : Policy
-        Instantiated policy object.
-
-    Examples
-    --------
-    >>> policy = make(config, env)
-    """
-    policy_cls = getattr(importlib.import_module("yrc.policies"), config.cls)
-    policy = policy_cls(config, env)
-    return policy
-
-
-def load(path, env):
-    """
-    Load a policy from a checkpoint file.
-
-    Parameters
-    ----------
-    path : str
-        Path to the checkpoint file.
-    env : object
-        The environment instance to be passed to the policy constructor.
-
-    Returns
-    -------
-    policy : Policy
-        Instantiated policy object with loaded parameters.
-
-    Examples
-    --------
-    >>> policy = load('checkpoint.ckpt', env)
-    """
-    ckpt = torch.load(
-        path, map_location=get_global_variable("device"), weights_only=False
-    )
-    config = ckpt["policy_config"]
-
-    policy = make(config, env)
-    policy.set_params(ckpt["model_state_dict"])
-    logging.info(f"Loaded policy from {path}")
-
-    return policy
 
 
 class Policy(ABC):
@@ -90,7 +29,7 @@ class Policy(ABC):
     """
 
     @abstractmethod
-    def act(self, obs: Any, *args, **kwargs) -> torch.Tensor:
+    def act(self, obs: Any, *args: Any, **kwargs: Any) -> torch.Tensor:
         """
         Select an action based on the given observation.
 
@@ -98,10 +37,14 @@ class Policy(ABC):
         ----------
         obs : Any
             The current observation from the environment.
+        *args : Any
+            Additional positional arguments.
+        **kwargs : Any
+            Additional keyword arguments.
 
         Returns
         -------
-        action : torch.Tensor
+        torch.Tensor
             The selected action. The format depends on the policy implementation.
 
         Examples
@@ -111,7 +54,7 @@ class Policy(ABC):
         pass
 
     @abstractmethod
-    def reset(self, done: "numpy.ndarray") -> None:
+    def reset(self, done: numpy.ndarray) -> None:
         """
         Reset the internal state of the policy.
 
@@ -135,7 +78,7 @@ class Policy(ABC):
         pass
 
     @abstractmethod
-    def set_params(self, params: dict) -> None:
+    def set_params(self, params: Dict[str, Any]) -> None:
         """
         Set the parameters of the policy.
 
@@ -158,7 +101,7 @@ class Policy(ABC):
         pass
 
     @abstractmethod
-    def get_params(self) -> dict:
+    def get_params(self) -> Dict[str, Any]:
         """
         Returns the current parameters of the policy.
 
@@ -167,7 +110,7 @@ class Policy(ABC):
 
         Returns
         -------
-        params : dict
+        dict
             A dictionary containing the current parameters of the policy.
 
         Examples

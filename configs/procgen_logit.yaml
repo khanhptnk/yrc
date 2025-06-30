@@ -1,13 +1,16 @@
 name: "procgen_logit"
-algorithm:
-    cls: "LogitAlgorithm"
+
 env:
-    suite: 'procgen'
-    name: 'coinrun'
+  name: "procgen"
+
+algorithm:
+  name: "logit"
+
 policy:
-    cls: 'LogitPolicy'
-    metric: "max_logit"
-train_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-train_expert: 'experiments/procgen_ppo_expert/best_test.ckpt'
-test_novice: 'experiments/procgen_ppo_novice/best_test.ckpt'
-test_expert: 'experiments/procgen_ppo_expert/best_test.ckpt' 
+  cls: "LogitPolicy"
+  metric: "max_logit"
+
+train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
+test_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
+test_expert: "experiments/procgen_ppo_expert/best_test.ckpt"

@@ -16,24 +16,17 @@ class RandomAlgorithmConfig:
 
     Parameters
     ----------
-    cls : str, optional
-        Name of the algorithm class. Default is "RandomAlgorithm".
+    name : str, optional
+        Name of the algorithm class. Default is "random".
     probs : list of float, optional
         List of probabilities to search. Default is np.arange(0, 1.01, 0.1).
-
-    Attributes
-    ----------
-    cls : str
-        Name of the algorithm class.
-    probs : list of float
-        List of probabilities to search.
 
     Examples
     --------
     >>> config = RandomAlgorithmConfig()
     """
 
-    cls: str = "RandomAlgorithm"
+    name: str = "random"
     probs: List[float] = field(default_factory=lambda: np.arange(0, 1.01, 0.1).tolist())
 
 
@@ -41,24 +34,14 @@ class RandomAlgorithm(Algorithm):
     """
     Algorithm that searches for the best probability parameter to maximize evaluation reward.
 
-    Parameters
-    ----------
-    config : RandomAlgorithmConfig
-        Configuration object for the RandomAlgorithm.
-
-    Attributes
-    ----------
-    config : RandomAlgorithmConfig
-        Configuration object for the algorithm.
-    save_dir : str
-        Directory for saving checkpoints.
-
     Examples
     --------
     >>> algo = RandomAlgorithm(RandomAlgorithmConfig())
     """
 
-    def __init__(self, config):
+    config_cls = RandomAlgorithmConfig
+
+    def __init__(self, config: RandomAlgorithmConfig) -> None:
         """
         Initialize the RandomAlgorithm.
 
@@ -66,6 +49,14 @@ class RandomAlgorithm(Algorithm):
         ----------
         config : RandomAlgorithmConfig
             Configuration object for the RandomAlgorithm.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> algo = RandomAlgorithm(RandomAlgorithmConfig())
         """
         self.config = config
 
@@ -74,17 +65,17 @@ class RandomAlgorithm(Algorithm):
         policy: "yrc.policies.PPOPolicy",
         env: "gym.Env",
         validators: Dict[str, "yrc.core.Evaluator"],
-    ):
+    ) -> None:
         """
         Train the RandomAlgorithm by searching for the best probability parameter that maximizes evaluation reward.
 
         Parameters
         ----------
-        policy : Policy
+        policy : yrc.policies.PPOPolicy
             The policy to be evaluated and tuned.
         env : gym.Env
             The environment instance for training and data generation.
-        validators : dict of str to Evaluator
+        validators : dict of str to yrc.core.Evaluator
             Dictionary mapping split names to evaluator instances for evaluation.
 
         Returns
@@ -127,13 +118,13 @@ class RandomAlgorithm(Algorithm):
                 logging.info(f"Prob: {best_prob[split]}")
                 validator.summarizer.write(best_result[split])
 
-    def save_checkpoint(self, policy, name):
+    def save_checkpoint(self, policy: "yrc.policies.PPOPolicy", name: str) -> None:
         """
         Save the current policy configuration and parameters to a checkpoint file.
 
         Parameters
         ----------
-        policy : Policy
+        policy : yrc.policies.PPOPolicy
             The policy whose parameters are to be saved.
         name : str
             Name for the checkpoint file.

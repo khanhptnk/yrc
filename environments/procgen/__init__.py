@@ -10,10 +10,31 @@ from .wrappers import (
 
 
 def make_env(split, config):
+    """
+    Creates and configures a Procgen environment for a given data split.
+
+    Parameters
+    ----------
+    split : str
+        The split of the dataset to use (e.g., "train", "val_sim", "val_true", "test").
+    config : ProcgenConfig
+        The configuration object containing environment and split-specific settings.
+
+    Returns
+    -------
+    env : ProcgenEnv or gym.Env
+        The fully wrapped Procgen environment instance.
+
+    Examples
+    --------
+    >>> from environments.procgen.config import ProcgenConfig
+    >>> env = make_env("train", ProcgenConfig())
+    """
+
     split_config = getattr(config, split)
 
     env = ProcgenEnv(
-        env_name=config.name,
+        env_name=config.task,
         num_envs=config.num_envs,
         num_threads=config.num_threads,
         start_level=split_config.start_level,

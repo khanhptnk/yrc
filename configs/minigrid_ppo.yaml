@@ -1,34 +1,38 @@
 name: "minigrid_ppo"
 seed: 10
+
 env: "minigrid"
+
 policy:
-  cls: PPOPolicy
-  model:
-    cls: ImpalaPPOModel
+  name: "ppo"
+  model: "minigrid_ppo"
+
 algorithm:
-  cls: PPOAlgorithm
+  name: "ppo"
   log_freq: 10
   save_freq: 0
-  num_steps: 25
-  total_timesteps: 50000
-  update_epochs: 3
-  gamma: 0.999
+  num_steps: 512
+  total_timesteps: 1000000
+  update_epochs: 4
+  gamma: 0.99
   gae_lambda: 0.95
   num_minibatches: 8
   clip_coef: 0.2
   norm_adv: true
   clip_vloss: true
   vf_coef: 0.5
-  ent_coef: 0.01
+  ent_coef: 0.05
   max_grad_norm: 0.5
-  learning_rate: 0.0005
+  learning_rate: 0.00025
   critic_pretrain_steps: 0
   anneal_lr: false
   log_action_id: 1
+
 evaluation:
   num_episodes: 32
-  num_steps: 25
-  temperature: 0
+  num_steps: 50
+  temperature: 0.0
   log_action_id: 1
+
 train_novice: "experiments/minigrid_novice/best_test_easy.ckpt"
 train_expert: "experiments/minigrid_expert/best_test_hard.ckpt"

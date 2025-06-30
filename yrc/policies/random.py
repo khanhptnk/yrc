@@ -40,7 +40,7 @@ class RandomPolicyConfig:
     0.7
     """
 
-    cls: str = "RandomPolicy"
+    name: str = "random"
     prob: Optional[float] = None
     load_path: Optional[str] = None
 
@@ -49,24 +49,6 @@ class RandomPolicy(Policy):
     """
     Policy that selects the expert action with a fixed probability.
 
-    Parameters
-    ----------
-    config : RandomPolicyConfig
-        Configuration object for the policy.
-    env : object
-        The environment instance, used to determine expert index.
-
-    Attributes
-    ----------
-    prob : float
-        Probability of selecting the expert action.
-    device : torch.device or str
-        Device for computation.
-    EXPERT : int
-        Index of the expert action.
-    config : RandomPolicyConfig
-        Configuration object for the policy.
-
     Examples
     --------
     >>> policy = RandomPolicy(RandomPolicyConfig(prob=0.7), env)
@@ -74,7 +56,9 @@ class RandomPolicy(Policy):
     >>> action = policy.act(obs)
     """
 
-    def __init__(self, config, env):
+    config_cls = RandomPolicyConfig
+
+    def __init__(self, config: RandomPolicyConfig, env: "gym.Env") -> None:
         """
         Initialize the RandomPolicy.
 
@@ -82,15 +66,23 @@ class RandomPolicy(Policy):
         ----------
         config : RandomPolicyConfig
             Configuration object for the policy.
-        env : object
+        env : gym.Env
             The environment instance, used to determine expert index.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> policy = RandomPolicy(RandomPolicyConfig(prob=0.7), env)
         """
         self.prob = config.prob
         self.device = get_global_variable("device")
         self.EXPERT = env.EXPERT
         self.config = config
 
-    def act(self, obs, temperature=None):
+    def act(self, obs: object, temperature: Optional[float] = None) -> torch.Tensor:
         """
         Select actions randomly based on the configured probability.
 
@@ -110,6 +102,10 @@ class RandomPolicy(Policy):
         ------
         ValueError
             If obs is not a dict or numpy array.
+
+        Examples
+        --------
+        >>> action = policy.act(obs)
         """
         if isinstance(obs, dict):
             batch_size = obs["base_obs"].shape[0]
@@ -125,7 +121,7 @@ class RandomPolicy(Policy):
         )
         return action
 
-    def reset(self, done):
+    def reset(self, done: np.ndarray) -> None:
         """
         Reset the policy state at episode boundaries.
 
@@ -137,10 +133,14 @@ class RandomPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.reset(done)
         """
         pass
 
-    def set_params(self, params):
+    def set_params(self, params: dict) -> None:
         """
         Set the parameters of the policy.
 
@@ -152,10 +152,14 @@ class RandomPolicy(Policy):
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.set_params({'prob': 0.5})
         """
         self.prob = params["prob"]
 
-    def get_params(self):
+    def get_params(self) -> dict:
         """
         Get the current parameters of the policy.
 
@@ -163,25 +167,37 @@ class RandomPolicy(Policy):
         -------
         dict
             Dictionary of policy parameters.
+
+        Examples
+        --------
+        >>> params = policy.get_params()
         """
         return {"prob": self.prob}
 
-    def train(self):
+    def train(self) -> None:
         """
         Set the policy to training mode.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.train()
         """
         pass
 
-    def eval(self):
+    def eval(self) -> None:
         """
         Set the policy to evaluation mode.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> policy.eval()
         """
         pass
