@@ -1,4 +1,5 @@
 import argparse
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -100,13 +101,12 @@ def parse_args():
     parser.add_argument(
         "--mode",
         type=str,
-        choices=[
-            "train",
-            "visualize"
-        ],
+        choices=["train", "visualize"],
         help="Mode to run",
     )
-    parser.add_argument("--type", type=str, choices=["agent", "coord"], help="Policy type")
+    parser.add_argument(
+        "--type", type=str, choices=["agent", "coord"], help="Policy type"
+    )
     parser.add_argument(
         "--seed", type=int, default=0, help="Random seed for reproducibility"
     )
@@ -141,6 +141,9 @@ def train(config, policy_type):
                 config.coordination, base_envs[split], novice, expert
             )
             envs[split].set_costs(0.05)
+        logging.info(
+            f"Expert query cost per action: {envs["train"].expert_query_cost_per_action}"
+        )
     else:
         envs = base_envs
 
@@ -156,7 +159,6 @@ def train(config, policy_type):
 
 
 def visualize(config, policy_type):
-
     base_env = make_base_env("test_hard", config.env, render_mode="human")
     if policy_type == "coord":
         novice = yrc.load_policy(config.train_novice, base_env)
@@ -168,12 +170,12 @@ def visualize(config, policy_type):
     policy = yrc.load_policy(config.policy.load_path, env)
 
     for _ in range(100):
-        policy.reset([True])
+        policy.reset([True] * config.env.num_envs)
         has_done = False
         obs = env.reset()
         total_reward = 0
         for i in range(config.evaluation.num_steps):
-            action, output = policy.act(obs, return_model_output=True)
+            action = policy.act(obs)
             obs, reward, done, info = env.step(action.cpu().numpy())
             has_done |= done
             total_reward += reward

@@ -1,7 +1,7 @@
 import os
 from copy import deepcopy as dc
 from dataclasses import dataclass
-from typing import Any, List, Tuple, Dict
+from typing import Any, Dict, List, Tuple
 
 # Import gym or gymnasium based on environment variable
 if os.environ.get("GYM_BACKEND", "gym") == "gymnasium":
