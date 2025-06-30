@@ -101,7 +101,7 @@ def parse_args():
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["train", "visualize"],
+        choices=["train", "eval", "visualize"],
         help="Mode to run",
     )
     parser.add_argument(
@@ -115,38 +115,42 @@ def parse_args():
     return args, config
 
 
-def make_base_env(split, config, render_mode="rgb_array"):
+def make_base_env(config, split, render_mode="rgb_array"):
     env_id = f"MiniGrid-{getattr(config, split)}"
 
     # env_fn should be a callable that returns a new environment instance
     def env_fn(env_id=env_id, render_mode=render_mode):
         return ImgObsWrapper(gym.make(env_id, render_mode=render_mode))
 
-    env = make_vec_env(env_fn, n_envs=config.num_envs, seed=config.seed)
-    return env
+    return make_vec_env(env_fn, n_envs=config.num_envs, seed=config.seed)
 
 
-def train(config, policy_type):
+def make_base_envs(config):
     base_envs = {}
     for split in splits:
-        base_envs[split] = make_base_env(split, config.env)
+        base_envs[split] = make_base_env(config.env, split)
+    return base_envs
 
-    if policy_type == "coord":
-        novice = yrc.load_policy(config.train_novice, base_envs["train"])
-        expert = yrc.load_policy(config.train_expert, base_envs["train"])
 
-        envs = {}
-        for split in splits:
-            envs[split] = yrc.CoordEnv(
-                config.coordination, base_envs[split], novice, expert
-            )
-            envs[split].set_costs(0.05)
-        logging.info(
-            f"Expert query cost per action: {envs["train"].expert_query_cost_per_action}"
+def make_coord_envs(base_envs, config):
+    novice = yrc.load_policy(config.train_novice, base_envs["train"])
+    expert = yrc.load_policy(config.train_expert, base_envs["train"])
+
+    envs = {}
+    for split in splits:
+        envs[split] = yrc.CoordEnv(
+            config.coordination, base_envs[split], novice, expert
         )
-    else:
-        envs = base_envs
+        envs[split].set_costs(0.05)
+    logging.info(
+        f"Expert query cost per action: {envs["train"].expert_query_cost_per_action}"
+    )
+    return envs
 
+
+def train(args, config):
+    base_envs = make_base_envs(config)
+    envs = make_coord_envs(base_envs, config) if args.type == "coord" else base_envs
     policy = yrc.make_policy(config.policy, envs["train"])
     algorithm = yrc.make_algorithm(config.algorithm)
 
@@ -158,9 +162,22 @@ def train(config, policy_type):
     algorithm.train(policy, envs["train"], validators)
 
 
-def visualize(config, policy_type):
-    base_env = make_base_env("test_hard", config.env, render_mode="human")
-    if policy_type == "coord":
+def evaluate(args, config):
+    base_envs = make_base_envs(config)
+    envs = make_coord_envs(base_envs, config) if args.type == "coord" else base_envs
+    if config.policy.load_path is None:
+        logging.info("WARNING: No policy load path specified, using default policy.")
+        policy = yrc.make_policy(config.policy, envs[splits[0]])
+    else:
+        policy = yrc.load_policy(config.policy.load_path, envs["train"])
+    for split in splits:
+        logging.info(f"Evaluating on {split} split")
+        yrc.Evaluator(config.evaluation, envs[split]).evaluate(policy)
+
+
+def visualize(args, config):
+    base_env = make_base_env(config.env, "test_hard", render_mode="human")
+    if args.type == "coord":
         novice = yrc.load_policy(config.train_novice, base_env)
         expert = yrc.load_policy(config.train_expert, base_env)
         env = yrc.CoordEnv(config.coordination, base_env, novice, expert)
@@ -192,9 +209,11 @@ def main():
 
     args, config = parse_args()
     if args.mode == "train":
-        train(config, args.type)
+        train(args, config)
+    elif args.mode == "eval":
+        evaluate(args, config)
     elif args.mode == "visualize":
-        visualize(config, args.type)
+        visualize(args, config)
 
 
 if __name__ == "__main__":

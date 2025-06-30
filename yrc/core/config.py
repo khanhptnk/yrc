@@ -177,7 +177,10 @@ def configure(config: YRCConfig) -> None:
     >>> configure(config)
     """
     # set up experiment directory
-    config.experiment_dir = "experiments/%s" % config.name
+    if config.policy.load_path is not None:
+        config.experiment_dir = os.path.dirname(config.policy.load_path)
+    else:
+        config.experiment_dir = "experiments/%s" % config.name
 
     if os.path.exists(config.experiment_dir):
         if config.eval_name is None and not config.overwrite:

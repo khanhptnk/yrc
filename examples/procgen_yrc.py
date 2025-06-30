@@ -86,15 +86,8 @@ def make_coord_envs(base_envs, config):
 
 
 def train(args, config):
-    eval_splits = args.eval_splits
-    splits = ["train"] + eval_splits
-
     base_envs = make_base_envs(config)
-    if args.type == "coord":
-        envs = make_coord_envs(config, base_envs)
-    else:
-        envs = base_envs
-
+    envs = make_coord_envs(config, base_envs) if args.type == "coord" else base_envs
     policy = yrc.make_policy(config.policy, envs["train"])
     algorithm = yrc.make_algorithm(config.algorithm)
 
@@ -107,13 +100,8 @@ def train(args, config):
 
 
 def evaluate(args, config):
-    splits = args.eval_splits
-
     base_envs = make_base_envs(config)
-    if args.type == "coord":
-        envs = make_coord_envs(config, base_envs)
-    else:
-        envs = base_envs
+    envs = make_coord_envs(config, base_envs) if args.type == "coord" else base_envs
 
     if config.policy.load_path is not None:
         # Load the policy from the specified path
