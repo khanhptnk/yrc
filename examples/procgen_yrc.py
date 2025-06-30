@@ -119,12 +119,12 @@ def evaluate(args, config):
 def main():
     # register the Procgen configuration with YRC
     # NOTE: do this before parsing args to ensure the config is available
-    yrc.register_env_config("procgen", ProcgenConfig)
+    yrc.register_environment("procgen", ProcgenConfig)
 
     args, config = parse_args()
-    if config.mode == "train":
+    if args.mode == "train":
         train(args, config)
-    elif config.mode == "eval":
+    elif args.mode == "eval":
         evaluate(args, config)
 
 

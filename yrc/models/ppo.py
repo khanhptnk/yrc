@@ -40,7 +40,7 @@ class ImpalaPPOModelConfig:
 
     Parameters
     ----------
-    cls : str, optional
+    name : str, optional
         Name of the model class. Default is "ImpalaPPOModel".
 
     Examples
@@ -48,7 +48,7 @@ class ImpalaPPOModelConfig:
     >>> config = ImpalaPPOModelConfig()
     """
 
-    cls: str = "ImpalaPPOModel"
+    name: str = "impala_ppo"
 
 
 class ImpalaPPOModel(nn.Module):
@@ -130,7 +130,7 @@ class ImpalaCoordPPOModelConfig:
 
     Parameters
     ----------
-    cls : str, optional
+    name : str, optional
         Name of the model class. Default is "ImpalaCoordPPOModel".
     feature_type : str, optional
         Type of feature representation to use. Options include:
@@ -142,7 +142,7 @@ class ImpalaCoordPPOModelConfig:
     >>> config = ImpalaCoordPPOModelConfig(feature_type="obs_hidden_dist")
     """
 
-    cls: str = "ImpalaCoordPPOModel"
+    name: str = "impala_coord_ppo"
     feature_type: str = "obs"
 
 

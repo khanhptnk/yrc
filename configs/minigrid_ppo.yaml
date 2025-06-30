@@ -30,7 +30,7 @@ algorithm:
 
 evaluation:
   num_episodes: 32
-  num_steps: 50
+  max_num_steps: 50
   temperature: 1.0
   log_action_id: 1
 

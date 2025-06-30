@@ -16,9 +16,9 @@ class EvaluatorConfig:
     Parameters
     ----------
     num_episodes : int, optional
-        Number of episodes to use for evaluation. Default is 500.
-    num_steps : int, optional
-        Number of steps per episode. Default is 256.
+        Number of episodes to use for evaluation. Default is 256.
+    max_num_steps : int, optional
+        Maximum number of steps per episode. Default is 256.
     temperature : float, optional
         Temperature parameter for action selection. Default is 1.0.
     log_action_id : int, optional
@@ -29,8 +29,8 @@ class EvaluatorConfig:
     >>> config = EvaluatorConfig(num_episodes=100, temperature=0.5)
     """
 
-    num_episodes: int = 500
-    num_steps: int = 256
+    num_episodes: int = 256
+    max_num_steps: int = 256
     temperature: float = 1.0
     log_action_id: int = CoordEnv.EXPERT
 
@@ -133,7 +133,7 @@ class Evaluator:
         obs = env.reset()
         has_done = np.array([False] * env.num_envs)
 
-        for _ in range(self.config.num_steps):
+        for _ in range(self.config.max_num_steps):
             action = policy.act(obs, temperature=self.config.temperature)
             obs, reward, done, info = env.step(action.cpu().numpy())
             # NOTE: put this before update has_done to include last step in summary
