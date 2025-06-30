@@ -19,7 +19,7 @@ class MiniGridConfig:
     name: str = "minigrid"
     num_envs: int = 8
     seed: int = 0
-    train: Optional[str] = None
+    train: Optional[str] = "DistShift2-v0"
     test_easy: Optional[str] = "DistShift1-v0"
     test_hard: Optional[str] = "DistShift2-v0"
 
@@ -101,69 +101,48 @@ def parse_args():
         "--mode",
         type=str,
         choices=[
-            "novice",
-            "expert",
-            "coord",
+            "train",
+            "visualize"
         ],
         help="Mode to run",
     )
+    parser.add_argument("--type", type=str, choices=["agent", "coord"], help="Policy type")
     parser.add_argument(
         "--seed", type=int, default=0, help="Random seed for reproducibility"
     )
     args, dotlist_args = parser.parse_known_args()
-
-    dotlist_args.append(f"env.name={MiniGridConfig.name}")
-    if args.mode == "novice":
-        dotlist_args.append("env.train=DistShift1-v0")
-    elif args.mode == "expert":
-        dotlist_args.append("env.train=DistShift2-v0")
-    elif args.mode == "coord":
-        dotlist_args.append("env.train=DistShift2-v0")
-
     config = yrc.make_config(args, dotlist_args)
     return args, config
 
 
-def make_base_env(split, config):
+def make_base_env(split, config, render_mode="rgb_array"):
     env_id = f"MiniGrid-{getattr(config, split)}"
 
     # env_fn should be a callable that returns a new environment instance
-    def env_fn(env_id=env_id):
-        return ImgObsWrapper(gym.make(env_id))
+    def env_fn(env_id=env_id, render_mode=render_mode):
+        return ImgObsWrapper(gym.make(env_id, render_mode=render_mode))
 
     env = make_vec_env(env_fn, n_envs=config.num_envs, seed=config.seed)
     return env
 
 
-def train_agent(config):
-    envs = {}
-    for split in splits:
-        envs[split] = make_base_env(split, config.env)
-    policy = yrc.make_policy(config.policy, envs["train"])
-    algorithm = yrc.make_algorithm(config.algorithm)
-
-    validators = {}
-    for split in splits:
-        if split != "train":
-            validators[split] = yrc.Evaluator(config.evaluation, envs[split])
-
-    algorithm.train(policy, envs["train"], validators)
-
-
-def train_coord(config):
+def train(config, policy_type):
     base_envs = {}
     for split in splits:
         base_envs[split] = make_base_env(split, config.env)
 
-    novice = yrc.load_policy(config.train_novice, base_envs["train"])
-    expert = yrc.load_policy(config.train_expert, base_envs["train"])
+    if policy_type == "coord":
+        novice = yrc.load_policy(config.train_novice, base_envs["train"])
+        expert = yrc.load_policy(config.train_expert, base_envs["train"])
 
-    envs = {}
-    for split in splits:
-        envs[split] = yrc.CoordEnv(
-            config.coordination, base_envs[split], novice, expert
-        )
-        envs[split].set_costs(0.05)
+        envs = {}
+        for split in splits:
+            envs[split] = yrc.CoordEnv(
+                config.coordination, base_envs[split], novice, expert
+            )
+            envs[split].set_costs(0.05)
+    else:
+        envs = base_envs
 
     policy = yrc.make_policy(config.policy, envs["train"])
     algorithm = yrc.make_algorithm(config.algorithm)
@@ -174,6 +153,33 @@ def train_coord(config):
             validators[split] = yrc.Evaluator(config.evaluation, envs[split])
 
     algorithm.train(policy, envs["train"], validators)
+
+
+def visualize(config, policy_type):
+
+    base_env = make_base_env("test_hard", config.env, render_mode="human")
+    if policy_type == "coord":
+        novice = yrc.load_policy(config.train_novice, base_env)
+        expert = yrc.load_policy(config.train_expert, base_env)
+        env = yrc.CoordEnv(config.coordination, base_env, novice, expert)
+        env.set_costs(0.05)
+    else:
+        env = base_env
+    policy = yrc.load_policy(config.policy.load_path, env)
+
+    for _ in range(100):
+        policy.reset([True])
+        has_done = False
+        obs = env.reset()
+        total_reward = 0
+        for i in range(config.evaluation.num_steps):
+            action, output = policy.act(obs, return_model_output=True)
+            obs, reward, done, info = env.step(action.cpu().numpy())
+            has_done |= done
+            total_reward += reward
+            if has_done:
+                break
+        print(total_reward)
 
 
 def main():
@@ -183,10 +189,10 @@ def main():
     yrc.register_model("minigrid_ppo", MiniGridPPOModel)
 
     args, config = parse_args()
-    if args.mode == "coord":
-        train_coord(config)
-    else:
-        train_agent(config)
+    if args.mode == "train":
+        train(config, args.type)
+    elif args.mode == "visualize":
+        visualize(config, args.type)
 
 
 if __name__ == "__main__":

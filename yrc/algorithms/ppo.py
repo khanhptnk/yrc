@@ -197,7 +197,7 @@ class PPOAlgorithm(Algorithm):
         for iteration in range(self.num_iterations):
             # save checkpoint
             if config.save_freq > 0 and iteration % config.save_freq == 0:
-                self.save_checkpoint(policy, f"iter_{iteration}")
+                self.save_checkpoint(policy, f"step_{self.global_step}")
 
             # evaluation
             if iteration % config.log_freq == 0:
