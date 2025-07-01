@@ -1,23 +1,6 @@
-yrc.environments
+﻿yrc.environments
 ================
 
 .. automodule:: yrc.environments
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

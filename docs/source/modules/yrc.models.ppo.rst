@@ -4,15 +4,6 @@ yrc.models.ppo
 .. automodule:: yrc.models.ppo
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -23,11 +14,3 @@ yrc.models.ppo
       ImpalaPPOModelConfig
       PPOModelOutput
    
-   
-
-   
-   
-   
-
-
-

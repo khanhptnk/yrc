@@ -4,15 +4,6 @@ yrc.policies.random
 .. automodule:: yrc.policies.random
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.policies.random
       RandomPolicy
       RandomPolicyConfig
    
-   
-
-   
-   
-   
-
-
-

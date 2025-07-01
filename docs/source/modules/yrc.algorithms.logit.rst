@@ -4,15 +4,6 @@ yrc.algorithms.logit
 .. automodule:: yrc.algorithms.logit
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.algorithms.logit
       LogitAlgorithm
       LogitAlgorithmConfig
    
-   
-
-   
-   
-   
-
-
-

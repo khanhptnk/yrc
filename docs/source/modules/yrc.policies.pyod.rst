@@ -4,15 +4,6 @@ yrc.policies.pyod
 .. automodule:: yrc.policies.pyod
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.policies.pyod
       PyODPolicy
       PyODPolicyConfig
    
-   
-
-   
-   
-   
-
-
-

@@ -4,15 +4,6 @@ yrc.core.evaluator
 .. automodule:: yrc.core.evaluator
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -21,11 +12,3 @@ yrc.core.evaluator
       Evaluator
       EvaluatorConfig
    
-   
-
-   
-   
-   
-
-
-

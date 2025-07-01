@@ -1,17 +1,8 @@
-﻿yrc.models.impala
+yrc.models.impala
 =================
 
 .. automodule:: yrc.models.impala
 
-   
-   
-   
-
-   
-   
-   
-
-   
    
    .. rubric:: Classes
 
@@ -22,11 +13,3 @@
       ImpalaBlock
       ResidualBlock
    
-   
-
-   
-   
-   
-
-
-

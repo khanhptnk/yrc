@@ -4,15 +4,6 @@ yrc.algorithms.random
 .. automodule:: yrc.algorithms.random
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.algorithms.random
       RandomAlgorithm
       RandomAlgorithmConfig
    
-   
-
-   
-   
-   
-
-
-

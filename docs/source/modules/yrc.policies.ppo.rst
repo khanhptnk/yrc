@@ -4,15 +4,6 @@ yrc.policies.ppo
 .. automodule:: yrc.policies.ppo
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.policies.ppo
       PPOPolicy
       PPOPolicyConfig
    
-   
-
-   
-   
-   
-
-
-

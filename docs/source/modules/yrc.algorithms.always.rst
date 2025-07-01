@@ -4,15 +4,6 @@ yrc.algorithms.always
 .. automodule:: yrc.algorithms.always
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.algorithms.always
       AlwaysAlgorithm
       AlwaysAlgorithmConfig
    
-   
-
-   
-   
-   
-
-
-

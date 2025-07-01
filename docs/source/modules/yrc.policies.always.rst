@@ -4,15 +4,6 @@ yrc.policies.always
 .. automodule:: yrc.policies.always
 
    
-   
-   
-
-   
-   
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
@@ -20,11 +11,3 @@ yrc.policies.always
       AlwaysPolicy
       AlwaysPolicyConfig
    
-   
-
-   
-   
-   
-
-
-

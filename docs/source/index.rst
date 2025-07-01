@@ -10,8 +10,7 @@ Welcome to yrc's documentation!
    Core concepts <core_concepts/index>
    Algorithms <algorithms/index>
    Tutorials <tutorials/index>
-   API Reference <autoapi/index>
-
+   API reference <autoapi/index>
 
 Welcome to the documentation for **yrc**!  
 
