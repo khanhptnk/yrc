@@ -204,13 +204,6 @@ def configure(config: YRCConfig) -> None:
     if os.path.isfile(log_file):
         os.remove(log_file)
 
-    # logging
-    configure_logging(log_file)
-    logging.info(str(datetime.now()))
-    logging.info("python -u " + " ".join(sys.argv))
-    logging.info("Write log to %s" % log_file)
-    logging.info(str(OmegaConf.to_yaml(config)))
-
     # configure wandb
     wandb.init(
         project="YRC",
@@ -218,6 +211,13 @@ def configure(config: YRCConfig) -> None:
         mode="online" if config.use_wandb else "disabled",
     )
     wandb.config.update(config)
+
+    # logging
+    configure_logging(log_file)
+    logging.info(str(datetime.now()))
+    logging.info("python -u " + " ".join(sys.argv))
+    logging.info("Write log to %s" % log_file)
+    logging.info(str(OmegaConf.to_yaml(config)))
 
     device = (
         torch.device(f"cuda:{config.device}") if torch.cuda.is_available() else "cpu"

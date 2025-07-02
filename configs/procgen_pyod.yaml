@@ -16,7 +16,7 @@ policy:
     n_features: 256
     epochs: 100
 
-train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
-train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
-test_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
-test_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
+train_novice: "experiments/procgen_novice/best_test.ckpt"
+train_expert: "experiments/procgen_expert/best_test.ckpt"
+test_novice: "experiments/procgen_novice/best_test.ckpt"
+test_expert: "experiments/procgen_expert/best_test.ckpt"
