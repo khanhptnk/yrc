@@ -133,6 +133,8 @@ class Evaluator:
         obs = env.reset()
         has_done = np.array([False] * env.num_envs)
 
+        policy.reset(np.ones_like(has_done))
+
         for _ in range(self.config.max_num_steps):
             action = policy.act(obs, temperature=self.config.temperature)
             obs, reward, done, info = env.step(action.cpu().numpy())

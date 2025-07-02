@@ -218,6 +218,7 @@ class PyODAlgorithm(Algorithm):
             policy.eval()
             obs = env.reset()
             has_done = np.array([False] * env.num_envs)
+            policy.reset(np.ones_like(has_done))
 
             while not has_done.all():
                 action, model_output = policy.act(

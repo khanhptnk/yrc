@@ -2,6 +2,8 @@ name: "procgen_pyod"
 
 env:
   name: "procgen"
+  train:
+    distribution_mode: "hard"
 
 algorithm:
   name: "pyod"

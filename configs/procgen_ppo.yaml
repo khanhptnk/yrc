@@ -1,0 +1,26 @@
+name: "procgen_ppo"
+
+env:
+  name: "procgen"
+  train:
+    distribution_mode: "hard"
+
+algorithm: 
+  name: "ppo"
+  total_timesteps: 15000000
+
+policy:
+  name: "ppo"
+  model:
+    name: "impala_coord_ppo"
+    feature_type: obs
+
+coordination:
+  expert_query_cost_weight: 0.4
+  switch_agent_cost_weight: 0.0
+  temperature: 1.0
+
+train_novice: "experiments/procgen_novice/best_test.ckpt"
+train_expert: "experiments/procgen_expert/best_test.ckpt"
+test_novice: "experiments/procgen_novice/best_test.ckpt"
+test_expert: "experiments/procgen_expert/best_test.ckpt"

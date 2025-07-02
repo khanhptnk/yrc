@@ -262,6 +262,9 @@ class PPOAlgorithm(Algorithm):
         next_done = np.zeros((self.num_envs,))
         next_obs = self.last_obs
 
+        # NOTE: not tested on recurrent policies. This might be suboptimal for them.
+        policy.reset(np.ones_like(next_done))
+
         for step in range(config.num_steps):
             self.global_step += self.num_envs
 
@@ -291,6 +294,8 @@ class PPOAlgorithm(Algorithm):
                     with torch.no_grad():
                         terminal_value = policy.model(terminal_obs).value
                     reward[i] += config.gamma * terminal_value
+
+            policy.reset(next_done)
 
             buffer.add(
                 step,

@@ -143,7 +143,7 @@ def make_coord_envs(base_envs, config):
         )
         envs[split].set_costs(0.05)
     logging.info(
-        f"Expert query cost per action: {envs["train"].expert_query_cost_per_action}"
+        f"Expert query cost per action: {envs['train'].expert_query_cost_per_action}"
     )
     return envs
 

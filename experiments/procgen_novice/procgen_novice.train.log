@@ -1,0 +1,2498 @@
+[0:00:00 INFO]: 2025-07-01 16:42:18.192024
+[0:00:00 INFO]: python -u examples/procgen_yrc.py --config configs/procgen_agent.yaml --mode train --type agent name=procgen_novice overwrite=1 device=3
+[0:00:00 INFO]: Write log to experiments/procgen_novice/procgen_novice.train.log
+[0:00:00 INFO]: name: procgen_novice
+device: 3
+seed: 10
+env:
+  name: procgen
+  task: coinrun
+  normalize_rew: false
+  num_envs: 128
+  num_threads: 8
+  train:
+    distribution_mode: easy
+    seed: 0
+    start_level: 0
+    num_levels: 100000
+  val_sim:
+    distribution_mode: easy
+    seed: 0
+    start_level: 50000
+    num_levels: 256
+  val_true:
+    distribution_mode: hard
+    seed: 0
+    start_level: 50000
+    num_levels: 256
+  test:
+    distribution_mode: easy
+    seed: 0
+    start_level: 0
+    num_levels: 100000
+policy:
+  name: ppo
+  model:
+    name: impala_ppo
+  load_path: null
+algorithm:
+  name: ppo
+  log_freq: 10
+  save_freq: 0
+  num_steps: 256
+  total_timesteps: 15000000
+  update_epochs: 3
+  gamma: 0.999
+  gae_lambda: 0.95
+  num_minibatches: 8
+  clip_coef: 0.2
+  norm_adv: true
+  clip_vloss: true
+  vf_coef: 0.5
+  ent_coef: 0.01
+  max_grad_norm: 0.5
+  learning_rate: 0.0005
+  critic_pretrain_steps: 0
+  anneal_lr: false
+  log_action_id: 1
+evaluation:
+  num_episodes: 256
+  max_num_steps: 256
+  temperature: 1.0
+  log_action_id: 1
+eval_name: null
+overwrite: true
+use_wandb: false
+experiment_dir: experiments/procgen_novice
+train_novice: null
+train_expert: null
+test_novice: null
+test_expert: null
+coordination:
+  expert_query_cost_weight: 0.4
+  switch_agent_cost_weight: 0.0
+  temperature: 1.0
+
+[0:00:00 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:00:00 INFO]: Evaluating on val_sim split
+[0:00:13 INFO]:    Steps:         60902
+   Episode length: mean  237.90  min   30.00  max  256.00
+   Reward:         mean 0.90 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.07
+
+[0:00:13 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:00:13 INFO]: Evaluating on val_true split
+[0:00:27 INFO]:    Steps:         61043
+   Episode length: mean  238.45  min   56.00  max  256.00
+   Reward:         mean 0.51 ± 0.27
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.07
+
+[0:00:27 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[0:00:27 INFO]: Evaluating on test split
+[0:00:41 INFO]:    Steps:         60998
+   Episode length: mean  238.27  min   22.00  max  256.00
+   Reward:         mean 0.59 ± 0.29
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.07
+
+[0:00:41 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:00:41 INFO]: BEST val_sim so far
+[0:00:41 INFO]:    Steps:         60902
+   Episode length: mean  237.90  min   30.00  max  256.00
+   Reward:         mean 0.90 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.07
+
+[0:00:41 INFO]: BEST val_true so far
+[0:00:41 INFO]:    Steps:         61043
+   Episode length: mean  238.45  min   56.00  max  256.00
+   Reward:         mean 0.51 ± 0.27
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.07
+
+[0:00:41 INFO]: BEST test so far
+[0:00:41 INFO]:    Steps:         60998
+   Episode length: mean  238.27  min   22.00  max  256.00
+   Reward:         mean 0.59 ± 0.29
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.07
+
+[0:02:04 INFO]: Iteration 10
+[0:02:04 INFO]: Train 327680 steps:
+[0:02:04 INFO]: 
+   Reward:      mean    4.75 ±    4.99
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0020  v_loss  0.8067  ent_loss -2.6249  loss  0.3750
+   Others:      advantage  0.0000 ±  0.9999  value  0.6563 ±  0.6746
+   Action 1 frac:    0.05
+   Action prob:    0.08
+[0:02:04 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:02:04 INFO]: Evaluating on val_sim split
+[0:02:14 INFO]:    Steps:         27237
+   Episode length: mean  106.39  min   21.00  max  256.00
+   Reward:         mean 4.14 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[0:02:14 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:02:14 INFO]: Evaluating on val_true split
+[0:02:25 INFO]:    Steps:         24465
+   Episode length: mean   95.57  min   17.00  max  256.00
+   Reward:         mean 4.45 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:02:26 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[0:02:26 INFO]: Evaluating on test split
+[0:02:36 INFO]:    Steps:         26949
+   Episode length: mean  105.27  min   17.00  max  256.00
+   Reward:         mean 4.84 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:02:36 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:02:36 INFO]: BEST val_sim so far
+[0:02:36 INFO]:    Steps:         27237
+   Episode length: mean  106.39  min   21.00  max  256.00
+   Reward:         mean 4.14 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[0:02:36 INFO]: BEST val_true so far
+[0:02:36 INFO]:    Steps:         24465
+   Episode length: mean   95.57  min   17.00  max  256.00
+   Reward:         mean 4.45 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:02:36 INFO]: BEST test so far
+[0:02:36 INFO]:    Steps:         26949
+   Episode length: mean  105.27  min   17.00  max  256.00
+   Reward:         mean 4.84 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:03:59 INFO]: Iteration 20
+[0:03:59 INFO]: Train 655360 steps:
+[0:03:59 INFO]: 
+   Reward:      mean    5.35 ±    4.99
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0020  v_loss  1.1035  ent_loss -2.5229  loss  0.5245
+   Others:      advantage -0.0000 ±  0.9999  value  1.1612 ±  1.4118
+   Action 1 frac:    0.04
+   Action prob:    0.09
+[0:03:59 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:03:59 INFO]: Evaluating on val_sim split
+[0:04:09 INFO]:    Steps:         17790
+   Episode length: mean   69.49  min   17.00  max  256.00
+   Reward:         mean 5.59 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:04:09 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:04:09 INFO]: Evaluating on val_true split
+[0:04:18 INFO]:    Steps:         16758
+   Episode length: mean   65.46  min   16.00  max  256.00
+   Reward:         mean 4.88 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:04:18 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[0:04:18 INFO]: Evaluating on test split
+[0:04:28 INFO]:    Steps:         16174
+   Episode length: mean   63.18  min   15.00  max  256.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:04:28 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:04:28 INFO]: BEST val_sim so far
+[0:04:28 INFO]:    Steps:         17790
+   Episode length: mean   69.49  min   17.00  max  256.00
+   Reward:         mean 5.59 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:04:28 INFO]: BEST val_true so far
+[0:04:28 INFO]:    Steps:         16758
+   Episode length: mean   65.46  min   16.00  max  256.00
+   Reward:         mean 4.88 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:04:28 INFO]: BEST test so far
+[0:04:28 INFO]:    Steps:         16174
+   Episode length: mean   63.18  min   15.00  max  256.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:05:49 INFO]: Iteration 30
+[0:05:49 INFO]: Train 983040 steps:
+[0:05:50 INFO]: 
+   Reward:      mean    5.74 ±    4.95
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0020  v_loss  1.3135  ent_loss -2.4084  loss  0.6307
+   Others:      advantage  0.0000 ±  0.9999  value  1.8752 ±  2.1894
+   Action 1 frac:    0.03
+   Action prob:    0.11
+[0:05:50 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:05:50 INFO]: Evaluating on val_sim split
+[0:05:57 INFO]:    Steps:         13173
+   Episode length: mean   51.46  min   16.00  max  182.00
+   Reward:         mean 5.98 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:05:57 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:05:57 INFO]: Evaluating on val_true split
+[0:06:04 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:06:04 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[0:06:04 INFO]: Evaluating on test split
+[0:06:11 INFO]:    Steps:         14061
+   Episode length: mean   54.93  min   17.00  max  183.00
+   Reward:         mean 6.33 ± 0.59
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:06:11 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:06:11 INFO]: BEST val_sim so far
+[0:06:11 INFO]:    Steps:         13173
+   Episode length: mean   51.46  min   16.00  max  182.00
+   Reward:         mean 5.98 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:06:11 INFO]: BEST val_true so far
+[0:06:11 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:06:11 INFO]: BEST test so far
+[0:06:11 INFO]:    Steps:         14061
+   Episode length: mean   54.93  min   17.00  max  183.00
+   Reward:         mean 6.33 ± 0.59
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:07:33 INFO]: Iteration 40
+[0:07:33 INFO]: Train 1310720 steps:
+[0:07:33 INFO]: 
+   Reward:      mean    5.97 ±    4.91
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0020  v_loss  1.4433  ent_loss -2.3240  loss  0.6964
+   Others:      advantage  0.0000 ±  0.9999  value  2.3572 ±  2.5340
+   Action 1 frac:    0.03
+   Action prob:    0.14
+[0:07:33 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:07:33 INFO]: Evaluating on val_sim split
+[0:07:40 INFO]:    Steps:         13983
+   Episode length: mean   54.62  min   17.00  max  191.00
+   Reward:         mean 6.29 ± 0.59
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:07:41 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:07:41 INFO]: Evaluating on val_true split
+[0:07:48 INFO]:    Steps:         15407
+   Episode length: mean   60.18  min   18.00  max  194.00
+   Reward:         mean 4.96 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:07:48 INFO]: Evaluating on test split
+[0:07:55 INFO]:    Steps:         13951
+   Episode length: mean   54.50  min   16.00  max  207.00
+   Reward:         mean 6.56 ± 0.58
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:07:55 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:07:55 INFO]: BEST val_sim so far
+[0:07:55 INFO]:    Steps:         13983
+   Episode length: mean   54.62  min   17.00  max  191.00
+   Reward:         mean 6.29 ± 0.59
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:07:55 INFO]: BEST val_true so far
+[0:07:55 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:07:55 INFO]: BEST test so far
+[0:07:55 INFO]:    Steps:         13951
+   Episode length: mean   54.50  min   16.00  max  207.00
+   Reward:         mean 6.56 ± 0.58
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:09:14 INFO]: Iteration 50
+[0:09:14 INFO]: Train 1638400 steps:
+[0:09:15 INFO]: 
+   Reward:      mean    6.16 ±    4.86
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0022  v_loss  1.5370  ent_loss -2.2507  loss  0.7438
+   Others:      advantage  0.0000 ±  0.9999  value  2.8314 ±  2.8002
+   Action 1 frac:    0.03
+   Action prob:    0.16
+[0:09:16 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:09:16 INFO]: Evaluating on val_sim split
+[0:09:23 INFO]:    Steps:         13473
+   Episode length: mean   52.63  min   17.00  max  247.00
+   Reward:         mean 6.52 ± 0.58
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:09:24 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:09:24 INFO]: Evaluating on val_true split
+[0:09:33 INFO]:    Steps:         16712
+   Episode length: mean   65.28  min   18.00  max  255.00
+   Reward:         mean 4.26 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:09:33 INFO]: Evaluating on test split
+[0:09:40 INFO]:    Steps:         12393
+   Episode length: mean   48.41  min   17.00  max  184.00
+   Reward:         mean 7.19 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:09:40 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:09:40 INFO]: BEST val_sim so far
+[0:09:40 INFO]:    Steps:         13473
+   Episode length: mean   52.63  min   17.00  max  247.00
+   Reward:         mean 6.52 ± 0.58
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:09:40 INFO]: BEST val_true so far
+[0:09:40 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:09:40 INFO]: BEST test so far
+[0:09:40 INFO]:    Steps:         12393
+   Episode length: mean   48.41  min   17.00  max  184.00
+   Reward:         mean 7.19 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:10:59 INFO]: Iteration 60
+[0:10:59 INFO]: Train 1966080 steps:
+[0:11:00 INFO]: 
+   Reward:      mean    6.31 ±    4.83
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0023  v_loss  1.6008  ent_loss -2.1983  loss  0.7761
+   Others:      advantage  0.0000 ±  0.9999  value  3.2050 ±  2.9396
+   Action 1 frac:    0.03
+   Action prob:    0.17
+[0:11:00 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:11:00 INFO]: Evaluating on val_sim split
+[0:11:07 INFO]:    Steps:         13496
+   Episode length: mean   52.72  min   19.00  max  178.00
+   Reward:         mean 7.27 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:11:07 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:11:07 INFO]: Evaluating on val_true split
+[0:11:17 INFO]:    Steps:         17247
+   Episode length: mean   67.37  min   17.00  max  256.00
+   Reward:         mean 4.92 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:11:17 INFO]: Evaluating on test split
+[0:11:23 INFO]:    Steps:         12141
+   Episode length: mean   47.43  min   17.00  max  164.00
+   Reward:         mean 7.27 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:11:23 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:11:23 INFO]: BEST val_sim so far
+[0:11:23 INFO]:    Steps:         13496
+   Episode length: mean   52.72  min   19.00  max  178.00
+   Reward:         mean 7.27 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:11:23 INFO]: BEST val_true so far
+[0:11:23 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:11:23 INFO]: BEST test so far
+[0:11:23 INFO]:    Steps:         12141
+   Episode length: mean   47.43  min   17.00  max  164.00
+   Reward:         mean 7.27 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:12:41 INFO]: Iteration 70
+[0:12:41 INFO]: Train 2293760 steps:
+[0:12:43 INFO]: 
+   Reward:      mean    6.49 ±    4.77
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0024  v_loss  1.6482  ent_loss -2.1602  loss  0.8001
+   Others:      advantage  0.0000 ±  0.9999  value  3.5496 ±  3.0294
+   Action 1 frac:    0.02
+   Action prob:    0.18
+[0:12:43 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:12:43 INFO]: Evaluating on val_sim split
+[0:12:50 INFO]:    Steps:         14364
+   Episode length: mean   56.11  min   19.00  max  178.00
+   Reward:         mean 7.03 ± 0.56
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:12:50 INFO]: Evaluating on val_true split
+[0:12:58 INFO]:    Steps:         17353
+   Episode length: mean   67.79  min   15.00  max  256.00
+   Reward:         mean 4.80 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:12:58 INFO]: Evaluating on test split
+[0:13:05 INFO]:    Steps:         14411
+   Episode length: mean   56.29  min   18.00  max  192.00
+   Reward:         mean 7.70 ± 0.52
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:13:05 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:13:05 INFO]: BEST val_sim so far
+[0:13:05 INFO]:    Steps:         13496
+   Episode length: mean   52.72  min   19.00  max  178.00
+   Reward:         mean 7.27 ± 0.55
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:13:05 INFO]: BEST val_true so far
+[0:13:05 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:13:05 INFO]: BEST test so far
+[0:13:05 INFO]:    Steps:         14411
+   Episode length: mean   56.29  min   18.00  max  192.00
+   Reward:         mean 7.70 ± 0.52
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:14:23 INFO]: Iteration 80
+[0:14:23 INFO]: Train 2621440 steps:
+[0:14:25 INFO]: 
+   Reward:      mean    6.66 ±    4.72
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0026  v_loss  1.6711  ent_loss -2.1351  loss  0.8116
+   Others:      advantage  0.0000 ±  0.9999  value  3.8513 ±  3.0814
+   Action 1 frac:    0.02
+   Action prob:    0.19
+[0:14:25 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:14:25 INFO]: Evaluating on val_sim split
+[0:14:32 INFO]:    Steps:         16231
+   Episode length: mean   63.40  min   19.00  max  214.00
+   Reward:         mean 7.38 ± 0.54
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:14:32 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:14:32 INFO]: Evaluating on val_true split
+[0:14:41 INFO]:    Steps:         20429
+   Episode length: mean   79.80  min   20.00  max  252.00
+   Reward:         mean 4.65 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:14:41 INFO]: Evaluating on test split
+[0:14:49 INFO]:    Steps:         15050
+   Episode length: mean   58.79  min   18.00  max  239.00
+   Reward:         mean 7.93 ± 0.50
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:14:49 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:14:49 INFO]: BEST val_sim so far
+[0:14:49 INFO]:    Steps:         16231
+   Episode length: mean   63.40  min   19.00  max  214.00
+   Reward:         mean 7.38 ± 0.54
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:14:49 INFO]: BEST val_true so far
+[0:14:49 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:14:49 INFO]: BEST test so far
+[0:14:49 INFO]:    Steps:         15050
+   Episode length: mean   58.79  min   18.00  max  239.00
+   Reward:         mean 7.93 ± 0.50
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:16:08 INFO]: Iteration 90
+[0:16:08 INFO]: Train 2949120 steps:
+[0:16:09 INFO]: 
+   Reward:      mean    6.81 ±    4.66
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0027  v_loss  1.6868  ent_loss -2.1158  loss  0.8195
+   Others:      advantage  0.0000 ±  0.9999  value  4.1193 ±  3.1116
+   Action 1 frac:    0.02
+   Action prob:    0.19
+[0:16:09 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:16:09 INFO]: Evaluating on val_sim split
+[0:16:17 INFO]:    Steps:         16270
+   Episode length: mean   63.55  min   19.00  max  231.00
+   Reward:         mean 8.40 ± 0.45
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:16:17 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:16:17 INFO]: Evaluating on val_true split
+[0:16:28 INFO]:    Steps:         21956
+   Episode length: mean   85.77  min   19.00  max  256.00
+   Reward:         mean 4.49 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[0:16:28 INFO]: Evaluating on test split
+[0:16:34 INFO]:    Steps:         15123
+   Episode length: mean   59.07  min   19.00  max  172.00
+   Reward:         mean 8.01 ± 0.49
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:16:34 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:16:34 INFO]: BEST val_sim so far
+[0:16:34 INFO]:    Steps:         16270
+   Episode length: mean   63.55  min   19.00  max  231.00
+   Reward:         mean 8.40 ± 0.45
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:16:34 INFO]: BEST val_true so far
+[0:16:34 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:16:34 INFO]: BEST test so far
+[0:16:34 INFO]:    Steps:         15123
+   Episode length: mean   59.07  min   19.00  max  172.00
+   Reward:         mean 8.01 ± 0.49
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:17:53 INFO]: Iteration 100
+[0:17:53 INFO]: Train 3276800 steps:
+[0:17:55 INFO]: 
+   Reward:      mean    6.95 ±    4.60
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0028  v_loss  1.6894  ent_loss -2.1023  loss  0.8208
+   Others:      advantage  0.0000 ±  0.9999  value  4.3581 ±  3.1207
+   Action 1 frac:    0.02
+   Action prob:    0.20
+[0:17:55 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:17:55 INFO]: Evaluating on val_sim split
+[0:18:03 INFO]:    Steps:         16267
+   Episode length: mean   63.54  min   17.00  max  203.00
+   Reward:         mean 8.28 ± 0.46
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:18:03 INFO]: Evaluating on val_true split
+[0:18:13 INFO]:    Steps:         23402
+   Episode length: mean   91.41  min   12.00  max  256.00
+   Reward:         mean 4.96 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:18:13 INFO]: Evaluating on test split
+[0:18:19 INFO]:    Steps:         15521
+   Episode length: mean   60.63  min   20.00  max  197.00
+   Reward:         mean 8.20 ± 0.47
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:18:19 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:18:19 INFO]: BEST val_sim so far
+[0:18:19 INFO]:    Steps:         16270
+   Episode length: mean   63.55  min   19.00  max  231.00
+   Reward:         mean 8.40 ± 0.45
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:18:19 INFO]: BEST val_true so far
+[0:18:19 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:18:19 INFO]: BEST test so far
+[0:18:19 INFO]:    Steps:         15521
+   Episode length: mean   60.63  min   20.00  max  197.00
+   Reward:         mean 8.20 ± 0.47
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:19:38 INFO]: Iteration 110
+[0:19:38 INFO]: Train 3604480 steps:
+[0:19:40 INFO]: 
+   Reward:      mean    7.05 ±    4.56
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0029  v_loss  1.6914  ent_loss -2.0980  loss  0.8218
+   Others:      advantage  0.0000 ±  0.9999  value  4.5507 ±  3.1114
+   Action 1 frac:    0.02
+   Action prob:    0.20
+[0:19:40 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:19:40 INFO]: Evaluating on val_sim split
+[0:19:48 INFO]:    Steps:         15392
+   Episode length: mean   60.12  min   18.00  max  196.00
+   Reward:         mean 8.32 ± 0.46
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:19:48 INFO]: Evaluating on val_true split
+[0:19:57 INFO]:    Steps:         19937
+   Episode length: mean   77.88  min   16.00  max  247.00
+   Reward:         mean 5.16 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[0:19:57 INFO]: Evaluating on test split
+[0:20:05 INFO]:    Steps:         14509
+   Episode length: mean   56.68  min   19.00  max  221.00
+   Reward:         mean 8.44 ± 0.44
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:20:05 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:20:05 INFO]: BEST val_sim so far
+[0:20:05 INFO]:    Steps:         16270
+   Episode length: mean   63.55  min   19.00  max  231.00
+   Reward:         mean 8.40 ± 0.45
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:20:05 INFO]: BEST val_true so far
+[0:20:05 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:20:05 INFO]: BEST test so far
+[0:20:05 INFO]:    Steps:         14509
+   Episode length: mean   56.68  min   19.00  max  221.00
+   Reward:         mean 8.44 ± 0.44
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:21:24 INFO]: Iteration 120
+[0:21:24 INFO]: Train 3932160 steps:
+[0:21:26 INFO]: 
+   Reward:      mean    7.15 ±    4.51
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0030  v_loss  1.6999  ent_loss -2.0878  loss  0.8261
+   Others:      advantage  0.0000 ±  0.9999  value  4.7559 ±  3.1148
+   Action 1 frac:    0.03
+   Action prob:    0.20
+[0:21:26 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:21:26 INFO]: Evaluating on val_sim split
+[0:21:34 INFO]:    Steps:         16972
+   Episode length: mean   66.30  min   19.00  max  194.00
+   Reward:         mean 8.63 ± 0.42
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:21:34 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:21:34 INFO]: Evaluating on val_true split
+[0:21:43 INFO]:    Steps:         18312
+   Episode length: mean   71.53  min   18.00  max  256.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.05
+
+[0:21:43 INFO]: Evaluating on test split
+[0:21:50 INFO]:    Steps:         15380
+   Episode length: mean   60.08  min   19.00  max  209.00
+   Reward:         mean 8.32 ± 0.46
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:21:50 INFO]: BEST val_sim so far
+[0:21:50 INFO]:    Steps:         16972
+   Episode length: mean   66.30  min   19.00  max  194.00
+   Reward:         mean 8.63 ± 0.42
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:21:50 INFO]: BEST val_true so far
+[0:21:50 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:21:50 INFO]: BEST test so far
+[0:21:50 INFO]:    Steps:         14509
+   Episode length: mean   56.68  min   19.00  max  221.00
+   Reward:         mean 8.44 ± 0.44
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:23:10 INFO]: Iteration 130
+[0:23:10 INFO]: Train 4259840 steps:
+[0:23:12 INFO]: 
+   Reward:      mean    7.25 ±    4.47
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0031  v_loss  1.6975  ent_loss -2.0797  loss  0.8249
+   Others:      advantage  0.0000 ±  0.9999  value  4.9193 ±  3.0960
+   Action 1 frac:    0.03
+   Action prob:    0.21
+[0:23:12 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:23:12 INFO]: Evaluating on val_sim split
+[0:23:21 INFO]:    Steps:         17665
+   Episode length: mean   69.00  min   19.00  max  227.00
+   Reward:         mean 8.28 ± 0.46
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:23:21 INFO]: Evaluating on val_true split
+[0:23:30 INFO]:    Steps:         18962
+   Episode length: mean   74.07  min   19.00  max  256.00
+   Reward:         mean 5.20 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:23:30 INFO]: Evaluating on test split
+[0:23:38 INFO]:    Steps:         17201
+   Episode length: mean   67.19  min   18.00  max  210.00
+   Reward:         mean 8.55 ± 0.43
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:23:38 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:23:38 INFO]: BEST val_sim so far
+[0:23:38 INFO]:    Steps:         16972
+   Episode length: mean   66.30  min   19.00  max  194.00
+   Reward:         mean 8.63 ± 0.42
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:23:38 INFO]: BEST val_true so far
+[0:23:38 INFO]:    Steps:         15532
+   Episode length: mean   60.67  min   17.00  max  191.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:23:38 INFO]: BEST test so far
+[0:23:38 INFO]:    Steps:         17201
+   Episode length: mean   67.19  min   18.00  max  210.00
+   Reward:         mean 8.55 ± 0.43
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:24:57 INFO]: Iteration 140
+[0:24:57 INFO]: Train 4587520 steps:
+[0:25:00 INFO]: 
+   Reward:      mean    7.34 ±    4.42
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0031  v_loss  1.6939  ent_loss -2.0718  loss  0.8231
+   Others:      advantage  0.0000 ±  0.9999  value  5.0734 ±  3.0801
+   Action 1 frac:    0.03
+   Action prob:    0.21
+[0:25:00 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:25:00 INFO]: Evaluating on val_sim split
+[0:25:08 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:25:08 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:25:08 INFO]: Evaluating on val_true split
+[0:25:17 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:25:17 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[0:25:17 INFO]: Evaluating on test split
+[0:25:25 INFO]:    Steps:         16364
+   Episode length: mean   63.92  min   18.00  max  254.00
+   Reward:         mean 8.75 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:25:25 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:25:25 INFO]: BEST val_sim so far
+[0:25:25 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:25:25 INFO]: BEST val_true so far
+[0:25:25 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:25:25 INFO]: BEST test so far
+[0:25:25 INFO]:    Steps:         16364
+   Episode length: mean   63.92  min   18.00  max  254.00
+   Reward:         mean 8.75 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:26:45 INFO]: Iteration 150
+[0:26:45 INFO]: Train 4915200 steps:
+[0:26:48 INFO]: 
+   Reward:      mean    7.42 ±    4.38
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0032  v_loss  1.6932  ent_loss -2.0637  loss  0.8228
+   Others:      advantage  0.0000 ±  0.9999  value  5.2292 ±  3.0680
+   Action 1 frac:    0.02
+   Action prob:    0.21
+[0:26:48 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:26:48 INFO]: Evaluating on val_sim split
+[0:26:57 INFO]:    Steps:         17285
+   Episode length: mean   67.52  min   18.00  max  256.00
+   Reward:         mean 8.63 ± 0.42
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:26:57 INFO]: Evaluating on val_true split
+[0:27:07 INFO]:    Steps:         17971
+   Episode length: mean   70.20  min   19.00  max  256.00
+   Reward:         mean 4.61 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:27:07 INFO]: Evaluating on test split
+[0:27:15 INFO]:    Steps:         15961
+   Episode length: mean   62.35  min   18.00  max  224.00
+   Reward:         mean 8.55 ± 0.43
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:27:15 INFO]: BEST val_sim so far
+[0:27:15 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:27:15 INFO]: BEST val_true so far
+[0:27:15 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:27:15 INFO]: BEST test so far
+[0:27:15 INFO]:    Steps:         16364
+   Episode length: mean   63.92  min   18.00  max  254.00
+   Reward:         mean 8.75 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:28:35 INFO]: Iteration 160
+[0:28:35 INFO]: Train 5242880 steps:
+[0:28:38 INFO]: 
+   Reward:      mean    7.49 ±    4.33
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0032  v_loss  1.6949  ent_loss -2.0586  loss  0.8237
+   Others:      advantage  0.0000 ±  0.9999  value  5.3683 ±  3.0515
+   Action 1 frac:    0.02
+   Action prob:    0.21
+[0:28:38 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:28:38 INFO]: Evaluating on val_sim split
+[0:28:46 INFO]:    Steps:         17629
+   Episode length: mean   68.86  min   18.00  max  211.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:28:46 INFO]: Evaluating on val_true split
+[0:28:54 INFO]:    Steps:         17657
+   Episode length: mean   68.97  min   18.00  max  222.00
+   Reward:         mean 5.12 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:28:54 INFO]: Evaluating on test split
+[0:29:02 INFO]:    Steps:         16130
+   Episode length: mean   63.01  min   18.00  max  197.00
+   Reward:         mean 8.79 ± 0.40
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:29:02 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:29:02 INFO]: BEST val_sim so far
+[0:29:02 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:29:02 INFO]: BEST val_true so far
+[0:29:02 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:29:02 INFO]: BEST test so far
+[0:29:02 INFO]:    Steps:         16130
+   Episode length: mean   63.01  min   18.00  max  197.00
+   Reward:         mean 8.79 ± 0.40
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:30:21 INFO]: Iteration 170
+[0:30:21 INFO]: Train 5570560 steps:
+[0:30:24 INFO]: 
+   Reward:      mean    7.57 ±    4.29
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0031  v_loss  1.6975  ent_loss -2.0519  loss  0.8251
+   Others:      advantage  0.0000 ±  0.9999  value  5.5116 ±  3.0410
+   Action 1 frac:    0.02
+   Action prob:    0.21
+[0:30:24 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:30:24 INFO]: Evaluating on val_sim split
+[0:30:32 INFO]:    Steps:         16757
+   Episode length: mean   65.46  min   18.00  max  219.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:30:32 INFO]: Evaluating on val_true split
+[0:30:42 INFO]:    Steps:         18828
+   Episode length: mean   73.55  min   17.00  max  256.00
+   Reward:         mean 5.35 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:30:42 INFO]: Evaluating on test split
+[0:30:50 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:30:50 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:30:50 INFO]: BEST val_sim so far
+[0:30:50 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:30:50 INFO]: BEST val_true so far
+[0:30:50 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:30:50 INFO]: BEST test so far
+[0:30:50 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:32:10 INFO]: Iteration 180
+[0:32:10 INFO]: Train 5898240 steps:
+[0:32:13 INFO]: 
+   Reward:      mean    7.64 ±    4.25
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0032  v_loss  1.6902  ent_loss -2.0464  loss  0.8215
+   Others:      advantage  0.0000 ±  0.9999  value  5.6122 ±  3.0117
+   Action 1 frac:    0.02
+   Action prob:    0.21
+[0:32:13 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:32:13 INFO]: Evaluating on val_sim split
+[0:32:22 INFO]:    Steps:         17742
+   Episode length: mean   69.30  min   19.00  max  218.00
+   Reward:         mean 8.44 ± 0.44
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:32:22 INFO]: Evaluating on val_true split
+[0:32:31 INFO]:    Steps:         19386
+   Episode length: mean   75.73  min   16.00  max  256.00
+   Reward:         mean 5.12 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[0:32:31 INFO]: Evaluating on test split
+[0:32:41 INFO]:    Steps:         17259
+   Episode length: mean   67.42  min   19.00  max  242.00
+   Reward:         mean 8.44 ± 0.44
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:32:41 INFO]: BEST val_sim so far
+[0:32:41 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:32:41 INFO]: BEST val_true so far
+[0:32:41 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:32:41 INFO]: BEST test so far
+[0:32:41 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:34:00 INFO]: Iteration 190
+[0:34:00 INFO]: Train 6225920 steps:
+[0:34:04 INFO]: 
+   Reward:      mean    7.70 ±    4.21
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0033  v_loss  1.6818  ent_loss -2.0408  loss  0.8172
+   Others:      advantage  0.0000 ±  0.9999  value  5.6975 ±  2.9836
+   Action 1 frac:    0.02
+   Action prob:    0.21
+[0:34:04 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:34:04 INFO]: Evaluating on val_sim split
+[0:34:13 INFO]:    Steps:         19085
+   Episode length: mean   74.55  min   18.00  max  236.00
+   Reward:         mean 8.44 ± 0.44
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:34:13 INFO]: Evaluating on val_true split
+[0:34:23 INFO]:    Steps:         18929
+   Episode length: mean   73.94  min   17.00  max  256.00
+   Reward:         mean 4.96 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:34:23 INFO]: Evaluating on test split
+[0:34:31 INFO]:    Steps:         16643
+   Episode length: mean   65.01  min   19.00  max  208.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:34:31 INFO]: BEST val_sim so far
+[0:34:31 INFO]:    Steps:         16815
+   Episode length: mean   65.68  min   18.00  max  189.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:34:31 INFO]: BEST val_true so far
+[0:34:31 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:34:31 INFO]: BEST test so far
+[0:34:31 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:35:51 INFO]: Iteration 200
+[0:35:51 INFO]: Train 6553600 steps:
+[0:35:55 INFO]: 
+   Reward:      mean    7.75 ±    4.17
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0034  v_loss  1.6766  ent_loss -2.0353  loss  0.8146
+   Others:      advantage  0.0000 ±  0.9999  value  5.7764 ±  2.9569
+   Action 1 frac:    0.02
+   Action prob:    0.21
+[0:35:55 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:35:55 INFO]: Evaluating on val_sim split
+[0:36:03 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:36:03 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_sim.ckpt
+[0:36:03 INFO]: Evaluating on val_true split
+[0:36:12 INFO]:    Steps:         17695
+   Episode length: mean   69.12  min   18.00  max  243.00
+   Reward:         mean 5.31 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:36:12 INFO]: Evaluating on test split
+[0:36:21 INFO]:    Steps:         17785
+   Episode length: mean   69.47  min   18.00  max  255.00
+   Reward:         mean 8.71 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:36:21 INFO]: BEST val_sim so far
+[0:36:21 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:36:21 INFO]: BEST val_true so far
+[0:36:21 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:36:21 INFO]: BEST test so far
+[0:36:21 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:37:41 INFO]: Iteration 210
+[0:37:41 INFO]: Train 6881280 steps:
+[0:37:45 INFO]: 
+   Reward:      mean    7.81 ±    4.14
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0034  v_loss  1.6757  ent_loss -2.0265  loss  0.8142
+   Others:      advantage  0.0000 ±  0.9999  value  5.8646 ±  2.9351
+   Action 1 frac:    0.02
+   Action prob:    0.22
+[0:37:45 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:37:45 INFO]: Evaluating on val_sim split
+[0:37:54 INFO]:    Steps:         16649
+   Episode length: mean   65.04  min   19.00  max  227.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:37:54 INFO]: Evaluating on val_true split
+[0:38:02 INFO]:    Steps:         15524
+   Episode length: mean   60.64  min   18.00  max  203.00
+   Reward:         mean 5.51 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:38:02 INFO]: Evaluating on test split
+[0:38:09 INFO]:    Steps:         14580
+   Episode length: mean   56.95  min   18.00  max  169.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:38:09 INFO]: BEST val_sim so far
+[0:38:09 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:38:09 INFO]: BEST val_true so far
+[0:38:09 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:38:09 INFO]: BEST test so far
+[0:38:09 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:39:30 INFO]: Iteration 220
+[0:39:30 INFO]: Train 7208960 steps:
+[0:39:35 INFO]: 
+   Reward:      mean    7.86 ±    4.10
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0034  v_loss  1.6809  ent_loss -2.0151  loss  0.8169
+   Others:      advantage  0.0000 ±  0.9999  value  5.9636 ±  2.9210
+   Action 1 frac:    0.02
+   Action prob:    0.22
+[0:39:35 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:39:35 INFO]: Evaluating on val_sim split
+[0:39:43 INFO]:    Steps:         16915
+   Episode length: mean   66.07  min   18.00  max  228.00
+   Reward:         mean 8.55 ± 0.43
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:39:43 INFO]: Evaluating on val_true split
+[0:39:52 INFO]:    Steps:         16283
+   Episode length: mean   63.61  min   16.00  max  239.00
+   Reward:         mean 5.35 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:39:52 INFO]: Evaluating on test split
+[0:40:00 INFO]:    Steps:         15137
+   Episode length: mean   59.13  min   18.00  max  209.00
+   Reward:         mean 8.75 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:40:00 INFO]: BEST val_sim so far
+[0:40:00 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:40:00 INFO]: BEST val_true so far
+[0:40:00 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:40:00 INFO]: BEST test so far
+[0:40:00 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:41:23 INFO]: Iteration 230
+[0:41:23 INFO]: Train 7536640 steps:
+[0:41:28 INFO]: 
+   Reward:      mean    7.91 ±    4.07
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0034  v_loss  1.6863  ent_loss -2.0053  loss  0.8197
+   Others:      advantage -0.0000 ±  0.9999  value  6.0628 ±  2.9086
+   Action 1 frac:    0.02
+   Action prob:    0.22
+[0:41:28 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:41:28 INFO]: Evaluating on val_sim split
+[0:41:36 INFO]:    Steps:         17897
+   Episode length: mean   69.91  min   19.00  max  250.00
+   Reward:         mean 8.98 ± 0.37
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:41:36 INFO]: Evaluating on val_true split
+[0:41:46 INFO]:    Steps:         16417
+   Episode length: mean   64.13  min   17.00  max  256.00
+   Reward:         mean 5.55 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:41:46 INFO]: Evaluating on test split
+[0:41:52 INFO]:    Steps:         15260
+   Episode length: mean   59.61  min   19.00  max  171.00
+   Reward:         mean 8.98 ± 0.37
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:41:52 INFO]: BEST val_sim so far
+[0:41:52 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:41:52 INFO]: BEST val_true so far
+[0:41:52 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:41:52 INFO]: BEST test so far
+[0:41:52 INFO]:    Steps:         16029
+   Episode length: mean   62.61  min   19.00  max  234.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[0:43:15 INFO]: Iteration 240
+[0:43:15 INFO]: Train 7864320 steps:
+[0:43:20 INFO]: 
+   Reward:      mean    7.95 ±    4.04
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0035  v_loss  1.6868  ent_loss -1.9947  loss  0.8200
+   Others:      advantage  0.0000 ±  0.9999  value  6.1488 ±  2.8906
+   Action 1 frac:    0.02
+   Action prob:    0.22
+[0:43:20 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:43:20 INFO]: Evaluating on val_sim split
+[0:43:30 INFO]:    Steps:         18549
+   Episode length: mean   72.46  min   18.00  max  256.00
+   Reward:         mean 9.14 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:43:30 INFO]: Evaluating on val_true split
+[0:43:39 INFO]:    Steps:         17630
+   Episode length: mean   68.87  min   18.00  max  237.00
+   Reward:         mean 5.35 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:43:39 INFO]: Evaluating on test split
+[0:43:47 INFO]:    Steps:         16832
+   Episode length: mean   65.75  min   18.00  max  191.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:43:47 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:43:47 INFO]: BEST val_sim so far
+[0:43:47 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:43:47 INFO]: BEST val_true so far
+[0:43:47 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:43:47 INFO]: BEST test so far
+[0:43:47 INFO]:    Steps:         16832
+   Episode length: mean   65.75  min   18.00  max  191.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:45:10 INFO]: Iteration 250
+[0:45:10 INFO]: Train 8192000 steps:
+[0:45:15 INFO]: 
+   Reward:      mean    7.99 ±    4.00
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0035  v_loss  1.6793  ent_loss -1.9869  loss  0.8163
+   Others:      advantage  0.0000 ±  0.9999  value  6.2032 ±  2.8626
+   Action 1 frac:    0.02
+   Action prob:    0.22
+[0:45:15 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:45:15 INFO]: Evaluating on val_sim split
+[0:45:24 INFO]:    Steps:         18303
+   Episode length: mean   71.50  min   19.00  max  256.00
+   Reward:         mean 8.79 ± 0.40
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:45:24 INFO]: Evaluating on val_true split
+[0:45:33 INFO]:    Steps:         17675
+   Episode length: mean   69.04  min   19.00  max  246.00
+   Reward:         mean 4.92 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:45:33 INFO]: Evaluating on test split
+[0:45:42 INFO]:    Steps:         16373
+   Episode length: mean   63.96  min   19.00  max  208.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:45:42 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:45:42 INFO]: BEST val_sim so far
+[0:45:42 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:45:42 INFO]: BEST val_true so far
+[0:45:42 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:45:42 INFO]: BEST test so far
+[0:45:42 INFO]:    Steps:         16373
+   Episode length: mean   63.96  min   19.00  max  208.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:47:05 INFO]: Iteration 260
+[0:47:05 INFO]: Train 8519680 steps:
+[0:47:10 INFO]: 
+   Reward:      mean    8.03 ±    3.98
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0035  v_loss  1.6766  ent_loss -1.9791  loss  0.8150
+   Others:      advantage -0.0000 ±  0.9999  value  6.2635 ±  2.8418
+   Action 1 frac:    0.02
+   Action prob:    0.23
+[0:47:10 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:47:10 INFO]: Evaluating on val_sim split
+[0:47:18 INFO]:    Steps:         16551
+   Episode length: mean   64.65  min   19.00  max  233.00
+   Reward:         mean 8.98 ± 0.37
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:47:18 INFO]: Evaluating on val_true split
+[0:47:28 INFO]:    Steps:         15773
+   Episode length: mean   61.61  min   16.00  max  256.00
+   Reward:         mean 5.31 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:47:28 INFO]: Evaluating on test split
+[0:47:37 INFO]:    Steps:         16939
+   Episode length: mean   66.17  min   18.00  max  240.00
+   Reward:         mean 8.75 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:47:37 INFO]: BEST val_sim so far
+[0:47:37 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:47:37 INFO]: BEST val_true so far
+[0:47:37 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:47:37 INFO]: BEST test so far
+[0:47:37 INFO]:    Steps:         16373
+   Episode length: mean   63.96  min   19.00  max  208.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:48:59 INFO]: Iteration 270
+[0:48:59 INFO]: Train 8847360 steps:
+[0:49:04 INFO]: 
+   Reward:      mean    8.07 ±    3.95
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0036  v_loss  1.6806  ent_loss -1.9676  loss  0.8171
+   Others:      advantage  0.0000 ±  0.9999  value  6.3399 ±  2.8284
+   Action 1 frac:    0.02
+   Action prob:    0.23
+[0:49:04 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:49:04 INFO]: Evaluating on val_sim split
+[0:49:12 INFO]:    Steps:         15517
+   Episode length: mean   60.61  min   18.00  max  191.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:49:12 INFO]: Evaluating on val_true split
+[0:49:21 INFO]:    Steps:         15407
+   Episode length: mean   60.18  min   17.00  max  237.00
+   Reward:         mean 5.47 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:49:21 INFO]: Evaluating on test split
+[0:49:28 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:49:28 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[0:49:28 INFO]: BEST val_sim so far
+[0:49:28 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:49:28 INFO]: BEST val_true so far
+[0:49:28 INFO]:    Steps:         18218
+   Episode length: mean   71.16  min   19.00  max  238.00
+   Reward:         mean 5.62 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[0:49:28 INFO]: BEST test so far
+[0:49:28 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:50:51 INFO]: Iteration 280
+[0:50:51 INFO]: Train 9175040 steps:
+[0:50:57 INFO]: 
+   Reward:      mean    8.10 ±    3.92
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0036  v_loss  1.6849  ent_loss -1.9553  loss  0.8193
+   Others:      advantage  0.0000 ±  0.9999  value  6.4201 ±  2.8178
+   Action 1 frac:    0.02
+   Action prob:    0.23
+[0:50:57 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:50:57 INFO]: Evaluating on val_sim split
+[0:51:06 INFO]:    Steps:         16260
+   Episode length: mean   63.52  min   18.00  max  219.00
+   Reward:         mean 8.83 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:51:06 INFO]: Evaluating on val_true split
+[0:51:13 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:51:13 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[0:51:13 INFO]: Evaluating on test split
+[0:51:20 INFO]:    Steps:         14986
+   Episode length: mean   58.54  min   19.00  max  176.00
+   Reward:         mean 8.91 ± 0.38
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:51:20 INFO]: BEST val_sim so far
+[0:51:20 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:51:20 INFO]: BEST val_true so far
+[0:51:20 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:51:20 INFO]: BEST test so far
+[0:51:20 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:52:41 INFO]: Iteration 290
+[0:52:41 INFO]: Train 9502720 steps:
+[0:52:47 INFO]: 
+   Reward:      mean    8.14 ±    3.89
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0036  v_loss  1.6898  ent_loss -1.9432  loss  0.8219
+   Others:      advantage -0.0000 ±  0.9999  value  6.4950 ±  2.8053
+   Action 1 frac:    0.02
+   Action prob:    0.24
+[0:52:47 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:52:47 INFO]: Evaluating on val_sim split
+[0:52:56 INFO]:    Steps:         16794
+   Episode length: mean   65.60  min   18.00  max  239.00
+   Reward:         mean 8.79 ± 0.40
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:52:56 INFO]: Evaluating on val_true split
+[0:53:04 INFO]:    Steps:         14293
+   Episode length: mean   55.83  min   16.00  max  200.00
+   Reward:         mean 5.04 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:53:04 INFO]: Evaluating on test split
+[0:53:11 INFO]:    Steps:         15073
+   Episode length: mean   58.88  min   18.00  max  179.00
+   Reward:         mean 8.75 ± 0.41
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:53:11 INFO]: BEST val_sim so far
+[0:53:11 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:53:11 INFO]: BEST val_true so far
+[0:53:11 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:53:11 INFO]: BEST test so far
+[0:53:11 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:54:38 INFO]: Iteration 300
+[0:54:38 INFO]: Train 9830400 steps:
+[0:54:44 INFO]: 
+   Reward:      mean    8.17 ±    3.87
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0036  v_loss  1.6925  ent_loss -1.9325  loss  0.8233
+   Others:      advantage -0.0000 ±  0.9999  value  6.5625 ±  2.7903
+   Action 1 frac:    0.02
+   Action prob:    0.24
+[0:54:44 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:54:44 INFO]: Evaluating on val_sim split
+[0:54:52 INFO]:    Steps:         16678
+   Episode length: mean   65.15  min   18.00  max  215.00
+   Reward:         mean 9.14 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:54:52 INFO]: Evaluating on val_true split
+[0:55:01 INFO]:    Steps:         18014
+   Episode length: mean   70.37  min   18.00  max  256.00
+   Reward:         mean 4.96 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:55:01 INFO]: Evaluating on test split
+[0:55:10 INFO]:    Steps:         16174
+   Episode length: mean   63.18  min   18.00  max  256.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:55:10 INFO]: BEST val_sim so far
+[0:55:10 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:55:10 INFO]: BEST val_true so far
+[0:55:10 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:55:10 INFO]: BEST test so far
+[0:55:10 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:56:31 INFO]: Iteration 310
+[0:56:31 INFO]: Train 10158080 steps:
+[0:56:37 INFO]: 
+   Reward:      mean    8.20 ±    3.84
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0036  v_loss  1.6938  ent_loss -1.9222  loss  0.8241
+   Others:      advantage -0.0000 ±  0.9999  value  6.6253 ±  2.7744
+   Action 1 frac:    0.02
+   Action prob:    0.24
+[0:56:37 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:56:37 INFO]: Evaluating on val_sim split
+[0:56:46 INFO]:    Steps:         18391
+   Episode length: mean   71.84  min   19.00  max  256.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:56:46 INFO]: Evaluating on val_true split
+[0:56:56 INFO]:    Steps:         17405
+   Episode length: mean   67.99  min   17.00  max  256.00
+   Reward:         mean 5.16 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:56:56 INFO]: Evaluating on test split
+[0:57:04 INFO]:    Steps:         15030
+   Episode length: mean   58.71  min   19.00  max  256.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:57:04 INFO]: BEST val_sim so far
+[0:57:04 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:57:04 INFO]: BEST val_true so far
+[0:57:04 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:57:04 INFO]: BEST test so far
+[0:57:04 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:58:24 INFO]: Iteration 320
+[0:58:24 INFO]: Train 10485760 steps:
+[0:58:30 INFO]: 
+   Reward:      mean    8.23 ±    3.82
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0036  v_loss  1.6963  ent_loss -1.9119  loss  0.8254
+   Others:      advantage -0.0000 ±  0.9999  value  6.6861 ±  2.7593
+   Action 1 frac:    0.02
+   Action prob:    0.24
+[0:58:30 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[0:58:30 INFO]: Evaluating on val_sim split
+[0:58:39 INFO]:    Steps:         18449
+   Episode length: mean   72.07  min   18.00  max  256.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:58:39 INFO]: Evaluating on val_true split
+[0:58:48 INFO]:    Steps:         16405
+   Episode length: mean   64.08  min   15.00  max  228.00
+   Reward:         mean 5.43 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:58:48 INFO]: Evaluating on test split
+[0:58:55 INFO]:    Steps:         16147
+   Episode length: mean   63.07  min   18.00  max  217.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:58:55 INFO]: BEST val_sim so far
+[0:58:55 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[0:58:55 INFO]: BEST val_true so far
+[0:58:55 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[0:58:55 INFO]: BEST test so far
+[0:58:55 INFO]:    Steps:         15042
+   Episode length: mean   58.76  min   18.00  max  189.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:00:15 INFO]: Iteration 330
+[1:00:15 INFO]: Train 10813440 steps:
+[1:00:21 INFO]: 
+   Reward:      mean    8.25 ±    3.80
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0037  v_loss  1.7005  ent_loss -1.9017  loss  0.8276
+   Others:      advantage -0.0000 ±  0.9999  value  6.7459 ±  2.7453
+   Action 1 frac:    0.01
+   Action prob:    0.24
+[1:00:21 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:00:21 INFO]: Evaluating on val_sim split
+[1:00:30 INFO]:    Steps:         17120
+   Episode length: mean   66.88  min   18.00  max  223.00
+   Reward:         mean 8.95 ± 0.38
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:00:30 INFO]: Evaluating on val_true split
+[1:00:39 INFO]:    Steps:         17488
+   Episode length: mean   68.31  min   16.00  max  256.00
+   Reward:         mean 4.88 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:00:39 INFO]: Evaluating on test split
+[1:00:47 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:00:47 INFO]: Saved checkpoint to experiments/procgen_novice/best_test.ckpt
+[1:00:47 INFO]: BEST val_sim so far
+[1:00:47 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:00:47 INFO]: BEST val_true so far
+[1:00:47 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:00:47 INFO]: BEST test so far
+[1:00:47 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:02:07 INFO]: Iteration 340
+[1:02:07 INFO]: Train 11141120 steps:
+[1:02:14 INFO]: 
+   Reward:      mean    8.28 ±    3.78
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0037  v_loss  1.7009  ent_loss -1.8932  loss  0.8278
+   Others:      advantage -0.0000 ±  0.9999  value  6.7978 ±  2.7284
+   Action 1 frac:    0.01
+   Action prob:    0.25
+[1:02:14 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:02:14 INFO]: Evaluating on val_sim split
+[1:02:24 INFO]:    Steps:         19004
+   Episode length: mean   74.23  min   18.00  max  256.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:02:24 INFO]: Evaluating on val_true split
+[1:02:33 INFO]:    Steps:         17700
+   Episode length: mean   69.14  min   17.00  max  256.00
+   Reward:         mean 5.27 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:02:33 INFO]: Evaluating on test split
+[1:02:43 INFO]:    Steps:         16879
+   Episode length: mean   65.93  min   17.00  max  256.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:02:43 INFO]: BEST val_sim so far
+[1:02:43 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:02:43 INFO]: BEST val_true so far
+[1:02:43 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:02:43 INFO]: BEST test so far
+[1:02:43 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:04:05 INFO]: Iteration 350
+[1:04:05 INFO]: Train 11468800 steps:
+[1:04:12 INFO]: 
+   Reward:      mean    8.30 ±    3.76
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0037  v_loss  1.7012  ent_loss -1.8851  loss  0.8280
+   Others:      advantage -0.0000 ±  0.9999  value  6.8443 ±  2.7110
+   Action 1 frac:    0.01
+   Action prob:    0.25
+[1:04:12 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:04:12 INFO]: Evaluating on val_sim split
+[1:04:22 INFO]:    Steps:         18653
+   Episode length: mean   72.86  min   18.00  max  256.00
+   Reward:         mean 8.95 ± 0.38
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:04:22 INFO]: Evaluating on val_true split
+[1:04:33 INFO]:    Steps:         16113
+   Episode length: mean   62.94  min   16.00  max  256.00
+   Reward:         mean 5.70 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:04:33 INFO]: Evaluating on test split
+[1:04:40 INFO]:    Steps:         16131
+   Episode length: mean   63.01  min   19.00  max  198.00
+   Reward:         mean 8.91 ± 0.38
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:04:40 INFO]: BEST val_sim so far
+[1:04:40 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:04:40 INFO]: BEST val_true so far
+[1:04:40 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:04:40 INFO]: BEST test so far
+[1:04:40 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:06:04 INFO]: Iteration 360
+[1:06:04 INFO]: Train 11796480 steps:
+[1:06:11 INFO]: 
+   Reward:      mean    8.32 ±    3.74
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0038  v_loss  1.7008  ent_loss -1.8763  loss  0.8279
+   Others:      advantage -0.0000 ±  0.9999  value  6.8869 ±  2.6923
+   Action 1 frac:    0.01
+   Action prob:    0.25
+[1:06:11 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:06:11 INFO]: Evaluating on val_sim split
+[1:06:21 INFO]:    Steps:         18271
+   Episode length: mean   71.37  min   18.00  max  254.00
+   Reward:         mean 9.14 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:06:21 INFO]: Evaluating on val_true split
+[1:06:31 INFO]:    Steps:         15470
+   Episode length: mean   60.43  min   16.00  max  241.00
+   Reward:         mean 5.47 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:06:31 INFO]: Evaluating on test split
+[1:06:40 INFO]:    Steps:         16882
+   Episode length: mean   65.95  min   18.00  max  205.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:06:40 INFO]: BEST val_sim so far
+[1:06:40 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:06:40 INFO]: BEST val_true so far
+[1:06:40 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:06:40 INFO]: BEST test so far
+[1:06:40 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:08:02 INFO]: Iteration 370
+[1:08:02 INFO]: Train 12124160 steps:
+[1:08:10 INFO]: 
+   Reward:      mean    8.34 ±    3.72
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0038  v_loss  1.7007  ent_loss -1.8673  loss  0.8279
+   Others:      advantage -0.0000 ±  0.9999  value  6.9295 ±  2.6748
+   Action 1 frac:    0.01
+   Action prob:    0.25
+[1:08:10 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:08:10 INFO]: Evaluating on val_sim split
+[1:08:20 INFO]:    Steps:         18203
+   Episode length: mean   71.11  min   18.00  max  244.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:08:20 INFO]: Evaluating on val_true split
+[1:08:27 INFO]:    Steps:         13894
+   Episode length: mean   54.27  min   15.00  max  175.00
+   Reward:         mean 5.51 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:08:27 INFO]: Evaluating on test split
+[1:08:35 INFO]:    Steps:         16241
+   Episode length: mean   63.44  min   18.00  max  222.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:08:35 INFO]: BEST val_sim so far
+[1:08:35 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:08:35 INFO]: BEST val_true so far
+[1:08:35 INFO]:    Steps:         15142
+   Episode length: mean   59.15  min   18.00  max  190.00
+   Reward:         mean 5.78 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:08:35 INFO]: BEST test so far
+[1:08:35 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:09:56 INFO]: Iteration 380
+[1:09:56 INFO]: Train 12451840 steps:
+[1:10:04 INFO]: 
+   Reward:      mean    8.36 ±    3.70
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0038  v_loss  1.7015  ent_loss -1.8595  loss  0.8283
+   Others:      advantage -0.0000 ±  0.9999  value  6.9692 ±  2.6573
+   Action 1 frac:    0.01
+   Action prob:    0.25
+[1:10:04 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:10:04 INFO]: Evaluating on val_sim split
+[1:10:11 INFO]:    Steps:         17144
+   Episode length: mean   66.97  min   18.00  max  199.00
+   Reward:         mean 8.98 ± 0.37
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:10:11 INFO]: Evaluating on val_true split
+[1:10:19 INFO]:    Steps:         15192
+   Episode length: mean   59.34  min   15.00  max  206.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:10:19 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[1:10:19 INFO]: Evaluating on test split
+[1:10:27 INFO]:    Steps:         16763
+   Episode length: mean   65.48  min   19.00  max  186.00
+   Reward:         mean 9.30 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:10:27 INFO]: BEST val_sim so far
+[1:10:27 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:10:27 INFO]: BEST val_true so far
+[1:10:27 INFO]:    Steps:         15192
+   Episode length: mean   59.34  min   15.00  max  206.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:10:27 INFO]: BEST test so far
+[1:10:27 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:11:46 INFO]: Iteration 390
+[1:11:46 INFO]: Train 12779520 steps:
+[1:11:54 INFO]: 
+   Reward:      mean    8.38 ±    3.68
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0038  v_loss  1.6992  ent_loss -1.8521  loss  0.8273
+   Others:      advantage -0.0000 ±  0.9999  value  6.9967 ±  2.6379
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:11:54 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:11:54 INFO]: Evaluating on val_sim split
+[1:12:04 INFO]:    Steps:         18091
+   Episode length: mean   70.67  min   19.00  max  255.00
+   Reward:         mean 8.83 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:12:04 INFO]: Evaluating on val_true split
+[1:12:12 INFO]:    Steps:         15357
+   Episode length: mean   59.99  min   16.00  max  217.00
+   Reward:         mean 5.82 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:12:12 INFO]: Evaluating on test split
+[1:12:21 INFO]:    Steps:         16491
+   Episode length: mean   64.42  min   18.00  max  256.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:12:21 INFO]: BEST val_sim so far
+[1:12:21 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:12:21 INFO]: BEST val_true so far
+[1:12:21 INFO]:    Steps:         15192
+   Episode length: mean   59.34  min   15.00  max  206.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:12:21 INFO]: BEST test so far
+[1:12:21 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:13:40 INFO]: Iteration 400
+[1:13:40 INFO]: Train 13107200 steps:
+[1:13:48 INFO]: 
+   Reward:      mean    8.40 ±    3.67
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0039  v_loss  1.6955  ent_loss -1.8465  loss  0.8254
+   Others:      advantage -0.0000 ±  0.9999  value  7.0137 ±  2.6188
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:13:48 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:13:48 INFO]: Evaluating on val_sim split
+[1:13:57 INFO]:    Steps:         16909
+   Episode length: mean   66.05  min   19.00  max  236.00
+   Reward:         mean 9.14 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:13:57 INFO]: Evaluating on val_true split
+[1:14:06 INFO]:    Steps:         15079
+   Episode length: mean   58.90  min   16.00  max  242.00
+   Reward:         mean 5.08 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:14:06 INFO]: Evaluating on test split
+[1:14:15 INFO]:    Steps:         15981
+   Episode length: mean   62.43  min   18.00  max  227.00
+   Reward:         mean 8.87 ± 0.39
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:14:15 INFO]: BEST val_sim so far
+[1:14:15 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:14:15 INFO]: BEST val_true so far
+[1:14:15 INFO]:    Steps:         15192
+   Episode length: mean   59.34  min   15.00  max  206.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:14:15 INFO]: BEST test so far
+[1:14:15 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:15:37 INFO]: Iteration 410
+[1:15:37 INFO]: Train 13434880 steps:
+[1:15:45 INFO]: 
+   Reward:      mean    8.41 ±    3.65
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0039  v_loss  1.6953  ent_loss -1.8413  loss  0.8253
+   Others:      advantage -0.0000 ±  0.9999  value  7.0410 ±  2.6021
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:15:45 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:15:45 INFO]: Evaluating on val_sim split
+[1:15:53 INFO]:    Steps:         16194
+   Episode length: mean   63.26  min   19.00  max  214.00
+   Reward:         mean 9.26 ± 0.32
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:15:53 INFO]: Evaluating on val_true split
+[1:16:03 INFO]:    Steps:         15648
+   Episode length: mean   61.12  min   17.00  max  256.00
+   Reward:         mean 5.20 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:16:03 INFO]: Evaluating on test split
+[1:16:12 INFO]:    Steps:         15714
+   Episode length: mean   61.38  min   18.00  max  256.00
+   Reward:         mean 9.10 ± 0.35
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:16:12 INFO]: BEST val_sim so far
+[1:16:12 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:16:12 INFO]: BEST val_true so far
+[1:16:12 INFO]:    Steps:         15192
+   Episode length: mean   59.34  min   15.00  max  206.00
+   Reward:         mean 5.86 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:16:12 INFO]: BEST test so far
+[1:16:12 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:17:35 INFO]: Iteration 420
+[1:17:35 INFO]: Train 13762560 steps:
+[1:17:43 INFO]: 
+   Reward:      mean    8.43 ±    3.64
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0039  v_loss  1.6948  ent_loss -1.8366  loss  0.8251
+   Others:      advantage -0.0000 ±  0.9999  value  7.0679 ±  2.5848
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:17:43 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:17:43 INFO]: Evaluating on val_sim split
+[1:17:53 INFO]:    Steps:         16871
+   Episode length: mean   65.90  min   18.00  max  256.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:17:53 INFO]: Evaluating on val_true split
+[1:18:01 INFO]:    Steps:         14109
+   Episode length: mean   55.11  min   16.00  max  212.00
+   Reward:         mean 6.02 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[1:18:01 INFO]: Saved checkpoint to experiments/procgen_novice/best_val_true.ckpt
+[1:18:01 INFO]: Evaluating on test split
+[1:18:08 INFO]:    Steps:         16128
+   Episode length: mean   63.00  min   17.00  max  179.00
+   Reward:         mean 8.79 ± 0.40
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:18:08 INFO]: BEST val_sim so far
+[1:18:08 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:18:08 INFO]: BEST val_true so far
+[1:18:08 INFO]:    Steps:         14109
+   Episode length: mean   55.11  min   16.00  max  212.00
+   Reward:         mean 6.02 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[1:18:08 INFO]: BEST test so far
+[1:18:08 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:19:30 INFO]: Iteration 430
+[1:19:30 INFO]: Train 14090240 steps:
+[1:19:39 INFO]: 
+   Reward:      mean    8.45 ±    3.62
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0040  v_loss  1.6916  ent_loss -1.8333  loss  0.8235
+   Others:      advantage -0.0000 ±  0.9999  value  7.0858 ±  2.5663
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:19:39 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:19:39 INFO]: Evaluating on val_sim split
+[1:19:48 INFO]:    Steps:         18239
+   Episode length: mean   71.25  min   19.00  max  251.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:19:48 INFO]: Evaluating on val_true split
+[1:19:57 INFO]:    Steps:         16480
+   Episode length: mean   64.38  min   15.00  max  221.00
+   Reward:         mean 5.04 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[1:19:57 INFO]: Evaluating on test split
+[1:20:06 INFO]:    Steps:         16439
+   Episode length: mean   64.21  min   19.00  max  242.00
+   Reward:         mean 9.06 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:20:06 INFO]: BEST val_sim so far
+[1:20:06 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:20:06 INFO]: BEST val_true so far
+[1:20:06 INFO]:    Steps:         14109
+   Episode length: mean   55.11  min   16.00  max  212.00
+   Reward:         mean 6.02 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[1:20:06 INFO]: BEST test so far
+[1:20:06 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:21:27 INFO]: Iteration 440
+[1:21:27 INFO]: Train 14417920 steps:
+[1:21:35 INFO]: 
+   Reward:      mean    8.46 ±    3.61
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0040  v_loss  1.6890  ent_loss -1.8310  loss  0.8222
+   Others:      advantage -0.0000 ±  0.9999  value  7.1008 ±  2.5500
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:21:35 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:21:35 INFO]: Evaluating on val_sim split
+[1:21:44 INFO]:    Steps:         16996
+   Episode length: mean   66.39  min   19.00  max  227.00
+   Reward:         mean 8.98 ± 0.37
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:21:44 INFO]: Evaluating on val_true split
+[1:21:53 INFO]:    Steps:         16198
+   Episode length: mean   63.27  min   15.00  max  216.00
+   Reward:         mean 4.92 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.04
+
+[1:21:53 INFO]: Evaluating on test split
+[1:22:03 INFO]:    Steps:         16605
+   Episode length: mean   64.86  min   19.00  max  253.00
+   Reward:         mean 8.67 ± 0.42
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:22:03 INFO]: BEST val_sim so far
+[1:22:03 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:22:03 INFO]: BEST val_true so far
+[1:22:03 INFO]:    Steps:         14109
+   Episode length: mean   55.11  min   16.00  max  212.00
+   Reward:         mean 6.02 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[1:22:03 INFO]: BEST test so far
+[1:22:03 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+
+[1:23:25 INFO]: Iteration 450
+[1:23:25 INFO]: Train 14745600 steps:
+[1:23:33 INFO]: 
+   Reward:      mean    8.47 ±    3.60
+   Base Reward: mean    0.00 ±    0.00
+   Loss:        pg_loss -0.0040  v_loss  1.6888  ent_loss -1.8281  loss  0.8221
+   Others:      advantage -0.0000 ±  0.9999  value  7.1243 ±  2.5345
+   Action 1 frac:    0.01
+   Action prob:    0.26
+[1:23:33 INFO]: Saved checkpoint to experiments/procgen_novice/last.ckpt
+[1:23:33 INFO]: Evaluating on val_sim split
+[1:23:42 INFO]:    Steps:         16668
+   Episode length: mean   65.11  min   19.00  max  219.00
+   Reward:         mean 9.18 ± 0.34
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:23:42 INFO]: Evaluating on val_true split
+[1:23:50 INFO]:    Steps:         14980
+   Episode length: mean   58.52  min   15.00  max  211.00
+   Reward:         mean 5.74 ± 0.61
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.03
+
+[1:23:50 INFO]: Evaluating on test split
+[1:23:57 INFO]:    Steps:         16018
+   Episode length: mean   62.57  min   19.00  max  223.00
+   Reward:         mean 9.02 ± 0.36
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:23:57 INFO]: BEST val_sim so far
+[1:23:57 INFO]:    Steps:         17325
+   Episode length: mean   67.68  min   19.00  max  220.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.01
+
+[1:23:57 INFO]: BEST val_true so far
+[1:23:57 INFO]:    Steps:         14109
+   Episode length: mean   55.11  min   16.00  max  212.00
+   Reward:         mean 6.02 ± 0.60
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.02
+
+[1:23:57 INFO]: BEST test so far
+[1:23:57 INFO]:    Steps:         16196
+   Episode length: mean   63.27  min   19.00  max  200.00
+   Reward:         mean 9.34 ± 0.31
+   Base Reward:    mean 0.00 ± 0.00
+   Action 1 fraction:    0.00
+

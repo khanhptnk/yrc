@@ -1,13 +1,15 @@
-name: "procgen_always_novice"
+name: "procgen_always"
 
 env:
   name: "procgen"
+  train:
+    distribution_mode: "hard"
 
 algorithm:
   name: "always"
 
 policy:
-  cls: "AlwaysPolicy"
+  name: "always"
   agent: "novice"
 
 train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"

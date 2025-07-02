@@ -6,11 +6,11 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import environments
-import yrc
-from environments.procgen.config import ProcgenConfig
 
-splits = ["train", "val_sim", "val_true", "test"]
+import yrc
+from environments.procgen import ProcgenConfig, make_env
+
+splits = ["train", "test"]
 
 
 def parse_args():
@@ -46,7 +46,7 @@ def parse_args():
 def compute_reward_per_action(config):
     with open("environments/metadata/test_eval_info.json") as f:
         data = json.load(f)
-    test_eval_info = data[config.suite][config.name]
+    test_eval_info = data[config.name][config.task]
     mean_episode_reward = test_eval_info["reward_mean"]
     mean_episode_length = test_eval_info["episode_length_mean"]
     reward_per_action = mean_episode_reward / mean_episode_length
@@ -56,11 +56,11 @@ def compute_reward_per_action(config):
 def make_base_envs(config):
     base_envs = {}
     for split in splits:
-        base_envs[split] = environments.procgen.make_env(split, config.env)
+        base_envs[split] = make_env(split, config.env)
     return base_envs
 
 
-def make_coord_envs(base_envs, config):
+def make_coord_envs(config, base_envs):
     some_base_env = list(base_envs.values())[0]
     train_novice = yrc.load_policy(config.train_novice, some_base_env)
     train_expert = yrc.load_policy(config.train_expert, some_base_env)
@@ -78,9 +78,9 @@ def make_coord_envs(base_envs, config):
         )
 
     # Set costs for the coordination environment
-    reward_per_action = compute_reward_per_action(config.env)
+    base_penalty = compute_reward_per_action(config.env)
     for split in splits:
-        envs[split].set_costs(reward_per_action)
+        envs[split].set_costs(base_penalty)
 
     return envs
 
@@ -93,8 +93,9 @@ def train(args, config):
 
     validators = {}
     for split in splits:
-        if split != "train":
-            validators[split] = yrc.Evaluator(config.evaluation, envs[split])
+        if split == "train":
+            continue
+        validators[split] = yrc.Evaluator(config.evaluation, envs[split])
 
     algorithm.train(policy, envs["train"], validators)
 
@@ -111,6 +112,8 @@ def evaluate(args, config):
         policy = yrc.make_policy(config.policy, envs[splits[0]])
 
     for split in splits:
+        if split == "train":
+            continue
         logging.info(f"Evaluating on {split} split")
         evaluator = yrc.Evaluator(config.evaluation, envs[split])
         evaluator.evaluate(policy)

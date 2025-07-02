@@ -1,17 +1,11 @@
-name: "procgen_agent_novice"
+name: "procgen_agent"
 
 env:
   name: "procgen"
   train:
     distribution_mode: "easy"
-    seed: 0
-    start_level: 0
-    num_levels: 100000
   test:
     distribution_mode: "easy"
-    seed: 0
-    start_level: 0
-    num_levels: 100000
 
 algorithm:
   name: "ppo"

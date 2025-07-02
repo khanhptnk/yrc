@@ -2,12 +2,14 @@ name: "procgen_random"
 
 env:
   name: "procgen"
+  train:
+    distribution_mode: "hard"
 
 algorithm:
   name: "random"
 
 policy:
-  cls: "RandomPolicy"
+  name: "random"
 
 train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
 train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"

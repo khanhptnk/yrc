@@ -47,5 +47,13 @@ def register_environment(name, config_cls):
     yrc.environments.registry[name] = config_cls
 
 
+def register_algorithm(name, algorithm_cls):
+    yrc.algorithms.registry[name] = algorithm_cls
+
+
+def register_policy(name, policy_cls):
+    yrc.policies.registry[name] = policy_cls
+
+
 def register_model(name, model_cls):
     yrc.models.registry[name] = model_cls

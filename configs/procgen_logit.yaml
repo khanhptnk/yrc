@@ -2,12 +2,14 @@ name: "procgen_logit"
 
 env:
   name: "procgen"
+  train:
+    distribution_mode: "hard"
 
 algorithm:
   name: "logit"
 
 policy:
-  cls: "LogitPolicy"
+  name: "logit"
   metric: "max_logit"
 
 train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"

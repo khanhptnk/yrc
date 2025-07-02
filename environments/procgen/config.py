@@ -17,17 +17,6 @@ class ProcgenDistributionConfig:
     num_levels : int, optional
         The number of unique levels to sample from. Default is 100000.
 
-    Attributes
-    ----------
-    distribution_mode : str
-        The difficulty mode of the environment.
-    seed : int
-        Random seed for environment reproducibility.
-    start_level : int
-        The starting level for the environment.
-    num_levels : int
-        The number of unique levels to sample from.
-
     Examples
     --------
     >>> config = ProcgenDistributionConfig(distribution_mode="hard", seed=42, start_level=100, num_levels=500)
@@ -64,27 +53,6 @@ class ProcgenConfig:
         Configuration for the true validation distribution.
     test : ProcgenDistributionConfig, optional
         Configuration for the test distribution.
-
-    Attributes
-    ----------
-    name : str
-        Name of the environment suite.
-    task : str
-        Name of the specific Procgen environment.
-    normalize_rew : bool
-        Whether to normalize rewards.
-    num_envs : int
-        Number of parallel environments to run.
-    num_threads : int
-        Number of threads to use for environment execution.
-    train : ProcgenDistributionConfig
-        Training distribution configuration.
-    val_sim : ProcgenDistributionConfig
-        Simulated validation distribution configuration.
-    val_true : ProcgenDistributionConfig
-        True validation distribution configuration.
-    test : ProcgenDistributionConfig
-        Test distribution configuration.
 
     Examples
     --------
