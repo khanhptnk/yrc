@@ -1,8 +1,8 @@
 # Configuration file for the Sphinx documentation builder.
 
 project = 'YRC'
-copyright = '2025, Khanh Nguyen, Mohamad Danesh, Alina Trinh, Ben Plaut'
-author = 'Khanh Nguyen, Mohamad Danesh, Alina Trinh, Ben Plaut'
+copyright = '2025, Khanh Nguyen'
+author = 'Khanh Nguyen'
 release = '0.0.1'
 
 extensions = [
@@ -20,6 +20,8 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'furo'
+html_logo = "images/logo.png"
+html_favicon = "images/logo.png"
 # html_static_path = ['_static']
 
 napoleon_google_docstring = True
