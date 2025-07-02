@@ -1,7 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Dict
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Import gym or gymnasium based on environment variable
 if os.environ.get("GYM_BACKEND", "gym") == "gymnasium":
@@ -12,9 +12,9 @@ else:
 import numpy as np
 import torch
 import torch.optim as optim
+import wandb
 from torch.distributions.categorical import Categorical
 
-import wandb
 from yrc.core import Algorithm
 from yrc.utils.global_variables import get_global_variable
 from yrc.utils.logging import configure_logging
@@ -29,7 +29,7 @@ class PPOAlgorithmConfig:
     Parameters
     ----------
     name : str, optional
-        Name of the algorithm (default: "ppo").
+        Name of the algorithm.
     log_freq : int, optional
         Frequency (in iterations) to log training statistics.
     save_freq : int, optional
@@ -422,7 +422,7 @@ class PPOAlgorithm(Algorithm):
         # kepp track of the learning rate in the summarizer
         self.summarizer.log["lr"] = lrnow
 
-    def _compute_advantages_and_returns(self):
+    def _compute_advantages_and_returns(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Compute advantages and returns using Generalized Advantage Estimation (GAE).
 
@@ -464,7 +464,7 @@ class PPOAlgorithm(Algorithm):
 
         Parameters
         ----------
-        policy : PPOPolicy
+        policy : yrc.policies.PPOPolicy
             The policy to save.
         name : str
             Name for the checkpoint file.
@@ -495,7 +495,7 @@ class PPOAlgorithm(Algorithm):
 
         Parameters
         ----------
-        policy : PPOPolicy
+        policy : yrc.policies.PPOPolicy
             The policy to load parameters into.
         load_path : str
             Path to the checkpoint file.
@@ -522,36 +522,6 @@ class PPOBatch:
     """
     Data structure for a batch of PPO training data.
 
-    Parameters
-    ----------
-    obs : TensorDict
-        Batch of observations.
-    actions : torch.Tensor
-        Batch of actions taken.
-    log_probs : torch.Tensor
-        Log probabilities of the actions.
-    advantages : torch.Tensor
-        Advantage estimates for the batch.
-    returns : torch.Tensor
-        Computed returns for the batch.
-    values : torch.Tensor
-        Value function predictions for the batch.
-
-    Attributes
-    ----------
-    obs : TensorDict
-        Batch of observations.
-    actions : torch.Tensor
-        Batch of actions taken.
-    log_probs : torch.Tensor
-        Log probabilities of the actions.
-    advantages : torch.Tensor
-        Advantage estimates for the batch.
-    returns : torch.Tensor
-        Computed returns for the batch.
-    values : torch.Tensor
-        Value function predictions for the batch.
-
     Examples
     --------
     >>> batch = PPOBatch(obs, actions, log_probs, advantages, returns, values)
@@ -569,22 +539,12 @@ class TrainBuffer:
     """
     Buffer for storing trajectories and training data for PPO.
 
-    Parameters
-    ----------
-    data : dict
-        Dictionary containing buffer arrays for each key (e.g., obs, actions, rewards).
-
-    Attributes
-    ----------
-    data : dict
-        Dictionary containing buffer arrays for each key.
-
     Examples
     --------
     >>> buffer = TrainBuffer.new(env, num_steps=128)
     """
 
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, Any]) -> None:
         """
         Initialize the TrainBuffer.
 
@@ -595,7 +555,7 @@ class TrainBuffer:
         """
         self.data = data
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """
         Retrieve a buffer attribute by key.
 
@@ -606,7 +566,7 @@ class TrainBuffer:
 
         Returns
         -------
-        value : Any
+        Any
             The buffer value for the given key.
 
         Raises
@@ -619,7 +579,7 @@ class TrainBuffer:
         raise AttributeError(f"'TrainBuffer' object has no attribute '{name}'")
 
     @classmethod
-    def new(cls, env, num_steps):
+    def new(cls, env: "gym.Env", num_steps: int) -> "TrainBuffer":
         """
         Create a new TrainBuffer with zero-initialized arrays for the given environment and number of steps.
 
@@ -668,7 +628,7 @@ class TrainBuffer:
 
         return cls(new_data)
 
-    def add(self, step, new_data):
+    def add(self, step: int, new_data: Dict[str, Any]) -> None:
         """
         Add new data for a given step to the buffer.
 
@@ -687,7 +647,7 @@ class TrainBuffer:
             assert k in self.data, f"Key {k} not found in buffer"
             self.data[k][step] = v
 
-    def flatten(self):
+    def flatten(self) -> "TrainBuffer":
         """
         Flatten the buffer for minibatch training.
 
@@ -705,7 +665,7 @@ class TrainBuffer:
             new_data[k] = v.flatten(0, 1)
         return TrainBuffer(new_data)
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name: str, value: Any) -> None:
         """
         Set a buffer value by key.
 
@@ -722,7 +682,7 @@ class TrainBuffer:
         """
         self.data[name] = value
 
-    def generate_minibatches(self, num_epochs, minibatch_size):
+    def generate_minibatches(self, num_epochs: int, minibatch_size: int) -> "PPOBatch":
         """
         Yield minibatches for training.
 
@@ -764,17 +724,12 @@ class TensorDict:
     """
     Utility class for handling dictionary-structured tensors, supporting batch operations.
 
-    Parameters
-    ----------
-    data : dict or torch.Tensor
-        Dictionary of tensors or a single tensor.
-
     Examples
     --------
     >>> td = TensorDict({'obs': torch.zeros(4, 3)})
     """
 
-    def __init__(self, data: dict | torch.Tensor) -> None:
+    def __init__(self, data: Union[Dict[str, torch.Tensor], torch.Tensor]) -> None:
         """
         Initialize a TensorDict.
 
@@ -790,7 +745,9 @@ class TensorDict:
         self.data = data
 
     @classmethod
-    def zeros(cls, shape: dict | tuple) -> "TensorDict":
+    def zeros(
+        cls, shape: Union[Dict[str, Tuple[int, ...]], Tuple[int, ...]]
+    ) -> "TensorDict":
         """
         Create a TensorDict of zeros with the given shape.
 
@@ -816,7 +773,7 @@ class TensorDict:
             data = torch.zeros(shape)
         return TensorDict(data)
 
-    def to(self, device: torch.device | str) -> "TensorDict":
+    def to(self, device: Union[torch.device, str]) -> "TensorDict":
         """
         Move all tensors in the TensorDict to the specified device.
 
@@ -842,7 +799,7 @@ class TensorDict:
             data = self.data.to(device)
         return TensorDict(data)
 
-    def __setitem__(self, indices: object, other: "TensorDict") -> None:
+    def __setitem__(self, indices: Any, other: "TensorDict") -> None:
         """
         Set values in the TensorDict at the given indices.
 
@@ -863,7 +820,7 @@ class TensorDict:
         else:
             self.data[indices] = other.data
 
-    def __getitem__(self, indices: object) -> "TensorDict":
+    def __getitem__(self, indices: Any) -> "TensorDict":
         """
         Retrieve values from the TensorDict at the given indices.
 
@@ -918,7 +875,7 @@ class TensorDict:
         return TensorDict(data)
 
     @classmethod
-    def from_numpy(cls, data: dict | np.ndarray) -> "TensorDict":
+    def from_numpy(cls, data: Union[Dict[str, np.ndarray], np.ndarray]) -> "TensorDict":
         """
         Convert numpy arrays to a TensorDict.
 
@@ -1031,9 +988,9 @@ class PPOTrainSummarizer:
         self,
         action: torch.Tensor,
         log_prob: torch.Tensor,
-        reward: np.ndarray | torch.Tensor,
-        done: np.ndarray | torch.Tensor,
-        info: list,
+        reward: Union[np.ndarray, torch.Tensor],
+        done: Union[np.ndarray, torch.Tensor],
+        info: List[dict],
     ) -> None:
         """
         Log statistics for each episode step.
@@ -1109,7 +1066,7 @@ class PPOTrainSummarizer:
         self.iter_log["ent_loss"].append(entropy_loss.item())
         self.iter_log["loss"].append(loss.item())
 
-    def summarize(self) -> dict:
+    def summarize(self) -> Dict[str, float]:
         """
         Compute summary statistics for the current log.
 
@@ -1143,7 +1100,7 @@ class PPOTrainSummarizer:
             "action_prob": float(np.mean(log["action_prob"])),
         }
 
-    def write(self, summary: dict = None) -> dict:
+    def write(self, summary: Optional[Dict[str, float]] = None) -> Dict[str, float]:
         """
         Pretty-print and log the summary statistics.
 
