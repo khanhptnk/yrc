@@ -58,5 +58,5 @@ You should expect a reward of around 5.73:
        Base Reward:    mean 6.88 ± 0.57
        Action 1 fraction:    0.36
 
-Wandb logs of all methods on Procgen-Coinrun are available `here <https://wandb.ai/kxnguyen/YRC?nw=nwuserkxnguyen>`_.
+Wandb logs of all methods on Procgen-Coinrun are available `here <https://wandb.ai/kxnguyen/YRC-public?nw=nwuserkxnguyen>`_.
 
