@@ -111,7 +111,7 @@ class PyODPolicy(Policy):
         """
         try:
             module_name, cls_name = config.method.split(".")
-            module_name = f"yrc.lib.pyod.pyod.models.{module_name}"
+            module_name = f"lib.pyod.pyod.models.{module_name}"
             module = importlib.import_module(module_name)
             cls = getattr(module, cls_name)
             return cls

@@ -1,3 +1,7 @@
 [submodule "environments/procgen/procgenAISC"]
 	path = environments/procgen/procgenAISC
 	url = git@github.com:JacobPfau/procgenAISC.git
+[submodule "lib/pyod"]
+	path = lib/pyod
+	url = https://github.com/khanhptnk/pyod.git
+	branch = yrc-adapted
