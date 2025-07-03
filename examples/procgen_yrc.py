@@ -74,7 +74,11 @@ def make_coord_envs(config, base_envs):
         else:
             novice, expert = test_novice, test_expert
         envs[split] = yrc.CoordEnv(
-            config.coordination, base_envs[split], novice, expert
+            config.coordination,
+            base_envs[split],
+            novice,
+            expert,
+            # open_expert=True,    # uncomment to use features from expert
         )
 
     # Set costs for the coordination environment

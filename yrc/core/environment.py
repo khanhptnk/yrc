@@ -1,7 +1,7 @@
 import os
 from copy import deepcopy as dc
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Import gym or gymnasium based on environment variable
 if os.environ.get("GYM_BACKEND", "gym") == "gymnasium":
@@ -64,6 +64,8 @@ class CoordEnv(gym.Env):
         base_env: gym.Env,
         novice: "yrc.core.Policy",
         expert: "yrc.core.Policy",
+        open_novice: bool = True,
+        open_expert: bool = False,
     ) -> None:
         """
         Initialize the coordination environment.
@@ -78,6 +80,10 @@ class CoordEnv(gym.Env):
             The novice policy.
         expert : yrc.core.Policy
             The expert policy.
+        open_novice : bool, optional
+            Whether to expose novice outputs in observations. Default is True.
+        open_expert : bool, optional
+            Whether to expose expert outputs in observations. Default is False.
 
         Returns
         -------
@@ -96,6 +102,8 @@ class CoordEnv(gym.Env):
 
         self.novice = novice
         self.expert = expert
+        self.open_novice = open_novice
+        self.open_expert = open_expert
 
         self.action_space = gym.spaces.Discrete(2)
         self.observation_space = gym.spaces.Dict(
@@ -145,14 +153,7 @@ class CoordEnv(gym.Env):
         --------
         >>> env.set_costs(0.05)
         """
-        # NOTE: paper results were generated with rounding
-        # self.expert_query_cost_per_action = round(
-        #     reward_per_action * self.config.expert_query_cost_weight, 2
-        # )
-        # self.switch_agent_cost_per_action = round(
-        #     reward_per_action * self.config.switch_agent_cost_weight, 2
-        # )
-
+        # NOTE: paper results were generated with rounding but here we don't
         self.expert_query_cost_per_action = (
             base_penalty * self.config.expert_query_cost_weight
         )
@@ -167,11 +168,13 @@ class CoordEnv(gym.Env):
 
         Returns
         -------
-        obs : dict
+        dict
             The initial observation of the environment, including:
                 - "base_obs": The initial observation from the base environment.
                 - "novice_hidden": Numpy array of hidden features from the novice policy.
                 - "novice_logits": Numpy array of output logits from the novice policy.
+                - "expert_hidden": Numpy array of hidden features from the expert policy (if open_expert).
+                - "expert_logits": Numpy array of output logits from the expert policy (if open_expert).
 
         Examples
         --------
@@ -219,9 +222,11 @@ class CoordEnv(gym.Env):
         -------
         obs : dict
             The next observation of the environment, including:
-                - "base_obs": The initial observation from the base environment.
+                - "base_obs": The observation from the base environment.
                 - "novice_hidden": Numpy array of hidden features from the novice policy.
                 - "novice_logits": Numpy array of output logits from the novice policy.
+                - "expert_hidden": Numpy array of hidden features from the expert policy (if open_expert).
+                - "expert_logits": Numpy array of output logits from the expert policy (if open_expert).
         reward : numpy.ndarray
             The reward(s) obtained from the environment after taking the action.
         done : numpy.ndarray
@@ -265,7 +270,7 @@ class CoordEnv(gym.Env):
 
         Returns
         -------
-        env_action : numpy.ndarray
+        numpy.ndarray
             Array of actions to be passed to the base environment.
 
         Examples
@@ -302,23 +307,28 @@ class CoordEnv(gym.Env):
 
         Returns
         -------
-        obs : dict
+        dict
             A dictionary containing:
                 - "base_obs": The current observation from the base environment.
-                - "novice_hidden": Numpy array of hidden features from the novice policy.
-                - "novice_logits": Numpy array of output logits from the novice policy.
+                - "novice_hidden": Numpy array of hidden features from the novice policy (if open_novice).
+                - "novice_logits": Numpy array of output logits from the novice policy (if open_novice).
+                - "expert_hidden": Numpy array of hidden features from the expert policy (if open_expert).
+                - "expert_logits": Numpy array of output logits from the expert policy (if open_expert).
 
         Examples
         --------
         >>> obs = env._get_obs()
         """
-        # NOTE: novice model must be state-less
-        model_output = self.novice.model(self.base_obs)
-        obs = {
-            "base_obs": self.base_obs,
-            "novice_hidden": model_output.hidden.detach().cpu().numpy(),
-            "novice_logits": model_output.logits.detach().cpu().numpy(),
-        }
+        # NOTE: models must be state-less. Models with a recurrent state should not be used here.
+        obs = {"base_obs": self.base_obs}
+        if self.open_novice:
+            novice_output = self.novice.model(self.base_obs)
+            obs["novice_hidden"] = novice_output.hidden.cpu().numpy()
+            obs["novice_logits"] = novice_output.logits.cpu().numpy()
+        if self.open_expert:
+            expert_output = self.expert.model(self.base_obs)
+            obs["expert_hidden"] = expert_output.hidden.cpu().numpy()
+            obs["expert_logits"] = expert_output.logits.cpu().numpy()
         return obs
 
     def _get_reward(
@@ -338,7 +348,7 @@ class CoordEnv(gym.Env):
 
         Returns
         -------
-        reward : numpy.ndarray
+        numpy.ndarray
             The computed reward(s) after applying costs.
 
         Examples
