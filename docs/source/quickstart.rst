@@ -1,85 +1,62 @@
 Quickstart
 ==========
 
-This page walks you through the steps to install and train a simple PPO coordinator on the Procgen-CoinRun "hard" tasks using the `yrc` package.
+0. Requirements
+------------
 
-Step 0: Clone the Repository
-----------------------------
+- Python 3.8 or higher
 
-.. code-block:: bash
+- (Optional) CUDA-compatible GPU for faster training
 
-   git clone <your-yrc-repo-url>
-   cd yrc
+1. Installation
+---------------
 
-Step 1: Install the Package Locally
------------------------------------
-
-.. code-block:: bash
-
-   pip install -e .
-
-Step 2: Train and Evaluate the Novice Agent
--------------------------------------------
-
-**Train the novice on the `easy` distribution:**
+You can install ``yrc`` using pip:
 
 .. code-block:: bash
 
-   python examples/procgen_agent.py \
-       --config configs/procgen_ppo.yaml \
-       name=procgen_novice \
-       env.train.distribution_mode=easy \
-       env.test.distribution_mode=easy
+    pip install yrc
 
-**Evaluate the novice on the `hard` distribution:**
+Alternatively, install from source:
 
 .. code-block:: bash
 
-   python examples/procgen_agent.py \
-       --config configs/procgen_ppo.yaml \
-       eval_name=procgen_novice \
-       env.test.distribution_mode=hard \
-       policy.load_path=experiments/procgen_novice/best_test.ckpt
+    git clone --recurse-submodules https://github.com/khanhptnk/yrc.git
+    pip install -e .
 
-Step 3: Train and Evaluate the Expert Agent
--------------------------------------------
-
-**Train the expert on the `hard` distribution:**
+Check that yrc was installed correctly by running:
 
 .. code-block:: bash
 
-   python examples/procgen_agent.py \
-       --config configs/procgen_ppo.yaml \
-       name=procgen_expert \
-       env.train.distribution_mode=hard \
-       env.test.distribution_mode=hard \
-       algorithm.total_timesteps=25000000
+    python -c "import yrc; print(yrc.__version__)"
 
-.. note::
+2. Training a Random Coordination Policy for Procgen-Coinrun
+------------------------------------------------------------
 
-   We increase the number of training steps since the tasks are harder. 
-   Any command-line flag in `yrc` will overwrite the corresponding value in the YAML config file.
-
-**Evaluate the expert on the `hard` distribution:**
+If you have not already cloned the repository in the previous step, do so now. The repository already integrates the Procgen environments:
 
 .. code-block:: bash
 
-   python examples/procgen_agent.py \
-       --config configs/procgen_ppo.yaml \
-       eval_name=procgen_expert \
-       env.test.distribution_mode=hard \
-       policy.load_path=experiments/procgen_expert/best_test.ckpt
+    git clone --recurse-submodules https://github.com/khanhptnk/yrc.git
 
-Step 4: Train a Coordinator on the `hard` Distribution
-------------------------------------------------------
+Next, train the coordination policy using the following command:
 
 .. code-block:: bash
 
-   python examples/procgen_coord_policy.py \
-       --config configs/procgen_skyline.yaml
+    python examples/procgen_yrc.py --config configs/procgen_random.yaml --mode train --type coord
 
+Training takes about 16 minutes to complete on an RTX 6000 GPU.  
+You should expect a reward of around 5.73:
 
+.. code-block:: none
 
+    [0:16:12 INFO]: BEST test so far
+    [0:16:12 INFO]: Parameters: {'temperature': 1.0, 'threshold': -1.9764122247695923}
+    [0:16:12 INFO]:    Steps:         18,792
+       Episode length: mean   73.41  min   17.00  max  256.00
+       Reward:         mean 5.73 ± 0.58
+       Base Reward:    mean 6.88 ± 0.57
+       Action 1 fraction:    0.36
 
-
+Wandb logs of all methods on Procgen-Coinrun are available `here <https://wandb.ai/kxnguyen/YRC?nw=nwuserkxnguyen>`_.
 
