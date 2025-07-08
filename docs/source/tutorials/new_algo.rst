@@ -1,11 +1,11 @@
 Add a New Algorithm
 ===================
 
-In this tutorial, you will learn how to add a new algorithm.
+In this tutorial, you will learn how to implement and intergrate a new algorithm for learning a coordination policy.
 
 We will implement a simple algorithm called ``AskEveryK``, which learns a policy that asks for help every K steps. The algorithm searches for the best value of K from a set of candidates.
 
-The code for this tutorial is provided at ``examples/procgen_ask_every_k.py``. Try running it with:
+The code for this tutorial is provided at `examples/procgen_ask_every_k.py <https://github.com/khanhptnk/yrc/blob/main/examples/procgen_ask_every_k.py>`_. Try running it with:
 
 .. code-block:: bash
 
@@ -14,7 +14,7 @@ The code for this tutorial is provided at ``examples/procgen_ask_every_k.py``. T
 1. Implement the Algorithm
 --------------------------
 
-We implement the ``AskEveryKAlgorithm`` class, which is a subclass of ``yrc.core.Algorithm``, along with its configuration dataclass, as follows:
+We first implement the ``AskEveryKAlgorithm`` class, which is a subclass of ``yrc.core.Algorithm``, along with its configuration dataclass:
 
 .. code-block:: python
 
@@ -40,6 +40,7 @@ We implement the ``AskEveryKAlgorithm`` class, which is a subclass of ``yrc.core
             for split in validators:
                 best_result[split] = {"reward_mean": -float("inf")}
 
+            # Loop through possible values of K and evaluate the corresponding policy
             for k in config.candidates:
                 logging.info(f"Evaluating k={k}")
                 policy.set_params({"k": k})

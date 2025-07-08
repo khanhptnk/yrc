@@ -6,9 +6,11 @@ This includes both Gym and Gymnasium environments.
 
 In this tutorial, you will learn how to:
 
-- Add a Gymnasium environment (MiniGrid) to YRC 
+- Add a `Gymnasium <https://gymnasium.farama.org/>`_ environment (`MiniGrid <https://minigrid.farama.org/>`_) to YRC 
 - Add a custom policy model 
 - Train a new policy on the new environment using PPO 
+
+The code of this example is at `examples/minigrid_yrc.py <https://github.com/khanhptnk/yrc/blob/main/examples/minigrid_yrc.py>`_.
 
 .. _add-env:
 
@@ -16,10 +18,10 @@ In this tutorial, you will learn how to:
 ----------------------------
 
 We will use the MiniGrid environments ``DistShift1-v0`` and ``DistShift2-v0``.  
-``DistShift1-v0`` will be used to train the novice agent, and ``DistShift2-v0`` for the expert agent.  
-We will then train a coordination policy on ``DistShift2-v0`` to coordinate both agents.
+``DistShift1-v0`` will be used to train the novice agent, and ``DistShift2-v0`` the expert agent.  
+We will then train a policy to coordinate the two agents on ``DistShift2-v0``.
 
-The DistShift environments come from the paper `AI Safety Gridworlds <https://arxiv.org/abs/1711.09883>`_ (Leike et al., 2017).  
+The DistShift environments originate from the paper `AI Safety Gridworlds <https://arxiv.org/abs/1711.09883>`_ (Leike et al., 2017).  
 The task is to reach the goal location while avoiding deadly lava. The agent always starts at the top-left corner, and the goal is at the top-right corner.  
 The lava is distributed differently in the two variants. Episode returns are between 0 and 1.
 
@@ -28,14 +30,16 @@ The lava is distributed differently in the two variants. Episode returns are bet
    :alt: DistShift environments
 
    DistShift1-v0 (left) and DistShift2-v0 (right).  
-   Source: Leike et al., 2017
+   Source: `Leike et al., 2017 <https://arxiv.org/abs/1711.09883>`_ 
 
 1.1. Define and Register Environment Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By defining an environment configuration dataclass, you can customize the environment using YAML or command-line flags.
 
-Here is a simple configuration class that lets you set the number of parallel environments and choose the training and test tasks::
+Here is a simple configuration class that lets you set the number of parallel environments and choose the training and test tasks:
+
+.. code-block:: python
 
     @dataclass
     class MiniGridConfig:
@@ -46,16 +50,19 @@ Here is a simple configuration class that lets you set the number of parallel en
         test_easy: Optional[str] = "DistShift1-v0"
         test_hard: Optional[str] = "DistShift2-v0"
 
-Register this configuration class with YRC::
+Register this configuration class with YRC:
+
+.. code-block:: python
 
     yrc.register_environment(MiniGridConfig.name, MiniGridConfig)
+
 
 Once registered, you can override the default parameters using YAML or command-line flags.  
 For example, specify ``env.num_env=8`` or ``env.train=DistShift1-v0`` on the command line.
 
 .. note::
 
-   Registration must happen before creating the ``config`` object, so the configuration parser includes the class arguments.
+   Registration must happen before creating the ``config`` object, so the configuration parser includes the registered arguments.
 
 1.2. Convert a Gymnasium Environment to Stable Baselines3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,7 +74,10 @@ YRC's PPOAlgorithm expects SB3 environments with these features
 - The ``reset()`` method returns only an observation.
 - The ``step()`` method returns a tuple ``(obs, reward, done, info)`` (the original Gym API).
 
-Below is sample code to convert a MiniGrid (Gymnasium) environment to an SB3 environment::
+Below is sample code to convert a MiniGrid (Gymnasium) environment to an SB3 environment:
+
+
+.. code-block:: python
 
     import gymnasium as gym
     from minigrid.wrappers import ImgObsWrapper
@@ -88,12 +98,14 @@ Below is sample code to convert a MiniGrid (Gymnasium) environment to an SB3 env
 2. Add a New Policy Model
 -------------------------
 
-We need a custom model to process observations from the new environment.
+We need a custom model to process observations from the newly added environment.
 
-As with the environment, you can change the model architecture using YAML or command-line flags.  
+As with the environment, you can cutomize the model using YAML or command-line flags.  
 This is done by defining a configuration dataclass and registering it with YRC.
 
-Here is an example model for the novice, expert, and coordination policies::
+Here is an example model class, used for the novice, expert, and coordination policies:
+
+.. code-block:: python
 
     @dataclass
     class MiniGridPPOModelConfig:
@@ -117,16 +129,16 @@ Here is an example model for the novice, expert, and coordination policies::
 .. note::
 
    The model class must have a ``config_cls`` attribute that points to the configuration dataclass.  
-   The ``CoordEnv`` (used for training the coordination policy) also requires the model to have ``hidden_dim`` and ``logit_dim`` attributes.
+   ``CoordEnv`` requires the model to have ``hidden_dim`` and ``logit_dim`` attributes.
 
 .. _run-experiments:
 
 3. Run Experiments
 ------------------
 
-We are now ready to train a coordination policy to help the novice efficiently leverage assistance from the expert on ``DistShift2-v0``.
+We are now ready to train a coordination policy to help the novice efficiently leverage assistance from the expert while performing the ``DistShift2-v0`` task.
 
-First, create a config YAML file and put it in a ``configs/`` directory:
+We provide a configuration file at `configs/minigrid_ppo.yaml`:
 
 .. code-block:: yaml
 
@@ -198,10 +210,9 @@ Example output::
        Base Reward:    mean 0.00 ± 0.00
        Action 1 fraction:    0.15
 
-As expected, the novice, trained on ``DistShift1-v0``, performs poorly on ``DistShift2-v0``.  
-It either gets confused or moves straight into the bottom lava pool.
+As expected, the novice performs poorly on ``DistShift2-v0`` (see ``Reward``, not ``Base Reward`` on the ``test_hard`` split).  
 
-**Train and evaluate the expert:**
+**Next, train and evaluate the expert:**
 
 .. code-block:: bash
 
@@ -230,9 +241,9 @@ Example output::
        Base Reward:    mean 0.00 ± 0.00
        Action 1 fraction:    0.10
 
-The expert, trained on ``DistShift2-v0``, performs well on both variants.
+The expert performs well on both task variants.
 
-**Train the coordination policy:**
+**Finally, train the coordination policy:**
 
 .. code-block:: bash
 
@@ -243,13 +254,11 @@ The expert, trained on ``DistShift2-v0``, performs well on both variants.
         overwrite=1 \
         name=minigrid_coord \
         env.name=minigrid \
-        env.train=DistShift2-v0 \
-        device=2
+        env.train=DistShift2-v0
 
 .. note::
 
-   When training the coordination policy, you must set the ``GYM_BACKEND=gymnasium`` environment variable so that YRC can initialize the CoordEnv correctly.  
-   This is only needed for the coordination policy.
+   Since we are using the Gymnasium version of MiniGrid, the environment variable ``GYM_BACKEND=gymnasium`` must be set so that YRC initializes CoordEnv correctly.  
 
 Example output::
 
@@ -267,5 +276,5 @@ Example output::
        Base Reward:    mean 0.93 ± 0.00
        Action 1 fraction:    0.46
 
-The learned coordination policy enables the novice to request help only 46% of the time while achieving expert-level performance (0.93) on ``DistShift2-v0``.
+As seen, the learned coordination policy enables the novice to request help only 46% of the time while achieving expert-level performance (0.93) on ``DistShift2-v0`` (see ``Base Reward`` on ``test_hard``; meanwhile, ``Reward`` reflects the base reward substracted by coordination cost).
 

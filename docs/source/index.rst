@@ -7,11 +7,11 @@ Welcome to yrc's Documentation!
    :width: 50%
    :target: _none
 
-Welcome to the documentation for **yrc**!
+Humans have evolved a `dual cognitive system <https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow>`_: a fast, reactive “System 1” and a slow, logical “System 2.” This architecture makes human decision-making both robust and efficient. Robustness comes from System 2’s ability to intervene and prevent mistakes that could be made by the impulsive System 1. Efficiency arises because System 2 can delegate routine tasks to System 1, which operates much faster and with greater energy efficiency.
 
-**yrc** is a flexible framework for research and development in human-AI coordination, policy learning, and reinforcement learning from human feedback. It provides unified abstractions for environments, policies, and algorithms, making it easy to experiment with new learning methods, design custom benchmarks, and analyze agent behavior.
+To build a similar architecture for AI agents, we must address a fundamental problem: *When should each system control the decision-making process?* We call this the **Yield-or-Request Control (YRC)** problem. We have developed a package that provides experimental infrastructure for research on this problem. Our package is simple and extensible—within just a few lines of code, you can train coordination policies on a wide range of environments, using either existing methods or your own.
 
-Whether you're a new user looking for a quick start, or a researcher interested in extending the package with your own algorithms and environments, you'll find everything you need in the sections below.
+We believe dual-system agents are the future of AI. You can help shape that future by working on YRC problems now, using our package!
 
 .. toctree::
    :maxdepth: 2
@@ -19,8 +19,8 @@ Whether you're a new user looking for a quick start, or a researcher interested 
 
    Quickstart <quickstart>
    Core concepts <core_concepts/index>
-   Algorithms <algorithms/index>
    Tutorials <tutorials/index>
+   Algorithms <algorithms/index>
    API reference <autoapi/index>
 
 Getting Started

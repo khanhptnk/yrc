@@ -1,8 +1,8 @@
 # Configuration file for the Sphinx documentation builder.
 
 project = 'YRC'
-copyright = '2025, Khanh Nguyen'
-author = 'Khanh Nguyen'
+copyright = '2025, Khanh Nguyen, Mohamad Danesh'
+author = 'Khanh Nguyen, Mohamad Danesh'
 release = '1.0'
 
 extensions = [

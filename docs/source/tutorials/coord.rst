@@ -5,11 +5,13 @@ In this tutorial, you will learn how to train a coordination policy to enable ef
 
 Training a coordination policy is very similar to training a single agent, thanks to YRC's standardized abstractions for algorithms, policies, and environments. The main differences are the configuration arguments and the need to wrap the base environments with `CoordEnv`.
 
+We will reuse the script `examples/procgen_yrc.py <https://github.com/khanhptnk/yrc/blob/main/examples/procgen_yrc.py>`_.
+
 0. Refresher: What is CoordEnv?
 -------------------------------
 
 A `CoordEnv` represents the POMDP presented to the coordination policy.  
-It is implemented as a Gym environment and consists of a base environment, a novice, and an expert policy.
+It is implemented as a Gym environment and comprises a base environment, a novice, and an expert policy.
 
 The action space contains two actions: ``NOVICE`` and ``EXPERT``, corresponding to querying the novice or the expert for the next decision.  
 When an action is chosen, the corresponding agent is queried for a base environment action. This action is then fed into the base environment to obtain the next state and reward.
@@ -25,20 +27,18 @@ Compared to training an agent, training a coordination policy differs in:
 
 - The paths to load the novice and expert agents
 
-Let's look at an example at ``configs/procgen_skyline.yaml``, which uses the PPO algorithm:
+Let's look at an example at `configs/procgen_ppo.yaml <https://github.com/khanhptnk/yrc/blob/main/configs/procgen_ppo.yaml>`_, which uses the PPO algorithm:
 
 .. code-block:: yaml
-
-    name: "procgen_skyline"
 
     env:
       name: "procgen"
       train:
         distribution_mode: "hard"
-      val_sim:
-        distribution_mode: "hard"
 
-    algorithm: "ppo"
+    algorithm: 
+      name: "ppo"
+      total_timesteps: 15000000
 
     policy:
       name: "ppo"
@@ -51,22 +51,13 @@ Let's look at an example at ``configs/procgen_skyline.yaml``, which uses the PPO
       switch_agent_cost_weight: 0.0
       temperature: 1.0
 
-    train_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
-    train_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
-    test_novice: "experiments/procgen_ppo_novice/best_test.ckpt"
-    test_expert: "experiments/procgen_ppo_expert/best_test.ckpt"
+    train_novice: "experiments/procgen_novice/best_test.ckpt"
+    train_expert: "experiments/procgen_expert/best_test.ckpt"
+    test_novice: "experiments/procgen_novice/best_test.ckpt"
+    test_expert: "experiments/procgen_expert/best_test.ckpt"
 
-The ``Random`` algorithm requires a simpler policy configuration of the algorithm and the policy:
 
-.. code-block:: yaml
-
-    algorithm:
-      name: "random"
-
-    policy:
-      cls: "RandomPolicy"
-
-2. Training Script
+2. Create CoordEnv
 ------------------
 
 There is a new step in the training script, which creates the `CoordEnv`:
@@ -119,3 +110,12 @@ The ``make_coord_envs`` function is defined as follows:
         return envs
 
 
+3. Run the script
+-----------------
+
+.. code-block:: bash
+
+    python examples/procgen_yrc.py --config configs/procgen_ppo.yaml --mode train --type coord --overwrite=1
+
+
+You can compare with our `Wandb Log <https://wandb.ai/kxnguyen/YRC-public/runs/7b0imagl?nw=nwuserkxnguyen>`_ to make sure the code runs as expected. 

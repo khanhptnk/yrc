@@ -1,7 +1,7 @@
 Logit Algorithms
 =============
 
-The novice computes a confidence score based on its output logits. It makes a help request when the score is below a threshold.  
+The novice computes a confidence score based on its output logits. It issues a help request whenever the score is below a threshold.  
 
 **Notation:**
 
@@ -14,23 +14,23 @@ The novice computes a confidence score based on its output logits. It makes a he
 **Supported metrics:**
 
 - ``max_logit``:  
-  The maximum logit value.
+  The maximum logit value
   :math:`\max_i z_i`
 
 - ``max_prob`` [1]_:
-  The maximum probability.
+  The maximum probability
   :math:`\max_i p_i` 
 
 - ``margin`` [2]_:
-  The difference between the highest and second-highest probabilities.
+  The difference between the highest and second-highest probabilities
   :math:`p_1^{\downarrow} - p_2^{\downarrow}`
 
 - ``entropy`` [3]_:
-  The negative entropy of the action distribution.
+  The negative entropy of the action distribution
   :math:`\sum_i p_i \ln p_i`
 
 - ``energy`` [4]_:
-  The log-sum-exp of the logits.
+  The log-sum-exp of the logits
   :math:`\ln \sum_i \exp(z_i)`
 
 
@@ -49,10 +49,10 @@ We address this by proposing the following adaptive procedure:
    Consider the :math:`n`-th percentiles of :math:`\mathcal{C}` as candidate thresholds (:math:`n = 0, 10,..., 100`).
 
 4. **Validation:**  
-   For each candidate threshold, evaluate the performance on the validation tasks.
+   For each candidate threshold, construct a policy and evaluate its performance on the validation tasks.
 
 5. **Test-Time Selection:**  
-   Select the threshold :math:`\tau^*` that yields the best validation performance and use it during testing.
+   Select the policy that yields the best validation performance and use it during testing.
 
 
 References
