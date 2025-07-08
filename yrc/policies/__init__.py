@@ -8,6 +8,6 @@ registry = {
     "always": AlwaysPolicy,
     "logit": LogitPolicy,
     "pyod": PyODPolicy,
-    "ppo": PPOPolicy,
     "random": RandomPolicy,
+    "ppo": PPOPolicy,
 }

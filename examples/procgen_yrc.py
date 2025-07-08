@@ -78,8 +78,17 @@ def make_coord_envs(config, base_envs):
             base_envs[split],
             novice,
             expert,
-            # open_expert=True,    # uncomment to use features from expert
+            # open_expert=True,  # uncomment to use features from expert
         )
+
+        # Altnernatively, use GeneralCoordEnv for recurrent policies. But it can be slower than CoordEnv.
+        # envs[split] = yrc.GeneralCoordEnv(
+        #     config.coordination,
+        #     base_envs[split],
+        #     novice,
+        #     expert,
+        #     # open_expert=True,    # uncomment to use features from expert
+        # )
 
     # Set costs for the coordination environment
     base_penalty = compute_reward_per_action(config.env)

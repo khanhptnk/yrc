@@ -243,7 +243,7 @@ class CoordEnv(gym.Env):
         --------
         >>> obs, reward, done, info = env.step(action)
         """
-        base_action = self._compute_env_action(action)
+        base_action = self._compute_base_action(action)
         self.base_obs, base_reward, done, base_info = self.base_env.step(base_action)
 
         info = dc(base_info)
@@ -259,7 +259,7 @@ class CoordEnv(gym.Env):
         return self._get_obs(), reward, done, info
 
     @torch.no_grad()
-    def _compute_env_action(self, action: np.ndarray) -> np.ndarray:
+    def _compute_base_action(self, action: np.ndarray) -> np.ndarray:
         """
         Compute the environment-specific action for each agent.
 
@@ -275,14 +275,14 @@ class CoordEnv(gym.Env):
 
         Examples
         --------
-        >>> env_action = env._compute_env_action(action)
+        >>> base_action = env._compute_base_action(action)
         """
         is_novice = action == self.NOVICE
         is_expert = np.logical_not(is_novice)
 
-        env_action = np.zeros_like(action)
+        base_action = np.zeros_like(action)
         if is_novice.any():
-            env_action[is_novice] = (
+            base_action[is_novice] = (
                 self.novice.act(
                     self.base_obs[is_novice], temperature=self.config.temperature
                 )
@@ -290,7 +290,7 @@ class CoordEnv(gym.Env):
                 .numpy()
             )
         if is_expert.any():
-            env_action[is_expert] = (
+            base_action[is_expert] = (
                 self.expert.act(
                     self.base_obs[is_expert], temperature=self.config.temperature
                 )
@@ -298,7 +298,7 @@ class CoordEnv(gym.Env):
                 .numpy()
             )
 
-        return env_action
+        return base_action
 
     @torch.no_grad()
     def _get_obs(self) -> Dict[str, Any]:
@@ -383,3 +383,104 @@ class CoordEnv(gym.Env):
         >>> env.close()
         """
         return self.base_env.close()
+
+
+class GeneralCoordEnv(CoordEnv):
+    """
+    Coordination environment supporting recurrent policies.
+
+    This class supports policies that maintain a hidden state across steps, but can be less efficient for
+    stateless policies than `CoordEnv`.
+
+    Examples
+    --------
+    >>> config = CoordinationConfig()
+    >>> base_env = gym.make(...)
+    >>> novice = ...
+    >>> expert = ...
+    >>> env = GeneralCoordEnv(config, base_env, novice, expert)
+    """
+
+    @torch.no_grad()
+    def _compute_agents_action(self) -> np.ndarray:
+        """
+        Compute the actions for both novice and expert agents, supporting recurrent policies.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of actions to be passed to the base environment.
+
+        Examples
+        --------
+        >>> base_action = env._compute_agents_action()
+        """
+        self.novice_action, self.novice_output = self.novice.act(
+            self.base_obs,
+            temperature=self.config.temperature,
+            return_model_output=True,
+        )
+        self.expert_action, self.expert_output = self.expert.act(
+            self.base_obs,
+            temperature=self.config.temperature,
+            return_model_output=True,
+        )
+        self.novice_action = self.novice_action.cpu().numpy()
+        self.expert_action = self.expert_action.cpu().numpy()
+
+    @torch.no_grad()
+    def _compute_base_action(self, action: np.ndarray) -> np.ndarray:
+        """
+        Compute the environment-specific action for each agent, supporting recurrent policies.
+
+        Parameters
+        ----------
+        action : numpy.ndarray
+            Array indicating which agent (novice or expert) acts for each environment.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of actions to be passed to the base environment.
+
+        Examples
+        --------
+        >>> base_action = env._compute_base_action(action)
+        """
+
+        is_novice = action == self.NOVICE
+        is_expert = np.logical_not(is_novice)
+
+        base_action = np.zeros_like(action)
+        base_action[is_novice] = self.novice_action[is_novice]
+        base_action[is_expert] = self.expert_action[is_expert]
+
+        return base_action
+
+    def _get_obs(self) -> Dict[str, Any]:
+        """
+        Return the current observation for the coordination environment, supporting recurrent policies.
+
+        Returns
+        -------
+        dict
+            A dictionary containing:
+                - "base_obs": The current observation from the base environment.
+                - "novice_hidden": Numpy array of hidden features from the novice policy (if open_novice).
+                - "novice_logits": Numpy array of output logits from the novice policy (if open_novice).
+                - "expert_hidden": Numpy array of hidden features from the expert policy (if open_expert).
+                - "expert_logits": Numpy array of output logits from the expert policy (if open_expert).
+
+        Examples
+        --------
+        >>> obs = env._get_obs()
+        """
+        self._compute_agents_action()
+        obs = {"base_obs": self.base_obs}
+        if self.open_novice:
+            obs["novice_hidden"] = self.novice_output.hidden.cpu().numpy()
+            obs["novice_logits"] = self.novice_output.logits.cpu().numpy()
+        if self.open_expert:
+            obs["expert_hidden"] = self.expert_output.hidden.cpu().numpy()
+            obs["expert_logits"] = self.expert_output.logits.cpu().numpy()
+        return obs

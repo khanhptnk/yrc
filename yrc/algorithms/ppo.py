@@ -12,9 +12,9 @@ else:
 import numpy as np
 import torch
 import torch.optim as optim
-import wandb
 from torch.distributions.categorical import Categorical
 
+import wandb
 from yrc.core import Algorithm
 from yrc.utils.global_variables import get_global_variable
 from yrc.utils.logging import configure_logging

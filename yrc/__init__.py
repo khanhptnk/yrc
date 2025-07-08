@@ -5,7 +5,7 @@ from omegaconf import OmegaConf
 
 import yrc
 from yrc.core.config import YRCConfig, configure
-from yrc.core.environment import CoordEnv
+from yrc.core.environment import CoordEnv, GeneralCoordEnv
 from yrc.core.evaluator import Evaluator
 from yrc.utils.global_variables import get_global_variable
 

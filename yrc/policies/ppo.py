@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-import torch.nn.functional as F
+import numpy as np
+import torch
 from torch.distributions.categorical import Categorical
 
 import yrc.models as model_factory
