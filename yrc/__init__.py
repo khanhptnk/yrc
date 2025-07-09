@@ -10,6 +10,9 @@ from yrc.core.evaluator import Evaluator
 from yrc.utils.global_variables import get_global_variable
 
 
+__version__ = "1.0"
+
+
 def make_config(args: object, dotlist_args: object = None) -> YRCConfig:
     """
     Create and configure a YRCConfig object from command-line arguments.
