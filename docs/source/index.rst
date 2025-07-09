@@ -32,13 +32,6 @@ Getting Started
 - **See what’s included:** The :doc:`Algorithms <algorithms/index>` page lists the standard algorithms provided in yrc and how to use them.
 - **Full API documentation:** Dive into :doc:`API reference <autoapi/index>` for details on classes, methods, and configuration options.
 
-About yrc
----------
-
-- **Open-source** and built for extensibility.
-- Designed for both **practitioners** and **researchers** in RL, imitation learning, and human-AI collaboration.
-- Actively developed and used in academic and industrial research.
-
 Indices and Tables
 ==================
 
