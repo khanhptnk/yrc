@@ -1,5 +1,7 @@
 # YRC: Yield and Request Control
 
+![YRC logo](images/logo.png)
+
 YRC is a research framework for studying **when and how AI agents should request or yield control** to humans or other agents during decision-making. It provides modular abstractions, benchmark environments, and baseline implementations to help you evaluate coordination strategies in multi-agent and human-AI systems.
 
 > “Know when to ask, know when to act.”
@@ -43,7 +45,20 @@ See the full documentation at:
 
 ## 🧪 Citing YRC
 
-If you use YRC in your research, please cite:
+
+If you use the YRC package in your research, please cite:
+
+```bibtex
+@misc{yrc2025,
+  author       = {Khanh Nguyen and Mohamad Danesh},
+  title        = {YRC: Yield and Request Control},
+  year         = {2025},
+  howpublished = {\url{https://github.com/khanhptnk/yrc}},
+  note         = {Python package. Version 1.0},
+}
+```
+
+If you work on YRC-0, please cite our paper:
 
 ```bibtex
 @article{danesh2025learning,
