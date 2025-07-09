@@ -1,4 +1,4 @@
-# YRC: Yield and Request Control
+# YRC: Yield or Request Control
 
 <p align="center">
   <img src="images/logo_white_bg.jpg" alt="YRC Logo" width="30%">
@@ -40,7 +40,7 @@ pip install -e .
 
 ## 📚 Documentation
 
-See the full documentation at:  
+See the full documentation at:
 [https://yrc.readthedocs.io](https://yrc.readthedocs.io)
 
 ---
@@ -53,14 +53,14 @@ If you use the YRC package in your research, please cite:
 ```bibtex
 @misc{yrc2025,
   author       = {Khanh Nguyen and Mohamad Danesh},
-  title        = {YRC: Yield and Request Control},
+  title        = {YRC: Yield or Request Control},
   year         = {2025},
   howpublished = {\url{https://github.com/khanhptnk/yrc}},
   note         = {Python package. Version 1.0},
 }
 ```
 
-If you work on YRC-0, please cite our paper:
+If you want to reference to the YRC-0 problem, please cite our paper:
 
 ```bibtex
 @article{danesh2025learning,
@@ -75,21 +75,21 @@ If you work on YRC-0, please cite our paper:
 
 ## 🤝 Contributing
 
-We welcome pull requests, feature suggestions, and bug reports!  
+We welcome pull requests, feature suggestions, and bug reports!
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
 ## 🛡 License
 
-This project is licensed under the MIT License.  
+This project is licensed under the MIT License.
 See [LICENSE](LICENSE) for more details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-YRC is developed at **UC Berkeley**, and inspired by foundational ideas in cognitive science, control theory, and cooperative AI.  
+YRC is developed at **UC Berkeley**, and inspired by foundational ideas in cognitive science, control theory, and cooperative AI.
 We thank the broader research community and reviewers for helpful discussions and feedback.
 
 
