@@ -18,5 +18,13 @@ dependencies = [
   "numba",
 ]
 
+[project.optional-dependencies]
+docs = [
+  "sphinx",
+  "sphinx-autoapi",
+  "sphinx_copybutton",
+  "furo",  
+]
+
 [tool.setuptools]
 packages = ["yrc"]
