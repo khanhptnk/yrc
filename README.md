@@ -1,6 +1,8 @@
 # YRC: Yield and Request Control
 
-<img src="images/logo_white_bg.jpg" alt="YRC Logo" width="50%">
+<p align="center">
+  <img src="images/logo_white_bg.jpg" alt="YRC Logo" width="30%">
+</p>
 
 YRC is a research framework for studying **when and how AI agents should request or yield control** to humans or other agents during decision-making. It provides modular abstractions, benchmark environments, and baseline implementations to help you evaluate coordination strategies in multi-agent and human-AI systems.
 
