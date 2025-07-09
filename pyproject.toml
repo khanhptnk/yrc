@@ -26,5 +26,5 @@ docs = [
   "furo",  
 ]
 
-[tool.setuptools]
-packages = ["yrc"]
+[tool.setuptools.packages.find]
+where = ["."]
