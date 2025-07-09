@@ -3,7 +3,7 @@
 project = 'YRC'
 copyright = '2025, Khanh Nguyen, Mohamad Danesh'
 author = 'Khanh Nguyen, Mohamad Danesh'
-release = '1.0'
+release = '1.0.0'
 
 extensions = [
     'autoapi.extension',
